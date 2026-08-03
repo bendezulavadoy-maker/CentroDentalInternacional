@@ -1,0 +1,598 @@
+/* ══════════════════════════════════════════════════════
+   GESTIÓN DE PACIENTES — Estilos
+   Hereda variables de style_panel_admin.css
+══════════════════════════════════════════════════════ */
+
+.contenedor-personal {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* ── Encabezado ── */
+.encabezado-personal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e0e4ea;
+}
+.encabezado-personal h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a2332;
+}
+
+/* ── Barra búsqueda ── */
+.barra-busqueda { margin-bottom: 16px; }
+.input-busqueda {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: 0.18s;
+  background: white;
+}
+.input-busqueda:focus {
+  outline: none;
+  border-color: #2a4d8f;
+  box-shadow: 0 0 0 3px rgba(42,77,143,0.08);
+}
+
+/* ── Botones ── */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.btn-principal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a2332;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 7px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+.btn-principal:hover { background: #2a3548; }
+
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  color: #5a6475;
+  padding: 7px 13px;
+  border-radius: 7px;
+  border: 0.5px solid #d5d9e0;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.btn-secundario:hover { border-color: #aab2c0; color: #1a2332; }
+
+.btn-guardar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1a2332;
+  color: white;
+  padding: 9px 18px;
+  border-radius: 7px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+.btn-guardar:hover { background: #2a3548; }
+
+.btn-editar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  color: #5a6475;
+  border: 0.5px solid #d5d9e0;
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.btn-editar:hover { border-color: #aab2c0; color: #1a2332; }
+
+.btn-historia, .btn-ver {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: white;
+  color: #5a6475;
+  border: 0.5px solid #d5d9e0;
+  padding: 5px 11px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.btn-historia:hover, .btn-ver:hover { border-color: #aab2c0; color: #1a2332; }
+
+/* ── Tabla ── */
+#tablaPersonal {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: white;
+  border: 0.5px solid #e0e4ea;
+  border-radius: 10px;
+  overflow: hidden;
+  table-layout: fixed;
+}
+#tablaPersonal thead tr { background: #f7f8fa; }
+#tablaPersonal th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: #5a6475;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 0.5px solid #e0e4ea;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#tablaPersonal td {
+  padding: 12px 16px;
+  border-bottom: 0.5px solid #eef0f3;
+  color: #1a2332;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#tablaPersonal tbody tr:hover { background: #fafbfc; }
+#tablaPersonal tbody tr:last-child td { border-bottom: none; }
+
+/* Anchos de columna fijos para evitar el efecto "amontonado" */
+#tablaPersonal th:nth-child(1), #tablaPersonal td:nth-child(1) { width: 56px; }
+#tablaPersonal th:nth-child(2), #tablaPersonal td:nth-child(2) { width: 130px; }
+#tablaPersonal th:nth-child(3), #tablaPersonal td:nth-child(3) { width: 22%; }
+#tablaPersonal th:nth-child(4), #tablaPersonal td:nth-child(4) { width: 26%; }
+#tablaPersonal th:nth-child(5), #tablaPersonal td:nth-child(5) { width: 130px; }
+#tablaPersonal th:nth-child(6), #tablaPersonal td:nth-child(6) { width: 90px; }
+#tablaPersonal th:nth-child(7), #tablaPersonal td:nth-child(7) { width: 100px; text-align: right; }
+#tablaPersonal td:nth-child(7) { text-align: right; }
+
+/* Badge de estado en vez de texto plano */
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.badge-estado::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.badge-estado.activo { background: #e8f5e9; color: #2e7d32; }
+.badge-estado.activo::before { background: #2e7d32; }
+.badge-estado.inactivo { background: #f4f6f9; color: #9aa3b0; }
+.badge-estado.inactivo::before { background: #9aa3b0; }
+
+/* ══════════════════════════════════════════════════════
+ FORMULARIO — tarjeta sobre fondo gris
+══════════════════════════════════════════════════════ */
+#seccionNuevoPaciente {
+  background: #eef0f3;
+  border-radius: 12px;
+  padding: 28px;
+  margin-top: 8px;
+}
+
+.tarjeta-formulario {
+  background: white;
+  border: 0.5px solid #e0e4ea;
+  border-radius: 12px;
+  max-width: 820px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.tarjeta-formulario-header {
+  padding: 18px 24px;
+  border-bottom: 0.5px solid #e0e4ea;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tarjeta-formulario-header span {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a2332;
+}
+.tarjeta-formulario-header i { font-size: 18px; color: #5a6475; }
+
+.tarjeta-formulario-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 28px;
+}
+
+.tarjeta-formulario-footer {
+  padding: 14px 24px;
+  border-top: 0.5px solid #e0e4ea;
+  background: #f7f8fa;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Foto */
+.columna-izquierda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.grupo-foto label {
+  font-size: 12px;
+  color: #5a6475;
+  display: block;
+  margin-bottom: 4px;
+  text-align: center;
+}
+.preview-foto {
+  width: 180px;
+  height: 180px;
+  border: 1.5px dashed #ccd2da;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f7f8fa;
+  transition: border-color 0.18s;
+  cursor: pointer;
+}
+.preview-foto:hover { border-color: #2a4d8f; }
+.preview-foto img { width: 100%; height: 100%; object-fit: cover; }
+.preview-foto i { font-size: 32px; color: #aab2c0; }
+
+.btn-file {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: white;
+  color: #5a6475;
+  border: 0.5px solid #d5d9e0;
+  border-radius: 6px;
+  font-size: 12px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.btn-file:hover { border-color: #aab2c0; color: #1a2332; }
+.btn-file.archivo-seleccionado { border-color: #2a4d8f; color: #2a4d8f; }
+.ayuda-foto { font-size: 11px; color: #9aa3b0; text-align: center; }
+
+/* Grid de campos */
+.columna-derecha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  align-content: start;
+}
+.columna-derecha .campo-ancho { grid-column: 1 / -1; }
+
+.grupo-campo { display: flex; flex-direction: column; gap: 5px; }
+.grupo-campo label { font-size: 13px; color: #5a6475; }
+.campo-obligatorio { color: #c0392b; margin-left: 2px; }
+.ayuda-campo { font-size: 11px; color: #9aa3b0; }
+
+.grupo-campo input[type="text"],
+.grupo-campo input[type="email"],
+.grupo-campo input[type="date"],
+.grupo-campo select,
+.grupo-campo textarea {
+  padding: 9px 11px;
+  border: 0.5px solid #d5d9e0;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a2332;
+  background: white;
+  transition: 0.15s;
+  width: 100%;
+}
+.grupo-campo input:focus,
+.grupo-campo select:focus,
+.grupo-campo textarea:focus {
+  outline: none;
+  border-color: #2a4d8f;
+  box-shadow: 0 0 0 3px rgba(42,77,143,0.08);
+}
+.grupo-campo textarea { resize: vertical; min-height: 70px; }
+
+.campo-valido   { border-color: #2e7d32 !important; }
+.campo-invalido { border-color: #c0392b !important; }
+
+.mensaje-error-campo {
+  font-size: 11px;
+  color: #c0392b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bloque-edad {
+  font-size: 12px;
+  color: #5a6475;
+  margin-top: 2px;
+}
+
+/* ── INFO APODERADO ── */
+.info-apoderado {
+  background: #f7f8fa;
+  border: 0.5px solid #e0e4ea;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.info-apoderado p { font-size: 13px; color: #1a2332; margin: 3px 0; }
+.info-apoderado strong { font-weight: 500; }
+
+.btn-editar-apoderado {
+  background: white;
+  color: #5a6475;
+  border: 0.5px solid #d5d9e0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-top: 8px;
+  width: 100%;
+}
+.btn-editar-apoderado:hover { border-color: #aab2c0; }
+
+.sin-apoderado { font-size: 13px; color: #9aa3b0; }
+
+.alerta-apoderado {
+  background: #fdf6ec;
+  border: 0.5px solid #f0d9b5;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.alerta-apoderado.error { background: #fdf0ef; border-color: #e8c4c0; }
+.alerta-apoderado p { font-size: 13px; color: #5a6475; margin: 4px 0; }
+
+.btn-agregar-apoderado {
+  background: #1a2332;
+  color: white;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+.btn-agregar-apoderado:hover { background: #2a3548; }
+
+/* ══════════════════════════════════════════════════════
+ DETALLE DE PACIENTE
+══════════════════════════════════════════════════════ */
+#seccionDetallePacientes {
+  background: #eef0f3;
+  border-radius: 12px;
+  padding: 28px;
+  margin-top: 8px;
+}
+
+.detalle-paciente-card {
+  background: white;
+  border: 0.5px solid #e0e4ea;
+  border-radius: 12px;
+  max-width: 820px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 0.5px solid #e0e4ea;
+}
+.detalle-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #eef2fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+  color: #2a4d8f;
+}
+.detalle-header-info p.nombre {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a2332;
+  margin: 0;
+}
+.detalle-header-info p.meta {
+  font-size: 13px;
+  color: #5a6475;
+  margin: 2px 0 0;
+}
+
+.detalle-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.detalle-seccion {
+  padding: 18px 24px;
+  border-bottom: 0.5px solid #eef0f3;
+}
+.detalle-seccion:nth-child(odd)  { border-right: 0.5px solid #eef0f3; }
+.detalle-seccion.campo-ancho { grid-column: 1 / -1; border-right: none; }
+
+.detalle-seccion h4 {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9aa3b0;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+.detalle-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.detalle-fila:last-child { margin-bottom: 0; }
+.detalle-fila .etiqueta { color: #5a6475; }
+.detalle-fila .valor    { color: #1a2332; text-align: right; }
+
+.detalle-footer {
+  display: flex;
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 0.5px solid #e0e4ea;
+  background: #f7f8fa;
+}
+
+/* ── MODAL APODERADO ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20,24,33,0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.mostrar { display: flex !important; }
+
+.modal-contenido {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 0.5px solid #e0e4ea;
+}
+.modal-encabezado h3 { font-size: 15px; font-weight: 500; color: #1a2332; margin: 0; }
+.btn-cerrar-modal {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #9aa3b0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.btn-cerrar-modal:hover { background: #f7f8fa; color: #1a2332; }
+
+#formApoderado { padding: 20px; }
+#formApoderado .grupo-campo { margin-bottom: 12px; }
+
+.modal-botones {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 0.5px solid #e0e4ea;
+  background: #f7f8fa;
+}
+.modal-botones button { flex: 1; }
+
+/* ── TOAST ── */
+.mensaje-sistema {
+  position: fixed;
+  top: 20px;
+  right: -360px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  transition: right 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  z-index: 9999;
+  min-width: 260px;
+}
+.mensaje-sistema.mostrar { right: 20px; opacity: 1; }
+.mensaje-sistema.exito { background: #2e7d32; }
+.mensaje-sistema.error { background: #c0392b; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 820px) {
+  .tarjeta-formulario-body { grid-template-columns: 1fr; }
+  .columna-izquierda { flex-direction: row; }
+  .columna-derecha { grid-template-columns: 1fr; }
+  .columna-derecha .campo-ancho { grid-column: 1; }
+  .detalle-body { grid-template-columns: 1fr; }
+  .detalle-seccion:nth-child(odd) { border-right: none; }
+}
+@media (max-width: 600px) {
+  #seccionNuevoPaciente, #seccionDetallePacientes { padding: 14px; }
+  .encabezado-personal { flex-direction: column; gap: 10px; align-items: stretch; }
+  .detalle-header { flex-direction: column; text-align: center; }
+}
+
+/* ══════════════════════════════════════════════════════
+ ESPECÍFICO DE PERSONAL — credenciales generadas
+══════════════════════════════════════════════════════ */
+.info-registro {
+  margin-top: 16px;
+  background: #f7f8fa;
+  border: 0.5px solid #e0e4ea;
+  border-radius: 8px;
+  padding: 14px;
+  width: 100%;
+  text-align: left;
+}
+.info-registro p {
+  font-size: 13px;
+  color: #1a2332;
+  margin: 2px 0;
+}
+.info-registro p strong {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9aa3b0;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+}
+#codigoAsignado, #contrasenaAsignada {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2a4d8f;
+}

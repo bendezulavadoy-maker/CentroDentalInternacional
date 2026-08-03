@@ -1,0 +1,169 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    background-color: #e9f2ff;
+}
+
+/* =======================
+   ENCABEZADO
+======================= */
+.header {
+    position: fixed;                 /* 🔹 Fija el encabezado */
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0d6efd;
+    color: white;
+    padding: 0 50px;
+    height: 70px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;                   /* 🔹 Para que siempre esté encima */
+}
+
+.header-right {
+    display: flex;
+    gap: 10px;
+}
+
+.header-right button {
+    background-color: white;
+    color: #0d6efd;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.header-right button:hover {
+    background-color: #e3edff;
+}
+
+.header-right button.logout {
+    background-color: #dc3545;
+    color: white;
+}
+
+.header-right button.logout:hover {
+    background-color: #b92d3a;
+}
+
+/* =======================
+   CONTENEDOR PRINCIPAL
+======================= */
+.contenedor_principal {
+    display: flex;
+    height: calc(100vh - 70px);  /* 🔹 Resta la altura del header */
+    margin-top: 70px;            /* 🔹 Deja espacio para el header fijo */
+    overflow: hidden;
+}
+
+/* =======================
+   BARRA LATERAL (1/4)
+======================= */
+.sidebar {
+    width: 25%;
+    background-color: #f8f9fa;
+    border-right: 1px solid #ddd;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.perfil-medico {
+    text-align: center;
+}
+
+.foto-perfil {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #0d6efd;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    display: block;
+    margin: 0 auto;
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    color: #0d6efd;
+    margin-top: 10px;
+}
+
+.tareas, .notas {
+    width: 100%;
+}
+
+.tareas h3, .notas h3 {
+    color: #0d6efd;
+    margin-bottom: 8px;
+}
+
+.tareas ul {
+    list-style: none;
+    padding-left: 15px;
+}
+
+.notas textarea {
+    width: 100%;
+    height: 120px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none;
+}
+
+/* =======================
+   ÁREA DE CONTENIDO (3/4)
+======================= */
+.content {
+    width: 75%;
+    background-color: #e9f2ff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.fondo-inicio {
+    width: 100%;
+    height: 100%;
+}
+
+.logo-fondo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* se ajusta a todo el espacio sin deformarse */
+    opacity: 0.3; /* un toque translúcido */
+}
+
+/* =======================
+   EFECTO SUAVE ENTRE VISTAS
+======================= */
+#contenido {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+
+.fade-out {
+    opacity: 0;
+}
+.fade-in {
+    opacity: 1;
+}

@@ -1,0 +1,615 @@
+.contenedor-config {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: white;
+    border: 0.5px solid #e0e4ea;
+    padding: 24px 28px;
+    border-radius: 12px;
+}
+
+.encabezado-config h2 {
+    margin-bottom: 20px;
+    color: #1a2332;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* Tabs */
+.tabs-config {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    border-bottom: 0.5px solid #e0e4ea;
+    padding-bottom: 0;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 9px 16px;
+    border: none;
+    background: #f7f8fa;
+    border-radius: 7px 7px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    color: #5a6475;
+    font-family: inherit;
+    transition: 0.18s;
+}
+
+.tab-btn:hover { color: #1a2332; }
+
+.tab-btn.activo {
+    background: #2a4d8f;
+    color: white;
+    font-weight: 500;
+}
+
+.tab-contenido {
+    display: none;
+}
+
+.tab-contenido.activo {
+    display: block;
+}
+
+/* Sección header */
+.seccion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.seccion-header h3 {
+    color: #1a2332;
+    margin: 0;
+}
+
+.subtitulo {
+    color: #5a6475;
+    font-size: 13px;
+    margin: 4px 0 16px;
+}
+
+/* Tablas */
+#tablaRoles, #tablaSedes, #matrizPermisos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 14px;
+    background: white;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#tablaRoles th, #tablaRoles td,
+#tablaSedes th, #tablaSedes td,
+#matrizPermisos th, #matrizPermisos td {
+    padding: 11px 16px;
+    border-bottom: 0.5px solid #eef0f3;
+    text-align: left;
+}
+
+#tablaRoles thead, #tablaSedes thead, #matrizPermisos thead {
+    background: #f7f8fa;
+}
+#tablaRoles thead th, #tablaSedes thead th, #matrizPermisos thead th {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5a6475;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 0.5px solid #e0e4ea;
+}
+
+#tablaRoles tbody tr:hover, #tablaSedes tbody tr:hover, #matrizPermisos tbody tr:hover {
+    background: #fafbfc;
+}
+#tablaRoles tbody tr:last-child td, #tablaSedes tbody tr:last-child td, #matrizPermisos tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Formulario inline */
+.form-inline {
+    background: #f7f8fa;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 16px;
+    max-width: 480px;
+}
+
+.form-inline h4 {
+    margin: 0 0 16px;
+    color: #1a2332;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.grupo-campo {
+    margin-bottom: 14px;
+}
+
+.grupo-campo label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: #5a6475;
+    font-weight: 400;
+}
+
+.grupo-campo input,
+.grupo-campo select {
+    width: 100%;
+    padding: 9px 11px;
+    border: 0.5px solid #d5d9e0;
+    border-radius: 7px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: 0.15s;
+}
+.grupo-campo input:focus,
+.grupo-campo select:focus {
+    outline: none;
+    border-color: #2a4d8f;
+    box-shadow: 0 0 0 3px rgba(42,77,143,0.08);
+}
+
+.form-botones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Botones */
+.btn-principal {
+    background: #1a2332;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.btn-principal:hover { background: #2a3548; }
+
+.btn-guardar {
+    background: #1a2332;
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.btn-guardar:hover { background: #2a3548; }
+
+.btn-secundario {
+    background: white;
+    color: #5a6475;
+    border: 0.5px solid #d5d9e0;
+    padding: 8px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.btn-secundario:hover { border-color: #aab2c0; color: #1a2332; }
+
+.btn-accion {
+    border: 0.5px solid #d5d9e0;
+    padding: 5px 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 4px;
+    background: white;
+    color: #5a6475;
+    font-family: inherit;
+    transition: 0.15s;
+}
+.btn-accion:hover { border-color: #aab2c0; color: #1a2332; }
+
+.btn-danger { background: #c0392b; color: white; border-color: #c0392b; }
+.btn-danger:hover { background: #a93226; }
+
+.etiqueta-base {
+    font-size: 11px;
+    color: #9aa3b0;
+    font-style: italic;
+}
+
+/* Badges */
+.badge-estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.badge-estado::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.badge-estado.activo   { background: #e8f5e9; color: #2e7d32; }
+.badge-estado.activo::before { background: #2e7d32; }
+.badge-estado.inactivo { background: #f4f6f9; color: #9aa3b0; }
+.badge-estado.inactivo::before { background: #9aa3b0; }
+
+/* Checkbox permisos */
+.chk-permiso {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.cargando { color: #9aa3b0; font-style: italic; }
+.campo-obligatorio { color: #c0392b; }
+
+/* Notificación emergente */
+.mensaje-sistema {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #2e7d32;
+    color: white;
+    padding: 13px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    z-index: 9999;
+    max-width: 320px;
+}
+
+.mensaje-sistema.mostrar {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mensaje-sistema.error {
+    background: #c0392b;
+}
+
+.mensaje-sistema.exito {
+    background: #2e7d32;
+}
+
+.mensaje-sistema .icono {
+    font-size: 18px;
+}
+/* ── Modal configuración ── */
+.cfg-modal-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.45);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.cfg-modal {
+    background: white; border-radius: 10px;
+    border: 0.5px solid #e0e4ea;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    width: 90%; max-width: 620px;
+    max-height: 90vh; display: flex; flex-direction: column;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.cfg-modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; background: #2a4d8f;
+    border-radius: 10px 10px 0 0;
+}
+.cfg-modal-header h3 { font-size: 15px; font-weight: 500; color: white; margin: 0; }
+
+.cfg-btn-cerrar {
+    background: rgba(255,255,255,0.15); border: none; color: white;
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    font-size: 13px; display: flex; align-items: center; justify-content: center;
+    transition: 0.15s;
+}
+.cfg-btn-cerrar:hover { background: rgba(255,255,255,0.25); }
+
+.cfg-modal-body {
+    padding: 20px; overflow-y: auto; flex: 1;
+}
+
+.cfg-modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 14px 20px; border-top: 0.5px solid #e0e4ea;
+}
+
+.cfg-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.cfg-checkbox-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #1a2332; cursor: pointer;
+}
+
+.cfg-seccion-pasos { margin-top: 12px; }
+.cfg-seccion-pasos .seccion-header { margin-bottom: 6px; }
+
+/* Pasos form */
+.paso-form-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 0.5px solid #f0f0f0;
+}
+.paso-num { font-size: 12px; font-weight: 600; color: #2a4d8f; min-width: 20px; }
+.paso-desc {
+    flex: 1; padding: 6px 8px; border: 0.5px solid #ddd;
+    border-radius: 5px; font-size: 12px; font-family: 'Inter', sans-serif;
+}
+.paso-costo {
+    width: 80px; padding: 6px 8px; border: 0.5px solid #ddd;
+    border-radius: 5px; font-size: 12px; font-family: 'Inter', sans-serif;
+}
+
+/* Lista planes config */
+.lista-planes-config { display: flex; flex-direction: column; gap: 8px; }
+
+.plan-config-item {
+    border: 0.5px solid #e0e4ea; border-radius: 8px;
+    padding: 14px 16px; display: flex;
+    justify-content: space-between; align-items: flex-start;
+    gap: 12px; transition: 0.15s;
+}
+.plan-config-item:hover { border-color: #2a4d8f; }
+.plan-config-item.inactivo { opacity: 0.6; background: #f7f8fa; }
+
+.plan-config-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.plan-config-nombre { font-size: 14px; font-weight: 500; color: #1a2332; }
+.plan-config-desc { font-size: 12px; color: #9aa3b0; }
+.plan-config-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+.plan-config-meta span { font-size: 11px; color: #5a6475; }
+
+.plan-config-pasos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.paso-chip {
+    background: #f7f8fa; border: 0.5px solid #ddd;
+    border-radius: 4px; padding: 2px 8px;
+    font-size: 11px; color: #5a6475;
+}
+
+.plan-config-acciones { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+/* Textarea en form-inline */
+.form-inline textarea {
+    width: 100%; padding: 8px 10px;
+    border: 0.5px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    resize: vertical; outline: none;
+}
+.form-inline textarea:focus { border-color: #2a4d8f; }
+.form-inline small { font-size: 11px; color: #9aa3b0; margin-top: 3px; display: block; }
+/* ── Horarios ── */
+.horarios-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f7f8fa;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 8px;
+}
+.grupo-campo-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.grupo-campo-inline label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5a6475;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.horario-semana-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 12px;
+    overflow-x: auto;
+}
+.horario-dia-col {
+    background: white;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 100px;
+}
+.horario-dia-header {
+    background: #f7f8fa;
+    padding: 5px 6px;
+    border-bottom: 0.5px solid #e0e4ea;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.horario-dia-nombre {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1a2332;
+    text-transform: uppercase;
+}
+.horario-dia-fecha {
+    font-size: 10px;
+    color: #9aa3b0;
+}
+.horario-dia-contenido {
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.horario-bloque {
+    border-radius: 5px;
+    padding: 4px 6px;
+    font-size: 10px;
+}
+.horario-bloque-trabajo {
+    background: #eef2fb;
+    border: 0.5px solid #c5d8f0;
+}
+.horario-bloque-bloqueo {
+    background: #f9f0f0;
+    border: 0.5px solid #e8c8c8;
+}
+.hb-sede {
+    display: block;
+    font-weight: 600;
+    color: #2a4d8f;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hb-horas { display: block; color: #5a6475; font-size: 10px; }
+.hb-motivo { display: block; font-size: 10px; color: #8b3a3a; }
+.hb-motivo-txt { display: block; font-size: 10px; color: #5a6475; font-style: italic; }
+.hb-acciones { display: flex; gap: 3px; margin-top: 3px; flex-wrap: wrap; }
+.hb-acciones button, .btn-del-horario, .btn-del-bloqueo, .btn-edit-horario {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 0.5px solid #ddd;
+    background: white;
+    cursor: pointer;
+    color: #5a6475;
+}
+.btn-del-horario:hover, .btn-del-bloqueo:hover { background: #f9f0f0; color: #8b3a3a; }
+.btn-edit-horario:hover { background: #eef2fb; color: #2a4d8f; }
+.btn-add-dia {
+    font-size: 10px;
+    color: #2a4d8f;
+    background: none;
+    border: 0.5px dashed #c5d8f0;
+    border-radius: 4px;
+    padding: 3px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+}
+.btn-add-dia:hover { background: #eef2fb; }
+.horario-horas { display: flex; gap: 12px; }
+.btn-danger-outline {
+    background: white;
+    border: 0.5px solid #e8c8c8;
+    color: #8b3a3a;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.btn-danger-outline:hover { background: #f9f0f0; }
+
+@media (max-width: 900px) {
+    .horario-semana-grid {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+    .horario-dia-col { min-width: 120px; flex-shrink: 0; }
+}
+
+/* ── Fix: contenedor se expande con el contenido de cada pestaña ── */
+.contenedor-config {
+    height: auto !important;
+    min-height: 200px;
+    overflow: visible !important;
+}
+
+.tab-contenido {
+    display: none;
+}
+
+.tab-contenido.activo {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* ── Buscador de doctor ── */
+.input-buscar-doctor {
+    padding: 6px 10px;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 5px;
+    font-size: 12px;
+    width: 200px;
+    color: #1a2332;
+}
+.input-buscar-doctor:focus {
+    outline: none;
+    border-color: #2a4d8f;
+    box-shadow: 0 0 0 2px rgba(42,77,143,0.08);
+}
+.lista-doctores-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    min-width: 200px;
+    background: white;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.doctor-opcion {
+    padding: 7px 12px;
+    font-size: 12px;
+    color: #1a2332;
+    cursor: pointer;
+    border-bottom: 0.5px solid #f7f8fa;
+}
+.doctor-opcion:hover { background: #eef2fb; color: #2a4d8f; }
+.doctor-opcion-vacio { padding: 8px 12px; font-size: 12px; color: #9aa3b0; font-style: italic; }
+
+/* ── Búsqueda de doctor ── */
+.input-buscar-doctor {
+    width: 200px;
+    padding: 5px 10px;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #1a2332;
+    margin-bottom: 4px;
+}
+.input-buscar-doctor:focus {
+    outline: none;
+    border-color: #2a4d8f;
+}
+
+/* ── Botones de horario agrupados ── */
+.horarios-controles-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}

@@ -1,0 +1,6 @@
+[02-Aug-2026 11:39:26 America/Lima] PHP Warning:  require_once(../CONFIG/conexion.php): Failed to open stream: No such file or directory in /home/fressdrr/dentalinternacional.site/MODELOS/modelo_pacientes.php on line 2
+[02-Aug-2026 11:39:26 America/Lima] PHP Fatal error:  Uncaught Error: Failed opening required '../CONFIG/conexion.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/fressdrr/dentalinternacional.site/MODELOS/modelo_pacientes.php:2
+Stack trace:
+#0 /home/fressdrr/dentalinternacional.site/test.php(20): require_once()
+#1 {main}
+  thrown in /home/fressdrr/dentalinternacional.site/MODELOS/modelo_pacientes.php on line 2

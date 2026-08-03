@@ -1,0 +1,768 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+.contenedor-atenciones { padding: 4px; }
+
+/* ── Saldo resumen ── */
+.saldo-resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.saldo-item {
+    background: white;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.saldo-item.alerta { border-color: #8b3a3a; background: #f9f0f0; }
+
+.saldo-numero {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.saldo-item.saldo-pendiente .saldo-numero { color: #8b3a3a; }
+.saldo-item.saldo-pendiente.alerta .saldo-numero { color: #8b3a3a; }
+
+.saldo-label {
+    font-size: 11px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* ── Planes activos ── */
+.seccion-planes {
+    background: white;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.seccion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.seccion-titulo {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.plan-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    background: #f8f9fa;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.plan-info { display: flex; flex-direction: column; gap: 2px; }
+.plan-nombre { font-size: 13px; font-weight: 500; color: #2c3e50; }
+.plan-doctor { font-size: 11px; color: #7f8c8d; }
+.plan-desc   { font-size: 11px; color: #95a5a6; font-style: italic; }
+
+.plan-meta { display: flex; align-items: center; gap: 10px; }
+.plan-costo    { font-size: 13px; font-weight: 600; color: #2a4d8f; }
+.plan-sesiones { font-size: 11px; color: #7f8c8d; }
+
+.badge-plan {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 0.5px solid;
+}
+.badge-plan.activo { background: #eaf1f8; color: #1d5180; border-color: #2e6da4; }
+
+/* ── Filtros ── */
+.barra-filtros-at {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.filtros-grupo { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.btn-filtro-at {
+    padding: 5px 12px;
+    border: 0.5px solid #ddd;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #636e72;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.btn-filtro-at:hover { border-color: #2a4d8f; color: #2a4d8f; }
+.btn-filtro-at.activo { background: #2a4d8f; color: white; border-color: #2a4d8f; font-weight: 500; }
+
+.filtros-secundarios { display: flex; gap: 8px; }
+
+.total-resultados { font-size: 12px; color: #95a5a6; margin-left: auto; }
+
+/* ── Selects ── */
+.at-select, select {
+    padding: 7px 10px;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: #2c3e50;
+    background: white;
+    outline: none;
+}
+
+/* ── Lista de citas ── */
+.lista-citas-at { display: flex; flex-direction: column; gap: 8px; }
+
+.cita-at-item {
+    background: white;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: border-color 0.15s;
+}
+
+.cita-at-item.sin-informe { border-left: 3px solid #c8960a; }
+.cita-at-item:hover { border-color: #2a4d8f; }
+
+.cita-at-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.cita-at-id { font-size: 11px; font-weight: 600; color: #2a4d8f; background: #e8f0fb; padding: 2px 8px; border-radius: 10px; }
+.cita-at-fecha   { font-size: 12px; color: #636e72; }
+.cita-at-servicio { font-size: 12px; font-weight: 500; color: #2c3e50; }
+.cita-at-doctor  { font-size: 12px; color: #7f8c8d; }
+.cita-at-plan    { font-size: 11px; background: #e8f0fb; color: #2a4d8f; padding: 2px 8px; border-radius: 10px; border: 0.5px solid #2a4d8f; }
+
+.at-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 0.5px solid;
+}
+.at-badge.sin-informe { background: #fffbf0; color: #7a5c00; border-color: #c8960a; }
+.at-badge.con-informe { background: #eaf1f8; color: #1d5180; border-color: #2e6da4; }
+.at-badge.pendiente   { background: #f4f6f7; color: #616a6b; border-color: #95a5a6; }
+
+.cita-at-detalle {
+    padding: 8px 0 6px;
+    border-top: 0.5px solid #f0f0f0;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #636e72;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cita-at-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cita-at-cobro { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cobro-total  { font-size: 12px; font-weight: 600; color: #2c3e50; }
+.cobro-pagado { font-size: 12px; color: #7f8c8d; }
+.cobro-saldo  { font-size: 12px; font-weight: 500; }
+.cobro-saldo.debe    { color: #8b3a3a; }
+.cobro-saldo.al-dia  { color: #2e6da4; }
+
+.cita-at-acciones { display: flex; gap: 6px; }
+
+.at-btn-accion {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.at-btn-accion.registrar { background: #2a4d8f; color: white; }
+.at-btn-accion.registrar:hover { background: #1f3870; }
+.at-btn-accion.editar { background: #f0f3f4; color: #2c3e50; border: 0.5px solid #ddd; }
+.at-btn-accion.editar:hover { border-color: #2a4d8f; color: #2a4d8f; }
+.at-btn-accion.pago { background: #2e6da4; color: white; }
+.at-btn-accion.pago:hover { background: #1d5180; }
+
+.at-sin-datos { text-align: center; padding: 40px; color: #95a5a6; font-size: 13px; }
+.cargando-at  { text-align: center; padding: 30px; color: #95a5a6; font-size: 13px; font-style: italic; }
+
+/* ── Modales ── */
+.at-modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.at-modal {
+    background: white;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    width: 90%;
+    max-width: 680px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideDown 0.2s ease;
+}
+
+.at-modal-sm { max-width: 420px; }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.at-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px 20px;
+    border-bottom: 0.5px solid #e0e0e0;
+    background: #2a4d8f;
+    border-radius: 10px 10px 0 0;
+}
+
+.at-modal-header h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: white;
+    margin: 0;
+}
+
+.at-modal-subtitulo { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+.at-btn-cerrar {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    flex-shrink: 0;
+}
+.at-btn-cerrar:hover { background: rgba(255,255,255,0.25); }
+
+.at-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.at-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 0.5px solid #e0e0e0;
+}
+
+/* ── Secciones del modal ── */
+.at-seccion {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 0.5px solid #f0f0f0;
+}
+.at-seccion:last-child { border-bottom: none; margin-bottom: 0; }
+
+.at-seccion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.at-seccion-titulo {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0 0 10px;
+}
+
+.at-grupo { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.at-grupo label { font-size: 12px; font-weight: 500; color: #636e72; }
+
+.at-grupo textarea, .at-input {
+    padding: 8px 10px;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: #2c3e50;
+    resize: vertical;
+    outline: none;
+    transition: 0.15s;
+    width: 100%;
+}
+.at-grupo textarea:focus, .at-input:focus { border-color: #2a4d8f; }
+.at-readonly { background: #f8f9fa; cursor: not-allowed; }
+
+.at-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.at-requerido { color: #8b3a3a; }
+
+/* Servicios en informe */
+.servicio-informe-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.srv-nombre { flex: 1; color: #2c3e50; font-weight: 500; }
+.srv-cant   { color: #7f8c8d; min-width: 30px; }
+.srv-precio { color: #636e72; min-width: 70px; text-align: right; }
+.srv-sub    { color: #2a4d8f; font-weight: 600; min-width: 70px; text-align: right; }
+
+.srv-btn-eliminar {
+    background: transparent;
+    border: none;
+    color: #8b3a3a;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: 0.15s;
+}
+.srv-btn-eliminar:hover { background: #f9f0f0; }
+
+.at-total-servicios {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #e8f0fb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a4d8f;
+    margin-top: 6px;
+}
+
+.at-sin-servicios { font-size: 12px; color: #95a5a6; font-style: italic; text-align: center; padding: 10px; }
+
+/* Plan de tratamiento */
+.at-opciones-plan { display: flex; gap: 16px; margin-bottom: 10px; }
+.at-radio-label { font-size: 13px; color: #2c3e50; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+/* Resumen cobro */
+.at-resumen-cobro {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.cobro-resumen-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #636e72;
+    padding: 4px 0;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+.cobro-resumen-item:last-child { border-bottom: none; }
+.cobro-resumen-item.saldo { font-weight: 600; color: #8b3a3a; margin-top: 4px; }
+
+/* Botones modales */
+.at-btn-principal {
+    padding: 8px 18px;
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.at-btn-principal:hover { background: #1f3870; }
+
+.at-btn-secundario {
+    padding: 8px 18px;
+    background: transparent;
+    color: #636e72;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.at-btn-secundario:hover { border-color: #636e72; }
+
+.at-btn-agregar {
+    padding: 5px 12px;
+    background: transparent;
+    color: #2a4d8f;
+    border: 0.5px solid #2a4d8f;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.at-btn-agregar:hover { background: #2a4d8f; color: white; }
+
+/* Notificación */
+.mensaje-sistema {
+    position: fixed;
+    top: 20px; right: -350px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transition: all 0.35s ease;
+    opacity: 0;
+    z-index: 99999;
+    min-width: 260px;
+}
+.mensaje-sistema.mostrar { right: 20px; opacity: 1; }
+.mensaje-sistema.exito { background: #2e6da4; }
+.mensaje-sistema.error { background: #8b3a3a; }
+/* Badges adicionales */
+.at-badge.enviado    { background: #eaf1f8; color: #1d5180; border-color: #2e6da4; }
+.at-badge.borrador-inf { background: #fff8e1; color: #7a5c00; border-color: #c8960a; }
+
+/* Botón borrador */
+.at-btn-borrador {
+    padding: 8px 18px;
+    background: transparent;
+    color: #c8960a;
+    border: 0.5px solid #c8960a;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.at-btn-borrador:hover { background: #fffbf0; }
+
+/* Aviso en modal confirmación */
+.at-aviso-envio {
+    background: #fff8e1;
+    border-left: 3px solid #c8960a;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: #7a5c00;
+    margin-top: 8px;
+}
+
+/* Formulario nuevo plan */
+.at-nuevo-plan-form {
+    background: #f8f9fa;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+}
+
+/* Nota precio */
+.at-nota {
+    font-size: 11px;
+    color: #95a5a6;
+    font-style: italic;
+    margin-top: 3px;
+}
+/* Plan contenedor */
+.at-plan-contenedor { margin-top: 10px; }
+
+.at-plan-bloque {
+    background: #f8f9fa;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+}
+
+.at-resumen-cuotas {
+    background: #e8f0fb;
+    border-left: 3px solid #2a4d8f;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2a4d8f;
+    margin-top: 8px;
+}
+
+.at-resumen-plan {
+    background: #f0f5ff;
+    border: 0.5px solid #2a4d8f;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .saldo-resumen { grid-template-columns: 1fr 1fr; }
+    .at-fila { grid-template-columns: 1fr; }
+    .at-modal { max-width: 95%; }
+}
+/* ── Vista estática del informe ── */
+.informe-vista { display: flex; flex-direction: column; gap: 0; }
+
+.informe-seccion {
+    padding: 14px 0;
+    border-bottom: 0.5px solid #f0f0f0;
+}
+.informe-seccion:last-of-type { border-bottom: none; }
+
+.informe-seccion-titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a4d8f;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.informe-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 10px;
+}
+
+.informe-etiqueta {
+    font-size: 11px;
+    font-weight: 500;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.informe-valor {
+    font-size: 13px;
+    color: #2c3e50;
+    line-height: 1.5;
+}
+.informe-valor.destacado {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2a4d8f;
+}
+
+.informe-fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.informe-plan-vista {
+    background: #f8f9fa;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+/* Tabla servicios en vista */
+.informe-tabla-servicios { display: flex; flex-direction: column; gap: 6px; }
+
+.informe-srv-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.informe-srv-nombre { flex: 1; color: #2c3e50; font-weight: 500; }
+.informe-srv-cant   { color: #7f8c8d; min-width: 30px; }
+.informe-srv-precio { color: #636e72; min-width: 70px; text-align: right; }
+.informe-srv-sub    { color: #2a4d8f; font-weight: 600; min-width: 70px; text-align: right; }
+
+.informe-srv-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: #e8f0fb;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a4d8f;
+    margin-top: 4px;
+}
+
+/* Badge estado en informe */
+.informe-estado-badge {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+}
+.informe-estado-badge.borrador {
+    background: #fff8e1;
+    color: #7a5c00;
+    border: 0.5px solid #c8960a;
+}
+.informe-estado-badge.enviado {
+    background: #eaf1f8;
+    color: #1d5180;
+    border: 0.5px solid #2e6da4;
+}
+/* ── Resaltado al llegar desde Mi Agenda ── */
+.cita-resaltada {
+    animation: resaltarCita 0.8s ease-in-out 3 !important;
+    border-color: #2a4d8f !important;
+    box-shadow: 0 0 0 3px rgba(42,77,143,0.15) !important;
+}
+
+@keyframes resaltarCita {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(42,77,143,0.15); }
+    50%       { box-shadow: 0 0 0 5px rgba(42,77,143,0.3); }
+}
+
+/* ── Plan desplegable ── */
+.plan-desplegable {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+    transition: box-shadow 0.2s;
+}
+.plan-desplegable.plan-abierto {
+    border-color: #2a4d8f;
+    box-shadow: 0 2px 8px rgba(42,77,143,0.08);
+}
+.plan-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.plan-cabecera-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.btn-toggle-plan {
+    background: none;
+    border: 0.5px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.6;
+}
+.btn-toggle-plan:hover { background: #eaf0fb; color: #2a4d8f; border-color: #2a4d8f; }
+
+.plan-detalles {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 0.5px solid #e8ecf0;
+}
+.plan-grid-detalle {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+}
+.plan-dato {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.plan-dato-label {
+    font-size: 10px;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.plan-dato-valor {
+    font-size: 12px;
+    font-weight: 500;
+    color: #2c3e50;
+}
+.plan-notas {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 0.5px solid #f0f0f0;
+}
+.plan-notas p {
+    font-size: 12px;
+    color: #5d6d7e;
+    margin: 3px 0 0;
+    font-style: italic;
+}
+
+/* ── Pendiente de cobro ── */
+.at-badge.pendiente-cobro {
+    background: #f4f6f7;
+    color: #5d6d7e;
+    border-color: #7f8c8d;
+    font-weight: 600;
+}
+
+.cita-at-item.por-cobrar {
+    border-left: 3px solid #7f8c8d;
+}

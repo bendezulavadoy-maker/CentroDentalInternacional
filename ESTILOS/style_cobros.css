@@ -1,0 +1,565 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+/* ── Layout principal ── */
+.cobros-contenedor {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    height: calc(100vh - 60px);
+    gap: 0;
+    background: #f4f6f7;
+}
+
+/* ── Buzón izquierdo ── */
+.cobros-buzon {
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cobros-buzon-header {
+    padding: 16px;
+    border-bottom: 1px solid #e8ecf0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.cobros-titulo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.cobros-contador {
+    background: #eaf1f8;
+    color: #2a4d8f;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 0.5px solid #c5d8f0;
+}
+
+.cobros-buzon-lista {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* ── Tarjeta paciente en buzón ── */
+.cobros-paciente-item {
+    padding: 10px 12px;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: white;
+}
+
+.cobros-paciente-item:hover {
+    border-color: #2a4d8f;
+    background: #f8fafd;
+}
+
+.cobros-paciente-item.activo {
+    border-color: #2a4d8f;
+    background: #eaf1f8;
+}
+
+.cobros-pac-nombre {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 2px;
+}
+
+.cobros-pac-meta {
+    font-size: 11px;
+    color: #7f8c8d;
+    display: flex;
+    gap: 8px;
+}
+
+.cobros-pac-badge {
+    font-size: 10px;
+    background: #f4f6f7;
+    color: #5d6d7e;
+    border: 0.5px solid #dde1e5;
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+
+/* ── Panel derecho ── */
+.cobros-detalle {
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.cobros-detalle-vacio {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #95a5a6;
+    font-size: 13px;
+}
+
+/* ── Header del detalle ── */
+.cobros-det-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.cobros-det-nombre {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 2px;
+}
+
+.cobros-det-sub {
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.cobros-btn-registrar {
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cobros-btn-registrar:hover { background: #1d3a6e; }
+.cobros-btn-registrar:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+/* ── Secciones de cobro ── */
+.cobros-seccion {
+    background: white;
+    border: 0.5px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+
+.cobros-sec-titulo {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2c3e50;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-bottom: 0.5px solid #e8ecf0;
+    margin: 0;
+}
+
+.cobros-sec-subtitulo {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5d6d7e;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 8px 14px 4px;
+    margin: 0;
+    border-top: 0.5px solid #f0f2f5;
+}
+
+/* ── Filas de items ── */
+.cobros-fila {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 0.5px solid #f4f6f7;
+    font-size: 12px;
+}
+
+.cobros-fila:last-child { border-bottom: none; }
+
+.cobros-fila.header-fila {
+    background: #f8f9fa;
+    font-size: 10px;
+    font-weight: 600;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 5px 14px;
+}
+
+.cobros-fila-nombre { color: #2c3e50; font-weight: 500; }
+.cobros-fila-monto  { color: #2c3e50; text-align: right; white-space: nowrap; }
+.cobros-fila-pagado { color: #5d6d7e; text-align: right; white-space: nowrap; }
+.cobros-fila-pendiente { color: #8b3a3a; font-weight: 500; text-align: right; white-space: nowrap; }
+.cobros-fila-pendiente.cero { color: #5d6d7e; font-weight: 400; }
+
+.cobros-fila-input {
+    text-align: right;
+}
+
+/* ── Input de monto ── */
+.cobros-monto-input {
+    width: 90px;
+    padding: 4px 8px;
+    border: 0.5px solid #dde1e5;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: right;
+    color: #2c3e50;
+    transition: border-color 0.15s;
+}
+
+.cobros-monto-input:focus {
+    outline: none;
+    border-color: #2a4d8f;
+    box-shadow: 0 0 0 2px rgba(42,77,143,0.08);
+}
+
+.cobros-monto-input:disabled {
+    background: #f4f6f7;
+    color: #95a5a6;
+    cursor: not-allowed;
+}
+
+/* ── Aparatología incluida (solo informativa) ── */
+.cobros-ap-incluida {
+    padding: 6px 14px 10px;
+}
+
+.cobros-ap-inc-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #7f8c8d;
+    padding: 2px 0;
+    font-style: italic;
+}
+
+/* ── Totales ── */
+.cobros-total-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-top: 1px solid #e8ecf0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.cobros-total-global {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #eaf1f8;
+    border: 0.5px solid #c5d8f0;
+    border-radius: 8px;
+    margin-bottom: 14px;
+}
+
+.cobros-total-global-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #2a4d8f;
+}
+
+.cobros-total-global-monto {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2a4d8f;
+}
+
+/* ── Sesiones desglose ── */
+.cobros-sesion-fila {
+    display: grid;
+    grid-template-columns: 60px 90px 80px 80px 80px 100px;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-bottom: 0.5px solid #f4f6f7;
+    font-size: 12px;
+}
+
+.cobros-sesion-fila:last-child { border-bottom: none; }
+
+.cobros-sesion-fila.header-fila {
+    background: #f8f9fa;
+    font-size: 10px;
+    font-weight: 600;
+    color: #95a5a6;
+    text-transform: uppercase;
+    padding: 5px 14px;
+}
+
+.cobros-sesion-num { font-weight: 600; color: #2a4d8f; }
+.cobros-sesion-pagado { color: #5d6d7e; text-align: right; }
+
+/* ── Saldos tab ── */
+.cobros-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 16px;
+}
+
+.cobros-tab {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #7f8c8d;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.cobros-tab:hover { color: #2c3e50; }
+.cobros-tab.activo { color: #2a4d8f; border-bottom-color: #2a4d8f; }
+
+/* ── Badge saldo ── */
+.cobros-badge-ok {
+    font-size: 10px;
+    background: #eaf1f8;
+    color: #2e6da4;
+    border: 0.5px solid #c5d8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+}
+
+/* ── Estados ── */
+.cobros-cargando {
+    text-align: center;
+    color: #95a5a6;
+    font-size: 12px;
+    padding: 20px;
+}
+
+.cobros-vacio {
+    text-align: center;
+    color: #95a5a6;
+    font-size: 12px;
+    padding: 14px;
+    font-style: italic;
+}
+
+/* ── Modal ── */
+.cobros-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cobros-modal {
+    background: white;
+    border-radius: 10px;
+    width: 480px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+.cobros-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+
+.cobros-modal-header h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.cobros-btn-cerrar {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #95a5a6;
+    cursor: pointer;
+    padding: 2px 6px;
+}
+
+.cobros-btn-cerrar:hover { color: #2c3e50; }
+
+.cobros-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+}
+
+.cobros-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 0.5px solid #e0e0e0;
+}
+
+.cobros-btn-sec {
+    background: white;
+    border: 0.5px solid #dde1e5;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: #5d6d7e;
+    cursor: pointer;
+}
+
+.cobros-btn-sec:hover { background: #f4f6f7; }
+
+.cobros-btn-pri {
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.cobros-btn-pri:hover { background: #1d3a6e; }
+
+.cobros-grupo {
+    margin-top: 12px;
+}
+
+.cobros-grupo label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: #5d6d7e;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.cobros-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 0.5px solid #dde1e5;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #2c3e50;
+}
+
+.cobros-input:focus {
+    outline: none;
+    border-color: #2a4d8f;
+}
+
+/* ── Resumen en modal ── */
+.cobros-resumen-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 0.5px solid #f4f6f7;
+    color: #2c3e50;
+}
+
+.cobros-resumen-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0 2px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2a4d8f;
+}
+
+/* ── Mensaje flash ── */
+.cobros-mensaje {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: white;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+
+.cobros-mensaje.mostrar { opacity: 1; transform: translateY(0); }
+.cobros-mensaje.exito { background: #2e6da4; }
+.cobros-mensaje.error { background: #8b3a3a; }
+
+/* ── Deudas anteriores ── */
+.cobros-sec-deuda {
+    border-left: 3px solid #8b3a3a;
+}
+.cobros-sec-deuda .cobros-sec-titulo {
+    color: #8b3a3a;
+    background: #f9f0f0;
+}
+.cobros-sec-nota {
+    font-size: 11px;
+    color: #8b3a3a;
+    padding: 4px 14px 6px;
+    margin: 0;
+    font-style: italic;
+    background: #fdf6f6;
+    border-bottom: 0.5px solid #f0dede;
+}
+.deuda-header {
+    background: #fdf6f6;
+}
+.cobros-resumen-deuda {
+    color: #8b3a3a;
+    font-style: italic;
+}
+/* Fila con 5 columnas para cobros */
+.cobros-fila {
+    grid-template-columns: 1fr auto auto auto auto;
+}
+
+/* ── Cita actual bloqueada ── */
+.cobros-nota-bloqueada {
+    color: #5d6d7e;
+    background: #f4f6f7;
+    border-bottom-color: #e0e0e0;
+    font-style: normal;
+}
+
+.cobros-monto-input:disabled {
+    background: #f4f6f7;
+    color: #b2bec3;
+    cursor: not-allowed;
+    border-color: #e8ecf0;
+}

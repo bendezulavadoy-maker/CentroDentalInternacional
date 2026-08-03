@@ -1,0 +1,616 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+/* ── Contenedor principal ── */
+.contenedor-historia-clinica {
+    padding: 20px;
+    background: #f4f6f8;
+    min-height: 100vh;
+}
+
+/* ── Encabezado ── */
+.encabezado-historia {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 14px 20px;
+    background: white;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+}
+
+.encabezado-historia h2 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.buscador-paciente {
+    position: relative;
+    flex: 1;
+    max-width: 460px;
+    margin: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f4f6f8;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.input-busqueda-paciente {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: #2c3e50;
+    outline: none;
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+}
+
+.resultados-busqueda {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 0.5px solid #ddd;
+    border-radius: 8px;
+    margin-top: 4px;
+    max-height: 280px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    z-index: 1000;
+}
+
+.resultado-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 0.5px solid #f0f0f0;
+    transition: background 0.15s;
+    font-size: 13px;
+}
+
+.resultado-item:last-child { border-bottom: none; }
+.resultado-item:hover { background: #f8f9fa; }
+.resultado-item strong { display: block; color: #2c3e50; margin-bottom: 2px; font-weight: 500; }
+.resultado-item small { color: #7f8c8d; font-size: 12px; }
+
+.btn-secundario {
+    padding: 7px 14px;
+    background: transparent;
+    color: #636e72;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.15s;
+}
+.btn-secundario:hover { border-color: #2a4d8f; color: #2a4d8f; }
+
+/* ── Tarjeta paciente ── */
+.seccion-info-paciente { margin-bottom: 14px; }
+
+.tarjeta-paciente {
+    display: flex;
+    gap: 24px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    align-items: flex-start;
+}
+
+/* ── Columna foto ── */
+.columna-foto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.contenedor-foto-paciente {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #2a4d8f;
+    background: #e8f0fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contenedor-foto-paciente img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-generar-pdf {
+    width: 100%;
+    padding: 7px 12px;
+    background: transparent;
+    color: #c0392b;
+    border: 0.5px solid #c0392b;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: 0.15s;
+}
+.btn-generar-pdf:hover { background: #c0392b; color: white; }
+.btn-generar-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-generar-pdf.cargando { opacity: 0.6; cursor: wait; pointer-events: none; }
+
+/* Mensaje cumpleaños */
+.contenedor-mensaje-cumpleanos { margin-top: 4px; text-align: center; width: 100%; }
+
+.mensaje-cumpleanos {
+    display: inline-block;
+    background: #e8f0fb;
+    color: #2a4d8f;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 0.5px solid #2a4d8f;
+    white-space: nowrap;
+}
+
+/* ── Columna datos ── */
+.columna-datos { flex: 1; }
+
+.nombre-paciente {
+    font-size: 20px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+
+.grid-datos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.dato-item { display: flex; flex-direction: column; gap: 2px; }
+
+.dato-label {
+    font-size: 11px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 500;
+}
+
+.dato-valor {
+    font-size: 13px;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* ── Apoderado ── */
+.info-apoderado-seccion {
+    background: #f8f9fa;
+    border-left: 3px solid #2a4d8f;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+}
+
+.info-apoderado-seccion h4 {
+    font-size: 11px;
+    font-weight: 500;
+    color: #2a4d8f;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+}
+
+.grid-datos-apoderado {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+/* ── Alergias ── */
+.info-alergias {
+    background: #fffbf0;
+    border-left: 3px solid #c8960a;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.info-alergias h4 {
+    font-size: 11px;
+    font-weight: 500;
+    color: #c8960a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 8px;
+}
+
+.lista-alergias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.alergia-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff8e1;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    color: #7a5c00;
+    border: 0.5px solid #c8960a;
+}
+
+.sin-datos {
+    color: #95a5a6;
+    font-style: italic;
+    font-size: 13px;
+    display: block;
+    padding: 4px 0;
+}
+
+.btn-accion-pequeno {
+    padding: 5px 12px;
+    background: transparent;
+    color: #2a4d8f;
+    border: 0.5px solid #2a4d8f;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+    white-space: nowrap;
+    align-self: flex-start;
+}
+.btn-accion-pequeno:hover { background: #2a4d8f; color: white; }
+
+/* ── Pestañas de módulos ── */
+.seccion-modulos {
+    background: white;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.pestanas-modulos {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+
+.pestana {
+    flex: 1;
+    padding: 13px 16px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    font-weight: 400;
+    color: #6c757d;
+    cursor: pointer;
+    transition: 0.15s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+}
+
+.pestana:hover { background: #f0f3f4; color: #495057; }
+
+.pestana.activa {
+    background: white;
+    color: #2a4d8f;
+    font-weight: 500;
+}
+
+.pestana.activa::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #2a4d8f;
+}
+
+.contenedor-modulo {
+    padding: 20px;
+    min-height: 250px;
+}
+
+.mensaje-seleccionar {
+    text-align: center;
+    color: #95a5a6;
+    padding: 40px;
+    font-size: 14px;
+}
+
+/* ── Sin paciente ── */
+.mensaje-sin-paciente {
+    background: white;
+    padding: 60px;
+    border-radius: 10px;
+    text-align: center;
+    border: 0.5px solid #e0e0e0;
+}
+
+.icono-mensaje {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+}
+
+.mensaje-sin-paciente p {
+    font-size: 16px;
+    color: #2c3e50;
+    margin: 8px 0;
+    font-weight: 500;
+}
+
+.texto-pequeno {
+    font-size: 13px !important;
+    color: #7f8c8d !important;
+    font-weight: 400 !important;
+}
+
+/* ── Modal alergias ── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.2s;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.mostrar {
+    display: flex !important;
+    opacity: 1;
+}
+
+.modal-contenido {
+    background: white;
+    width: 90%;
+    max-width: 560px;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transform: translateY(-20px);
+    transition: transform 0.2s;
+}
+
+.modal-overlay.mostrar .modal-contenido { transform: translateY(0); }
+
+.modal-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+
+.modal-encabezado h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.btn-cerrar-modal {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #7f8c8d;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: 0.15s;
+}
+.btn-cerrar-modal:hover { background: #f0f0f0; color: #e74c3c; }
+
+.modal-cuerpo {
+    padding: 20px;
+    max-height: 460px;
+    overflow-y: auto;
+}
+
+.contenedor-busqueda-medicamento { position: relative; margin-bottom: 16px; }
+
+.buscar-medicamento { display: flex; gap: 8px; }
+
+.input-medicamento {
+    flex: 1;
+    padding: 9px 12px;
+    border: 0.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: 0.15s;
+}
+.input-medicamento:focus { border-color: #2a4d8f; }
+
+.btn-agregar {
+    padding: 9px 16px;
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+    transition: 0.15s;
+}
+.btn-agregar:hover { background: #1f3870; }
+
+.resultados-medicamentos {
+    width: 100%;
+    background: white;
+    border: 0.5px solid #2a4d8f;
+    border-radius: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+.resultado-medicamento {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 0.5px solid #f0f0f0;
+    font-size: 13px;
+    transition: 0.15s;
+}
+.resultado-medicamento:last-child { border-bottom: none; }
+.resultado-medicamento:hover { background: #f8f9fa; }
+.resultado-medicamento.nuevo { background: #e9f7ef; color: #1e8449; font-weight: 500; }
+.resultado-medicamento.nuevo:hover { background: #d5f0e0; }
+
+.lista-alergias-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.alergia-item-modal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #fffbf0;
+    border: 0.5px solid #c8960a;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #7a5c00;
+    transition: 0.15s;
+}
+
+.btn-eliminar-alergia {
+    background: transparent;
+    color: #e74c3c;
+    border: 0.5px solid #e74c3c;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.btn-eliminar-alergia:hover { background: #e74c3c; color: white; }
+
+.modal-botones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 0.5px solid #e0e0e0;
+}
+
+.btn-guardar {
+    padding: 8px 18px;
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.btn-guardar:hover { background: #1f3870; }
+
+/* ── Animaciones ── */
+.contenido-historia { animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.oculto { display: none !important; }
+
+/* ── Notificación ── */
+.mensaje-sistema {
+    position: fixed;
+    top: 20px;
+    right: -350px;
+    padding: 14px 22px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transition: all 0.35s ease;
+    opacity: 0;
+    z-index: 9999;
+    min-width: 280px;
+}
+.mensaje-sistema.mostrar { right: 20px; opacity: 1; }
+.mensaje-sistema.exito { background: #27ae60; }
+.mensaje-sistema.error { background: #e74c3c; }
+.mensaje-sistema .icono { font-size: 18px; }
+
+/* ── Scrollbar ── */
+.resultados-medicamentos::-webkit-scrollbar,
+.lista-alergias-modal::-webkit-scrollbar { width: 6px; }
+.resultados-medicamentos::-webkit-scrollbar-track,
+.lista-alergias-modal::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 6px; }
+.resultados-medicamentos::-webkit-scrollbar-thumb,
+.lista-alergias-modal::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 6px; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .tarjeta-paciente { flex-direction: column; align-items: center; }
+    .grid-datos, .grid-datos-apoderado { grid-template-columns: 1fr 1fr; }
+    .pestanas-modulos { flex-wrap: wrap; }
+    .pestana { flex: 1 1 50%; }
+    .encabezado-historia { flex-direction: column; gap: 12px; }
+    .buscador-paciente { max-width: 100%; margin: 0; }
+}

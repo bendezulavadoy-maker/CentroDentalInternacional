@@ -1,0 +1,353 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+* { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+.contenedor-odontograma {
+    background: white;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    padding: 20px;
+    position: relative;
+}
+
+/* ── Encabezado ── */
+.odonto-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 0.5px solid #e0e0e0;
+}
+.odonto-titulo { font-size: 15px; font-weight: 500; color: #2c3e50; margin: 0; }
+.odonto-subtitulo { font-size: 11px; color: #7f8c8d; margin-top: 2px; }
+
+.btn-nueva-version {
+    padding: 7px 14px; background: #2a4d8f; color: white;
+    border: none; border-radius: 6px; font-size: 12px; font-weight: 500;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+}
+.btn-nueva-version:hover { background: #1f3870; }
+
+/* ── Lista de versiones ── */
+.lista-versiones { margin-bottom: 16px; }
+
+.version-seccion-label {
+    font-size: 10px; font-weight: 600; color: #95a5a6;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 10px 0 6px;
+}
+
+.version-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border: 0.5px solid #e0e0e0;
+    border-radius: 8px; margin-bottom: 6px; transition: 0.15s;
+}
+.version-item.vigente {
+    border-color: #2a4d8f;
+    background: #f0f5ff;
+}
+.version-item:hover { border-color: #2a4d8f; }
+
+.version-item-datos { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.version-num { font-size: 13px; font-weight: 500; color: #2c3e50; }
+.version-meta { font-size: 12px; color: #7f8c8d; }
+.version-hallazgos { font-size: 11px; color: #95a5a6; }
+.version-notas { font-size: 11px; color: #636e72; font-style: italic; }
+
+.estado-badge {
+    font-size: 10px; font-weight: 500; padding: 2px 8px;
+    border-radius: 10px; border: 0.5px solid;
+}
+.estado-badge.borrador { background: #fff8e1; color: #7a5c00; border-color: #c8960a; }
+.estado-badge.cerrado  { background: #f4f6f7; color: #616a6b; border-color: #95a5a6; }
+
+.btn-ver-version {
+    padding: 5px 12px; background: transparent; color: #2a4d8f;
+    border: 0.5px solid #2a4d8f; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: 0.15s; white-space: nowrap;
+}
+.btn-ver-version:hover { background: #2a4d8f; color: white; }
+
+.sin-versiones {
+    text-align: center; padding: 30px 20px;
+    color: #7f8c8d; font-size: 13px;
+}
+
+/* ── Panel odontograma ── */
+.panel-odontograma {
+    border-top: 0.5px solid #e0e0e0;
+    padding-top: 16px;
+    margin-top: 8px;
+}
+
+.version-info-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; background: #f8f9fa;
+    border-radius: 8px; border: 0.5px solid #e0e0e0;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+}
+.version-info-datos { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.version-label { font-size: 14px; font-weight: 500; color: #2c3e50; }
+.version-doctor { font-size: 12px; color: #636e72; }
+.version-fecha  { font-size: 12px; color: #95a5a6; }
+
+.version-acciones { display: flex; gap: 8px; }
+
+.btn-guardar-borrador {
+    padding: 6px 14px; background: transparent; color: #2a4d8f;
+    border: 0.5px solid #2a4d8f; border-radius: 6px; font-size: 12px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.btn-guardar-borrador:hover { background: #2a4d8f; color: white; }
+
+.btn-cerrar-version {
+    padding: 6px 14px; background: #c0392b; color: white;
+    border: none; border-radius: 6px; font-size: 12px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.btn-cerrar-version:hover { background: #a93226; }
+
+/* ── Barra herramientas ── */
+.barra-herramientas {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 10px 14px; background: #f8f9fa;
+    border: 0.5px solid #e0e0e0; border-radius: 8px;
+    margin-bottom: 14px; position: relative;
+}
+.herramientas-label { font-size: 11px; color: #7f8c8d; font-weight: 500; }
+.herramientas-grupo { display: flex; align-items: center; gap: 6px; }
+
+.hallazgo-chip {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 0.5px solid #ddd; background: white; color: #2c3e50;
+    transition: 0.15s; user-select: none;
+}
+.hallazgo-chip.azul { background: #e8f0fb; color: #2a4d8f; border-color: #2a4d8f; }
+.hallazgo-chip.rojo { background: #fdecea; color: #c0392b; border-color: #c0392b; }
+
+.menu-hallazgos {
+    position: absolute; top: 100%; left: 14px; z-index: 500;
+    background: white; border: 0.5px solid #ddd; border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 280px; overflow-y: auto; min-width: 220px;
+}
+.menu-hallazgo-opcion {
+    display: block; width: 100%; text-align: left;
+    padding: 8px 14px; border: none; background: transparent;
+    font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif;
+    border-bottom: 0.5px solid #f0f0f0; transition: 0.1s;
+}
+.menu-hallazgo-opcion:last-child { border-bottom: none; }
+.menu-hallazgo-opcion.azul:hover { background: #e8f0fb; color: #2a4d8f; }
+.menu-hallazgo-opcion.rojo:hover { background: #fdecea; color: #c0392b; }
+
+.selector-color { display: flex; gap: 4px; }
+.btn-color {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent;
+    cursor: pointer; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; transition: 0.15s;
+}
+.btn-color.azul { background: #e8f0fb; color: #2a4d8f; }
+.btn-color.rojo { background: #fdecea; color: #c0392b; }
+.btn-color.activo.azul { border-color: #2a4d8f; }
+.btn-color.activo.rojo { border-color: #c0392b; }
+
+.btn-borrar-hallazgo {
+    padding: 5px 12px; background: transparent; color: #636e72;
+    border: 0.5px solid #ddd; border-radius: 6px; font-size: 11px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+}
+.btn-borrar-hallazgo:hover { border-color: #e74c3c; color: #e74c3c; }
+
+/* ── SVG ── */
+.odonto-svg-contenedor {
+    overflow-x: auto; background: white;
+    border: 0.5px solid #e0e0e0; border-radius: 8px;
+    padding: 10px; margin-bottom: 12px;
+}
+.odonto-svg { width: 100%; min-width: 700px; }
+
+.svg-label-arco {
+    font-size: 9px; fill: #95a5a6;
+    font-family: 'Inter', sans-serif;
+}
+.svg-num-diente {
+    font-size: 9px; fill: #636e72; font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+.svg-anotacion-texto {
+    font-size: 8px; fill: #2a4d8f; font-weight: 600;
+    font-family: 'Inter', sans-serif; pointer-events: none;
+}
+
+.cara-diente {
+    stroke: #ccc;
+    stroke-width: 0.8;
+    cursor: pointer;
+}
+
+.cara-diente:hover {
+    stroke: #999;
+    stroke-width: 1.2;
+}
+.cara-pintada {
+    transition: none !important;
+}
+.rect-anotacion {
+    fill: white; stroke: #ddd; stroke-width: 0.5; cursor: pointer;
+}
+.rect-anotacion:hover { fill: #f8f9fa; }
+
+/* ── Leyenda ── */
+.odonto-leyenda {
+    display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.leyenda-item {
+    font-size: 11px; padding: 3px 10px; border-radius: 4px;
+    border-left: 3px solid;
+}
+.leyenda-item.azul { background: #e8f0fb; color: #2a4d8f; border-color: #2a4d8f; }
+.leyenda-item.rojo { background: #fdecea; color: #c0392b; border-color: #c0392b; }
+
+/* ── Especificaciones ── */
+.odonto-especificaciones { margin-bottom: 12px; }
+.espec-label {
+    display: block; font-size: 11px; font-weight: 500;
+    color: #636e72; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+}
+.espec-textarea {
+    width: 100%; padding: 10px 12px;
+    border: 0.5px solid #ddd; border-radius: 6px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    resize: vertical; color: #2c3e50; outline: none; transition: 0.15s;
+}
+.espec-textarea:focus { border-color: #2a4d8f; }
+.espec-textarea:disabled { background: #f8f9fa; color: #636e72; }
+
+/* ── Toggle temporales ── */
+.toggle-temporales { margin-bottom: 12px; }
+.toggle-label { font-size: 12px; color: #636e72; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+/* ── Menú contextual ── */
+.menu-contextual {
+    position: fixed; z-index: 9000;
+    background: white; border: 0.5px solid #ddd;
+    border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    min-width: 200px; overflow: hidden;
+}
+.menu-ctx-header {
+    padding: 8px 12px; background: #f8f9fa;
+    border-bottom: 0.5px solid #e0e0e0;
+    display: flex; gap: 8px; align-items: center;
+}
+.menu-ctx-diente { font-size: 12px; font-weight: 600; color: #2c3e50; }
+.menu-ctx-cara   { font-size: 11px; color: #7f8c8d; }
+
+.menu-ctx-opciones { max-height: 240px; overflow-y: auto; }
+
+.menu-ctx-opcion {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 12px; border: none; background: transparent;
+    font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif;
+    border-bottom: 0.5px solid #f5f5f5; transition: 0.1s;
+}
+.menu-ctx-opcion.azul:hover { background: #e8f0fb; color: #2a4d8f; }
+.menu-ctx-opcion.rojo:hover { background: #fdecea; color: #c0392b; }
+
+.menu-ctx-separador { height: 0.5px; background: #e0e0e0; }
+.menu-ctx-borrar {
+    display: block; width: 100%; text-align: left;
+    padding: 7px 12px; border: none; background: transparent;
+    font-size: 12px; color: #e74c3c; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: 0.1s;
+}
+.menu-ctx-borrar:hover { background: #fdecea; }
+
+/* ── Modal confirmación ── */
+.odonto-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.45); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.odonto-modal {
+    background: white; border-radius: 10px; padding: 24px;
+    max-width: 440px; width: 90%; border: 0.5px solid #e0e0e0;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+.odonto-modal h4 { font-size: 15px; font-weight: 500; color: #2c3e50; margin-bottom: 10px; }
+.odonto-modal p  { font-size: 13px; color: #636e72; line-height: 1.6; }
+.odonto-modal strong { color: #c0392b; }
+.odonto-modal-botones { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+.btn-cancelar-cierre {
+    padding: 7px 16px; background: transparent; color: #636e72;
+    border: 0.5px solid #ddd; border-radius: 6px; font-size: 13px;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+}
+.btn-confirmar-cierre {
+    padding: 7px 16px; background: #c0392b; color: white;
+    border: none; border-radius: 6px; font-size: 13px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+}
+.btn-confirmar-cierre:hover { background: #a93226; }
+/* Sin versiones — estado inicial */
+.sin-versiones-editable {
+    text-align: center;
+    padding: 40px 20px;
+    border: 1px dashed #c0d0e8;
+    border-radius: 10px;
+    background: #f7faff;
+}
+
+.sin-versiones-titulo {
+    font-size: 15px;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
+.sin-versiones-desc {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-bottom: 18px;
+}
+
+.btn-crear-inicial {
+    padding: 10px 24px;
+    background: #2a4d8f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.cara-hover {
+    fill: #c0d0e8 !important;
+    stroke: #2a4d8f !important;
+    stroke-width: 1.5 !important;
+}
+.btn-confirmar-nueva {
+    padding: 7px 16px; background: #2a4d8f; color: white;
+    border: none; border-radius: 6px; font-size: 13px;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: 0.15s;
+}
+.btn-confirmar-nueva:hover { background: #1f3870; }
+
+.btn-crear-inicial:hover { background: #1f3870; }
+/* ── Notificación ── */
+.mensaje-sistema {
+    position: fixed; top: 20px; right: -350px;
+    padding: 12px 20px; border-radius: 8px;
+    display: flex; align-items: center; gap: 10px;
+    color: white; font-size: 13px; font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transition: all 0.35s ease; opacity: 0; z-index: 9999; min-width: 260px;
+}
+.mensaje-sistema.mostrar { right: 20px; opacity: 1; }
+.mensaje-sistema.exito { background: #27ae60; }
+.mensaje-sistema.error { background: #e74c3c; }
+
+.cargando-odonto { text-align: center; color: #95a5a6; font-size: 13px; padding: 20px; }

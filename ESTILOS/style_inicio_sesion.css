@@ -1,0 +1,44 @@
+body {
+    font-family: Arial, sans-serif;
+    background-image: url("../IMAGENES/otros/fondo_inicio_sesion.png"); /* Ruta del fondo */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: flex;
+    justify-content: flex-start; /* ⬅️ Mueve el formulario a la izquierda */
+    align-items: center;
+    height: 100vh;
+    padding-left: 50px; /* Espacio desde el borde izquierdo */
+}
+
+.contenedor-login {
+    background: rgba(255, 255, 255, 0.9); /* Fondo blanco semi-transparente */
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    width: 350px;
+    text-align: center;
+    margin-left: 200px; /* 💡 Ajusta esta distancia */
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0077b6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+}
