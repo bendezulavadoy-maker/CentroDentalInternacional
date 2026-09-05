@@ -1,44 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 body {
-    font-family: Arial, sans-serif;
-    background-image: url("../IMAGENES/otros/fondo_inicio_sesion.png"); /* Ruta del fondo */
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background-image: url("../IMAGENES/otros/fondo_inicio_sesion.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 
     display: flex;
-    justify-content: flex-start; /* ⬅️ Mueve el formulario a la izquierda */
+    justify-content: flex-start;
     align-items: center;
     height: 100vh;
-    padding-left: 50px; /* Espacio desde el borde izquierdo */
+    margin: 0;
+    padding-left: 50px;
 }
 
 .contenedor-login {
-    background: rgba(255, 255, 255, 0.9); /* Fondo blanco semi-transparente */
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    width: 350px;
-    text-align: center;
-    margin-left: 200px; /* 💡 Ajusta esta distancia */
+    position: relative;
+    background: rgba(255, 255, 255, 0.97);
+    padding: 36px 34px 30px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(20, 40, 40, 0.08);
+    box-shadow: 0 24px 48px rgba(15, 45, 45, 0.18), 0 2px 6px rgba(15, 45, 45, 0.08);
+    width: 368px;
+    box-sizing: border-box;
+    margin-left: 200px;
+    overflow: hidden;
 }
 
-input {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0;
+/* Acento superior — toma los mismos tonos del fondo (verde-azulado a azul institucional) */
+.barra-acento {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4fb8a0 0%, #2a4d8f 100%);
 }
 
-button {
+/* ── Membrete institucional ── */
+.membrete-login {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 14px;
+}
+
+.membrete-marca {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2f3f;
+    letter-spacing: 0.6px;
+}
+
+.membrete-sub {
+    font-size: 11px;
+    color: #6c8580;
+    letter-spacing: 0.3px;
+}
+
+.divisor-login {
+    height: 1px;
+    background: linear-gradient(90deg, rgba(79,184,160,0.5), rgba(42,77,143,0.35), transparent);
+    margin-bottom: 18px;
+}
+
+.etiqueta-acceso {
+    margin: 0 0 20px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ── Formulario ── */
+.campo-form {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.campo-form label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #45505c;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.campo-form input[type="text"],
+.campo-form input[type="password"] {
     width: 100%;
-    padding: 10px;
-    background-color: #0077b6;
+    padding: 10px 12px;
+    border: 0.5px solid #ccd3d1;
+    border-radius: 4px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    background: #fafcfc;
+}
+.campo-form input[type="text"]:focus,
+.campo-form input[type="password"]:focus {
+    outline: none;
+    border-color: #2a4d8f;
+    background: white;
+}
+
+/* Código de usuario con prefijo fijo DENTINT */
+.grupo-usuario {
+    display: flex;
+    align-items: stretch;
+    border: 0.5px solid #ccd3d1;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    background: #fafcfc;
+}
+.grupo-usuario:focus-within { border-color: #2a4d8f; background: white; }
+
+.prefijo-usuario {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: #eef2f1;
+    color: #4f6360;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-right: 0.5px solid #ccd3d1;
+    white-space: nowrap;
+}
+
+.grupo-usuario input {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    flex: 1;
+    min-width: 0;
+}
+.grupo-usuario input:focus { outline: none; }
+
+/* ── Botón ── */
+button[type="submit"] {
+    width: 100%;
+    padding: 11px;
+    margin-top: 8px;
+    background: linear-gradient(90deg, #2a4d8f 0%, #23406f 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
     cursor: pointer;
+    transition: filter 0.15s;
 }
+button[type="submit"]:hover { filter: brightness(1.08); }
 
-.error {
-    color: red;
-    margin-top: 10px;
+/* ── Mensaje de error ── */
+.mensaje-error {
+    margin-top: 16px;
+    padding: 10px 12px;
+    background: #fdecea;
+    border: 0.5px solid #e0b0a8;
+    border-left: 3px solid #c0392b;
+    border-radius: 3px;
+    color: #a5322a;
+    font-size: 11.5px;
+    text-align: left;
 }

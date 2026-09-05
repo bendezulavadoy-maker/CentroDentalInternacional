@@ -56,7 +56,7 @@ foreach ($modulosVisibles as $clave => $info) {
 <!-- ══ HEADER ══ -->
 <header>
     <div class="header-marca">
-        <button class="btn-menu-mobile" id="btnMenuMobile" aria-label="Menú">
+        <button class="btn-menu-mobile" id="btnMenuMobile" aria-label="Mostrar/ocultar menú" title="Mostrar/ocultar menú">
             <i class="ti ti-menu-2"></i>
         </button>
         <div class="header-marca-icono">
@@ -68,9 +68,9 @@ foreach ($modulosVisibles as $clave => $info) {
         </div>
     </div>
 
-    <div class="header-centro">
+    <div class="header-centro" id="headerBreadcrumb">
         <i class="ti ti-chevron-right" style="font-size:14px;color:rgba(255,255,255,0.4);"></i>
-        <span id="header-modulo-actual" style="color:rgba(255,255,255,0.7);font-size:13px;">
+        <span class="crumb-item crumb-actual" id="header-modulo-actual">
             Inicio
         </span>
     </div>
@@ -157,32 +157,63 @@ foreach ($modulosVisibles as $clave => $info) {
 <script src="../SCRIPTS/script_panel_admin.js"></script>
 
 <script>
-// ── Sidebar mobile ────────────────────────────────────────────
+// ── Sidebar: mobile (overlay) + escritorio (colapsable) ────────
 const sidebar  = document.getElementById('sidebar');
 const overlay  = document.getElementById('sidebarOverlay');
 const btnMenu  = document.getElementById('btnMenuMobile');
 
+function esMobile() {
+    return window.innerWidth <= 900;
+}
+
 function abrirSidebar() {
-    sidebar.classList.add('abierto');
-    overlay.classList.add('activo');
+    if (esMobile()) {
+        sidebar.classList.add('abierto');
+        overlay.classList.add('activo');
+    } else {
+        document.body.classList.remove('sidebar-colapsado');
+    }
 }
 function cerrarSidebar() {
-    sidebar.classList.remove('abierto');
-    overlay.classList.remove('activo');
+    if (esMobile()) {
+        sidebar.classList.remove('abierto');
+        overlay.classList.remove('activo');
+    } else {
+        document.body.classList.add('sidebar-colapsado');
+    }
+}
+function sidebarEstaAbierto() {
+    return esMobile() ? sidebar.classList.contains('abierto') : !document.body.classList.contains('sidebar-colapsado');
 }
 
 btnMenu?.addEventListener('click', () => {
-    sidebar.classList.contains('abierto') ? cerrarSidebar() : abrirSidebar();
+    sidebarEstaAbierto() ? cerrarSidebar() : abrirSidebar();
 });
 overlay.addEventListener('click', cerrarSidebar);
 
-// ── Marcar item activo y actualizar breadcrumb ────────────────
+// ── Breadcrumb multinivel ───────────────────────────────────────
+// window.actualizarBreadcrumb(['Historias Clínicas', 'Juan Pérez']) construye:
+// › Historias Clínicas › Juan Pérez  (el último segmento resaltado)
+window.actualizarBreadcrumb = function(segmentos) {
+    const cont = document.getElementById('headerBreadcrumb');
+    if (!cont || !segmentos || !segmentos.length) return;
+    let html = '';
+    segmentos.forEach((seg, i) => {
+        html += '<i class="ti ti-chevron-right" style="font-size:14px;color:rgba(255,255,255,0.4);"></i>';
+        const esUltimo = i === segmentos.length - 1;
+        html += `<span class="crumb-item${esUltimo ? ' crumb-actual' : ''}">${seg}</span>`;
+    });
+    cont.innerHTML = html;
+};
+
+// ── Marcar item activo, actualizar breadcrumb y ocultar sidebar ──
 function marcarActivo(vista, label) {
     document.querySelectorAll('aside a[data-vista]').forEach(a => a.classList.remove('activo'));
     const link = document.querySelector(`aside a[data-vista="${vista}"]`);
     if (link) link.classList.add('activo');
-    const modLabel = document.getElementById('header-modulo-actual');
-    if (modLabel) modLabel.textContent = label || vista;
+    window.actualizarBreadcrumb([label || vista]);
+
+    // Al abrir cualquier módulo, el sidebar se oculta para dar más espacio
     cerrarSidebar();
 }
 

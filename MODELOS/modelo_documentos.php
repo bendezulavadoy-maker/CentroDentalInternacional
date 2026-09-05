@@ -387,6 +387,120 @@ class ModeloDocumentos {
     }
 
     /**
+     * Copiar un documento (duplica el archivo físico + el registro) a otra carpeta
+     */
+    public function copiarDocumento($idDocumento, $idCarpetaDestino, $idUsuario) {
+        try {
+            $original = $this->obtenerDocumento($idDocumento);
+            if (!$original) throw new Exception('Documento original no encontrado');
+
+            // Duplicar el archivo físico en disco
+            $rutaOriginal = '../' . $original['archivo'];
+            $extension = $original['extension'];
+            $nombreArchivo = uniqid() . '_' . time() . '.' . $extension;
+            $directorio = dirname($rutaOriginal) . '/';
+            $rutaNueva = $directorio . $nombreArchivo;
+
+            if (!file_exists($rutaOriginal) || !copy($rutaOriginal, $rutaNueva)) {
+                throw new Exception('No se pudo duplicar el archivo físico');
+            }
+
+            $rutaRelativaNueva = dirname($original['archivo']) . '/' . $nombreArchivo;
+
+            $this->conexion->beginTransaction();
+
+            $sql = "INSERT INTO documentos_paciente 
+                    (id_paciente, id_carpeta, titulo, archivo, tipo, 
+                     extension, tamano_archivo, descripcion, subido_por) 
+                    VALUES 
+                    (:id_paciente, :id_carpeta, :titulo, :archivo, :tipo,
+                     :extension, :tamano, :descripcion, :subido_por)";
+            
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->execute([
+                ':id_paciente' => $original['id_paciente'],
+                ':id_carpeta' => $idCarpetaDestino,
+                ':titulo' => $original['titulo'] . ' (copia)',
+                ':archivo' => $rutaRelativaNueva,
+                ':tipo' => $original['tipo'],
+                ':extension' => $original['extension'],
+                ':tamano' => $original['tamano_archivo'],
+                ':descripcion' => $original['descripcion'],
+                ':subido_por' => $idUsuario
+            ]);
+
+            $idNuevo = $this->conexion->lastInsertId();
+
+            $this->registrarHistorialDocumento($idNuevo, 'subir', $idUsuario, [
+                'titulo' => $original['titulo'] . ' (copia)',
+                'copiado_de' => $idDocumento
+            ]);
+
+            $this->conexion->commit();
+            return $idNuevo;
+        } catch (Exception $e) {
+            if ($this->conexion->inTransaction()) $this->conexion->rollBack();
+            error_log("❌ Error al copiar documento: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Copiar una carpeta completa (con subcarpetas y documentos) a otra ubicación
+     */
+    public function copiarCarpeta($idCarpeta, $idCarpetaDestinoPadre, $idPaciente, $idUsuario) {
+        try {
+            $original = $this->obtenerCarpeta($idCarpeta);
+            if (!$original) return false;
+
+            // 1. Crear la carpeta nueva (nunca marcada como del sistema)
+            $idCarpetaNueva = $this->crearCarpeta([
+                'nombre_carpeta' => $original['nombre_carpeta'] . ' (copia)',
+                'id_carpeta_padre' => $idCarpetaDestinoPadre,
+                'id_paciente' => $idPaciente,
+                'es_sistema' => 0,
+                'orden' => $original['orden'],
+                'icono' => $original['icono'],
+                'color' => $original['color'],
+                'creado_por' => $idUsuario
+            ]);
+            if (!$idCarpetaNueva) throw new Exception('No se pudo crear la carpeta destino');
+
+            // 2. Copiar los documentos de esta carpeta
+            $documentos = $this->obtenerDocumentosCarpeta($idCarpeta);
+            foreach ($documentos as $doc) {
+                $this->copiarDocumento($doc['id_documento'], $idCarpetaNueva, $idUsuario);
+            }
+
+            // 3. Copiar recursivamente las subcarpetas
+            $subcarpetas = $this->obtenerSubcarpetas($idCarpeta);
+            foreach ($subcarpetas as $sub) {
+                $this->copiarCarpeta($sub['id_carpeta'], $idCarpetaNueva, $idPaciente, $idUsuario);
+            }
+
+            return $idCarpetaNueva;
+        } catch (Exception $e) {
+            error_log("❌ Error al copiar carpeta: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtener un documento por su ID (todas las columnas)
+     */
+    public function obtenerDocumento($idDocumento) {
+        try {
+            $sql = "SELECT * FROM vista_documentos_completa WHERE id_documento = :id_documento";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->execute([':id_documento' => $idDocumento]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("❌ Error al obtener documento: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Editar información del documento
      */
     public function editarDocumento($idDocumento, $datos, $idUsuario) {

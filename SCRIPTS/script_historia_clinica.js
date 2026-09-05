@@ -1,4 +1,7 @@
 let pacienteActual = null; // 👈 MOVER ESTA DECLARACIÓN AQUÍ (FUERA DE LA FUNCIÓN)
+let historiaActual = null;
+let seccionesActuales = {};
+
 function iniciarModuloHistoriaClinica() {
     console.log('🏥 Iniciando módulo de Historia Clínica');
 
@@ -136,11 +139,18 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
                 console.log('✅ Datos recibidos:', data);
                 if (data.success) {
                     pacienteActual = data.paciente;
+                    historiaActual = data.historia;
                     console.log('👤 Paciente actual guardado:', pacienteActual);
                     mostrarInformacionPaciente(data.paciente);
                     cargarAlergias(idPaciente);
+                    renderizarChecklistHistoria(data.secciones, data.historia);
                     mensajeSinPaciente.style.display = 'none';
                     contenidoHistoria.style.display = 'block';
+
+                    // Actualizar breadcrumb del header general con el nombre del paciente
+                    if (typeof window.actualizarBreadcrumb === 'function' && document.querySelector('aside a[data-vista="historia_clinica"].activo')) {
+                        window.actualizarBreadcrumb(['Historias Clínicas', `${data.paciente.nombre} ${data.paciente.apellido}`]);
+                    }
 
                     // Activar pestaña inicial automáticamente
                     const pestanaTarget = document.querySelector(`.pestana[data-modulo="${pestanaInicial}"]`);
@@ -159,10 +169,22 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
                 mostrarMensajeSistema('❌ Error al cargar la historia clínica', 'error');
             });
     }
-
+    function mostrarInfoModificacion(idModal, datos) {
+        const cuerpo = document.querySelector(`#${idModal} .modal-cuerpo`);
+        if (!cuerpo) return;
+        let info = cuerpo.querySelector('.info-modificado');
+        if (!info) {
+            info = document.createElement('p');
+            info.className = 'info-modificado';
+            cuerpo.insertBefore(info, cuerpo.firstChild);
+        }
+        info.textContent = datos && datos.modificado_por_nombre
+            ? `Última modificación: ${datos.modificado_por_nombre}`
+            : '';
+    }
     function mostrarInformacionPaciente(paciente) {
         console.log('📝 Mostrando información del paciente:', paciente);
-        
+
         // Foto
         const rutaFoto = paciente.foto ? `../${paciente.foto}` : '../IMAGENES/perfiles_pacientes/default.png';
         document.getElementById('fotoPaciente').src = rutaFoto;
@@ -170,9 +192,9 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         // Datos básicos
         document.getElementById('nombrePaciente').textContent = `${paciente.nombre} ${paciente.apellido}`;
         document.getElementById('dniPaciente').textContent = paciente.dni || 'N/A';
-        document.getElementById('fechaNacimientoPaciente').textContent = paciente.fecha_nacimiento ? formatearFecha(paciente.fecha_nacimiento) : 'N/A';
-        document.getElementById('edadPaciente').textContent = paciente.fecha_nacimiento ? calcularEdad(paciente.fecha_nacimiento) : 'N/A';
-        document.getElementById('sexoPaciente').textContent = paciente.nombre_sexo || 'N/A';
+        const edad = paciente.fecha_nacimiento ? calcularEdad(paciente.fecha_nacimiento) : 'N/A';
+        const sexo = paciente.nombre_sexo || '';
+        document.getElementById('sexoEdadPaciente').textContent = sexo ? `${sexo}, ${edad}` : edad;
         document.getElementById('telefonoPaciente').textContent = paciente.telefono || 'N/A';
         document.getElementById('correoPaciente').textContent = paciente.correo || 'N/A';
 
@@ -265,24 +287,20 @@ function generarPDFHistoriaClinica() {
     }
 
     function mostrarAlergias(alergias) {
-        const listaAlergias = document.getElementById('listaAlergias');
-        
+        const btnAlergias = document.getElementById('btnGestionarAlergias');
+        if (!btnAlergias) return;
+
         if (alergias.length === 0) {
-            listaAlergias.innerHTML = '<span class="sin-datos">No se han registrado alergias</span>';
+            btnAlergias.textContent = 'Sin alergias';
+            btnAlergias.classList.remove('con-alergias');
+            btnAlergias.title = '';
             return;
         }
 
-        let html = '';
-        alergias.forEach(alergia => {
-            html += `
-                <div class="alergia-tag">
-                    <span class="icono-alergia">⚠️</span>
-                    <span>${alergia.medicamento}</span>
-                </div>
-            `;
-        });
-
-        listaAlergias.innerHTML = html;
+        const nombres = alergias.map(a => a.medicamento).join(', ');
+        btnAlergias.textContent = `⚠️ Ver alergias (${alergias.length})`;
+        btnAlergias.classList.add('con-alergias');
+        btnAlergias.title = nombres;
     }
 
     // Modal de alergias
@@ -773,6 +791,305 @@ function cargarModuloCitas() {
                 `;
             });
     }
+    // =====================================================
+    // 🩺 CHECKLIST DE HISTORIA CLÍNICA (sidebar) — abre modales
+    // =====================================================
+
+    const definicionSecciones = {
+        motivo_consulta:   { modal: 'modalMotivoConsulta' },
+        antecedentes_personales: { modal: 'modalAntecedentesPersonales' },
+        antecedentes_familiares: { modal: 'modalAntecedentesFamiliares' },
+        examen_general:     { modal: 'modalExamenGeneral' },
+        examen_extraoral:   { modal: 'modalExamenExtraoral' },
+        examen_intraoral:   { modal: 'modalExamenIntraoral' }
+    };
+
+    function renderizarChecklistHistoria(secciones, historia) {
+        seccionesActuales = secciones || {};
+        const motivoCompleto = !!(historia && historia.motivo_consulta && historia.motivo_consulta.trim() !== '');
+
+        Object.keys(definicionSecciones).forEach(clave => {
+            const item = document.querySelector(`.check-item-sidebar[data-seccion="${clave}"]`);
+            if (!item) return;
+            const icono = item.querySelector('.check-icono');
+            const completo = clave === 'motivo_consulta'
+                ? motivoCompleto
+                : !!(seccionesActuales[clave] && seccionesActuales[clave]._completo);
+
+            icono.textContent = completo ? '✓' : '–';
+            item.classList.toggle('completo', completo);
+        });
+    }
+
+    // Prellenar los campos del modal con lo que ya está guardado
+    function prellenarSeccion(seccion) {
+        if (seccion === 'motivo_consulta') {
+            document.getElementById('txtMotivoConsulta').value = (historiaActual && historiaActual.motivo_consulta) || '';
+        } else if (seccion === 'examen_general') {
+            const d = seccionesActuales.examen_general || {};
+            document.getElementById('inpTalla').value = d.talla_mts || '';
+            document.getElementById('inpPeso').value = d.peso_kg || '';
+            document.getElementById('inpTemperatura').value = d.temperatura || '';
+            document.getElementById('inpSaturacion').value = d.saturacion || '';
+            mostrarInfoModificacion('modalExamenGeneral', d);  
+        } else if (seccion === 'antecedentes_personales') {
+            const dOld = seccionesActuales.antecedentes || {};
+            document.getElementById('txtAntecedentesMedica').value = dOld.medica || '';
+            document.getElementById('txtAntecedentesOdontologicos').value = dOld.odontologicos || '';
+            const d = seccionesActuales.antecedentes_personales || {};
+            document.querySelectorAll('#modalAntecedentesPersonales input[type="radio"]').forEach(r => r.checked = false);
+            marcarRadio('fuma', d.fuma);
+            marcarRadio('alcohol', d.alcohol);
+            marcarRadio('sustancias_psicoactivas', d.sustancias_psicoactivas);
+            marcarRadio('medicamentos_estimulantes', d.medicamentos_estimulantes);
+            marcarRadio('bruxismo', d.bruxismo);
+            marcarRadio('respiracion_bucal', d.respiracion_bucal);
+            marcarRadio('embarazo', d.embarazo);
+            marcarRadio('lactancia', d.lactancia);
+            marcarRadio('trastornos_coagulacion', d.trastornos_coagulacion);
+            document.getElementById('inpFumaCantidad').value = d.fuma_cantidad || '';
+            document.getElementById('inpFumaFrecuencia').value = d.fuma_frecuencia || '';
+            document.getElementById('inpAlcoholCantidad').value = d.alcohol_cantidad || '';
+            document.getElementById('inpAlcoholFrecuencia').value = d.alcohol_frecuencia || '';
+            document.getElementById('inpSustanciasEspecifique').value = d.sustancias_especifique || '';
+            document.getElementById('inpSustanciasFrecuencia').value = d.sustancias_frecuencia || '';
+            document.getElementById('inpSustanciasUltimoConsumo').value = d.sustancias_ultimo_consumo || '';
+            document.getElementById('inpMedicamentosEspecifique').value = d.medicamentos_especifique || '';
+            document.getElementById('inpMedicamentosFrecuencia').value = d.medicamentos_frecuencia || '';
+            document.getElementById('inpMedicamentosUltimoConsumo').value = d.medicamentos_ultimo_consumo || '';
+            document.getElementById('txtHospitalizacionesPrevias').value = d.hospitalizaciones_previas || '';
+            document.getElementById('txtCirugias').value = d.cirugias || '';
+            document.getElementById('txtMedicamentosActuales').value = d.medicamentos_actuales || '';
+            document.getElementById('txtDiagnostico').value = d.diagnostico || '';
+            mostrarInfoModificacion('modalAntecedentesPersonales', d); 
+        } else if (seccion === 'antecedentes_familiares') {
+            const d = seccionesActuales.antecedentes_familiares || {};
+            document.getElementById('chkHipertensionArterial').checked = !!Number(d.hipertension_arterial);
+            document.getElementById('chkDiabetes').checked = !!Number(d.diabetes);
+            document.getElementById('chkEnfermedadCardiaca').checked = !!Number(d.enfermedad_cardiaca);
+            document.getElementById('chkAsma').checked = !!Number(d.asma);
+            document.getElementById('chkEpilepsia').checked = !!Number(d.epilepsia);
+            document.getElementById('chkHepatitis').checked = !!Number(d.hepatitis);
+            document.getElementById('chkVih').checked = !!Number(d.vih);
+            document.getElementById('chkTuberculosis').checked = !!Number(d.tuberculosis);
+            document.getElementById('chkEnfermedadRenal').checked = !!Number(d.enfermedad_renal);
+            document.getElementById('chkEnfermedadHepatica').checked = !!Number(d.enfermedad_hepatica);
+            document.getElementById('inpFamiliaresOtro').value = d.otros || '';
+            mostrarInfoModificacion('modalAntecedentesFamiliares', d);
+        } else if (seccion === 'examen_extraoral') {
+            const d = seccionesActuales.examen_extraoral || {};
+            document.querySelectorAll('#modalExamenExtraoral input[type="radio"]').forEach(r => r.checked = false);
+            marcarRadio('simetria', d.simetria);
+            marcarRadio('musculatura', d.musculatura);
+            marcarRadio('perfil_antero_posterior', d.perfil_antero_posterior);
+            marcarRadio('perfil_vertical', d.perfil_vertical);
+            marcarRadio('fonacion', d.fonacion);
+            marcarRadio('deglucion', d.deglucion);
+            marcarRadio('respiracion', d.respiracion);
+            marcarRadio('habitos', d.habitos);
+            document.getElementById('inpDeglucionTipo').value = d.deglucion_tipo || '';
+            mostrarInfoModificacion('modalExamenExtraoral', d); 
+        } else if (seccion === 'examen_intraoral') {
+            const d = seccionesActuales.examen_intraoral || {};
+            document.getElementById('txtLabios').value = d.labios || '';
+            document.getElementById('txtVestibulo').value = d.vestibulo || '';
+            document.getElementById('txtFrenillos').value = d.frenillos || '';
+            document.getElementById('txtPaladar').value = d.paladar || '';
+            document.getElementById('txtOrofaringe').value = d.orofaringe || '';
+            document.getElementById('txtLengua').value = d.lengua || '';
+            document.getElementById('txtPisoBoca').value = d.piso_boca || '';
+            mostrarInfoModificacion('modalExamenIntraoral', d);   
+        }
+    }
+
+    function marcarRadio(nombre, valor) {
+        if (!valor) return;
+        const radio = document.querySelector(`input[name="${nombre}"][value="${valor}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    function leerRadio(nombre) {
+        const radio = document.querySelector(`input[name="${nombre}"]:checked`);
+        return radio ? radio.value : '';
+    }
+
+    function abrirModalPorId(idModal) {
+        const modal = document.getElementById(idModal);
+        if (!modal) return;
+        modal.style.display = 'flex';
+        modal.style.justifyContent = 'center';
+        modal.style.alignItems = 'center';
+        setTimeout(() => modal.classList.add('mostrar'), 10);
+    }
+
+    function cerrarModalPorId(idModal) {
+        const modal = document.getElementById(idModal);
+        if (!modal) return;
+        modal.classList.remove('mostrar');
+        setTimeout(() => { modal.style.display = 'none'; }, 200);
+    }
+
+    document.querySelectorAll('[data-cerrar-modal]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            cerrarModalPorId(this.dataset.cerrarModal);
+        });
+    });
+
+    // Clic en cada ítem del checklist (Filiación no abre nada, ya está completa)
+    document.querySelectorAll('.check-item-sidebar:not(.no-clic)').forEach(item => {
+        item.addEventListener('click', function() {
+            if (!pacienteActual || !historiaActual) {
+                mostrarMensajeSistema('❌ Seleccione un paciente primero', 'error');
+                return;
+            }
+            const seccion = this.dataset.seccion;
+            const def = definicionSecciones[seccion];
+            if (!def) return;
+            prellenarSeccion(seccion);
+            abrirModalPorId(def.modal);
+        });
+    });
+
+    function guardarSeccionHistoria(accion, payload, claveSeccion) {
+        fetch('../CONTROLADORES/controlador_historia_clinica.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion, ...payload })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                mostrarMensajeSistema('✅ ' + data.mensaje, 'exito');
+                const def = definicionSecciones[claveSeccion];
+                if (def) cerrarModalPorId(def.modal);
+                refrescarChecklistHistoria();
+            } else {
+                mostrarMensajeSistema('❌ ' + data.mensaje, 'error');
+            }
+        })
+        .catch(err => {
+            console.error('❌ Error al guardar sección:', err);
+            mostrarMensajeSistema('❌ Error al guardar. Intente nuevamente', 'error');
+        });
+    }
+
+    function refrescarChecklistHistoria() {
+        if (!historiaActual) return;
+        fetch(`../CONTROLADORES/controlador_historia_clinica.php?accion=cargar_secciones&id_historia=${historiaActual.id_historia}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) renderizarChecklistHistoria(data.secciones, historiaActual);
+            })
+            .catch(err => console.error('❌ Error al refrescar checklist:', err));
+    }
+
+    document.getElementById('btnGuardarMotivoConsulta').addEventListener('click', function() {
+        const motivo = document.getElementById('txtMotivoConsulta').value.trim();
+        historiaActual.motivo_consulta = motivo;
+        guardarSeccionHistoria('guardar_motivo_consulta', {
+            id_historia: historiaActual.id_historia,
+            motivo_consulta: motivo
+        }, 'motivo_consulta');
+    });
+
+    document.getElementById('btnGuardarExamenGeneral').addEventListener('click', function() {
+        guardarSeccionHistoria('guardar_examen_general', {
+            id_historia: historiaActual.id_historia,
+            talla_mts: document.getElementById('inpTalla').value.trim(),
+            peso_kg: document.getElementById('inpPeso').value.trim(),
+            temperatura: document.getElementById('inpTemperatura').value.trim(),
+            saturacion: document.getElementById('inpSaturacion').value.trim()
+        }, 'examen_general');
+    });
+
+    document.getElementById('btnGuardarAntecedentesPersonales').addEventListener('click', function() {
+        guardarSeccionHistoria('guardar_antecedentes_personales', {
+            id_historia: historiaActual.id_historia,
+            medica: document.getElementById('txtAntecedentesMedica').value.trim(),
+            odontologicos: document.getElementById('txtAntecedentesOdontologicos').value.trim(),
+            fuma: leerRadio('fuma'),
+            fuma_cantidad: document.getElementById('inpFumaCantidad').value.trim(),
+            fuma_frecuencia: document.getElementById('inpFumaFrecuencia').value.trim(),
+            alcohol: leerRadio('alcohol'),
+            alcohol_cantidad: document.getElementById('inpAlcoholCantidad').value.trim(),
+            alcohol_frecuencia: document.getElementById('inpAlcoholFrecuencia').value.trim(),
+            sustancias_psicoactivas: leerRadio('sustancias_psicoactivas'),
+            sustancias_especifique: document.getElementById('inpSustanciasEspecifique').value.trim(),
+            sustancias_frecuencia: document.getElementById('inpSustanciasFrecuencia').value.trim(),
+            sustancias_ultimo_consumo: document.getElementById('inpSustanciasUltimoConsumo').value.trim(),
+            medicamentos_estimulantes: leerRadio('medicamentos_estimulantes'),
+            medicamentos_especifique: document.getElementById('inpMedicamentosEspecifique').value.trim(),
+            medicamentos_frecuencia: document.getElementById('inpMedicamentosFrecuencia').value.trim(),
+            medicamentos_ultimo_consumo: document.getElementById('inpMedicamentosUltimoConsumo').value.trim(),
+            bruxismo: leerRadio('bruxismo'),
+            respiracion_bucal: leerRadio('respiracion_bucal'),
+            embarazo: leerRadio('embarazo'),
+            lactancia: leerRadio('lactancia'),
+            trastornos_coagulacion: leerRadio('trastornos_coagulacion'),
+            hospitalizaciones_previas: document.getElementById('txtHospitalizacionesPrevias').value.trim(),
+            cirugias: document.getElementById('txtCirugias').value.trim(),
+            medicamentos_actuales: document.getElementById('txtMedicamentosActuales').value.trim(),
+            diagnostico: document.getElementById('txtDiagnostico').value.trim()
+        }, 'antecedentes_personales');
+    });
+
+    document.getElementById('btnGuardarAntecedentesFamiliares').addEventListener('click', function() {
+        guardarSeccionHistoria('guardar_antecedentes_familiares', {
+            id_historia: historiaActual.id_historia,
+            hipertension_arterial: document.getElementById('chkHipertensionArterial').checked ? 1 : 0,
+            diabetes: document.getElementById('chkDiabetes').checked ? 1 : 0,
+            enfermedad_cardiaca: document.getElementById('chkEnfermedadCardiaca').checked ? 1 : 0,
+            asma: document.getElementById('chkAsma').checked ? 1 : 0,
+            epilepsia: document.getElementById('chkEpilepsia').checked ? 1 : 0,
+            hepatitis: document.getElementById('chkHepatitis').checked ? 1 : 0,
+            vih: document.getElementById('chkVih').checked ? 1 : 0,
+            tuberculosis: document.getElementById('chkTuberculosis').checked ? 1 : 0,
+            enfermedad_renal: document.getElementById('chkEnfermedadRenal').checked ? 1 : 0,
+            enfermedad_hepatica: document.getElementById('chkEnfermedadHepatica').checked ? 1 : 0,
+            otros: document.getElementById('inpFamiliaresOtro').value.trim()
+        }, 'antecedentes_familiares');
+    });
+
+    document.getElementById('btnGuardarExamenExtraoral').addEventListener('click', function() {
+        guardarSeccionHistoria('guardar_examen_extraoral', {
+            id_historia: historiaActual.id_historia,
+            simetria: leerRadio('simetria'),
+            musculatura: leerRadio('musculatura'),
+            perfil_antero_posterior: leerRadio('perfil_antero_posterior'),
+            perfil_vertical: leerRadio('perfil_vertical'),
+            fonacion: leerRadio('fonacion'),
+            deglucion: leerRadio('deglucion'),
+            deglucion_tipo: document.getElementById('inpDeglucionTipo').value.trim(),
+            respiracion: leerRadio('respiracion'),
+            habitos: leerRadio('habitos')
+        }, 'examen_extraoral');
+    });
+
+    document.getElementById('btnGuardarExamenIntraoral').addEventListener('click', function() {
+        guardarSeccionHistoria('guardar_examen_intraoral', {
+            id_historia: historiaActual.id_historia,
+            labios: document.getElementById('txtLabios').value.trim(),
+            vestibulo: document.getElementById('txtVestibulo').value.trim(),
+            frenillos: document.getElementById('txtFrenillos').value.trim(),
+            paladar: document.getElementById('txtPaladar').value.trim(),
+            orofaringe: document.getElementById('txtOrofaringe').value.trim(),
+            lengua: document.getElementById('txtLengua').value.trim(),
+            piso_boca: document.getElementById('txtPisoBoca').value.trim()
+        }, 'examen_intraoral');
+    });
+
+    // =====================================================
+    // ↔️ COLAPSAR/EXPANDIR EL SIDEBAR DEL PACIENTE (más espacio)
+    // =====================================================
+    const btnToggleSidebarPaciente = document.getElementById('btnToggleSidebarPaciente');
+    const sidebarPaciente = document.getElementById('sidebarPaciente');
+    if (btnToggleSidebarPaciente && sidebarPaciente) {
+        btnToggleSidebarPaciente.addEventListener('click', function() {
+            const colapsado = sidebarPaciente.classList.toggle('colapsado');
+            btnToggleSidebarPaciente.querySelector('.icono-toggle').textContent = colapsado ? '›' : '‹';
+        });
+    }
+
     // =====================================================
     // 🔙 VOLVER A MÓDULO DE PACIENTES
     // =====================================================

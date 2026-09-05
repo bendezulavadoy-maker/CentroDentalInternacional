@@ -7,15 +7,16 @@ console.log('📁 Iniciando módulo de documentos');
 // =====================================================
 // 🔹 VARIABLES GLOBALES
 // =====================================================
-let carpetaActual = null;
-let rutaActual = [];
-let estructuraCarpetas = [];
-let documentosActuales = [];
+var carpetaActual = null;
+var rutaActual = [];
+var estructuraCarpetas = [];
+var documentosActuales = [];
+var portapapeles = null; // { tipo: 'carpeta'|'documento', id, nombre, accion: 'copiar'|'cortar' }
 
 // =====================================================
 // 🔹 ELEMENTOS DEL DOM
 // =====================================================
-const elementos = {
+var elementos = {
     // Estadísticas
     totalCarpetas: document.getElementById('totalCarpetas'),
     totalDocumentos: document.getElementById('totalDocumentos'),
@@ -32,15 +33,13 @@ const elementos = {
     // Botones principales
     btnNuevaCarpeta: document.getElementById('btnNuevaCarpeta'),
     btnSubirDocumento: document.getElementById('btnSubirDocumento'),
+    btnPegar: document.getElementById('btnPegar'),
     
     // Modal Nueva Carpeta
     modalNuevaCarpeta: document.getElementById('modalNuevaCarpeta'),
     formNuevaCarpeta: document.getElementById('formNuevaCarpeta'),
     nombreCarpeta: document.getElementById('nombreCarpeta'),
-    iconoCarpeta: document.getElementById('iconoCarpeta'),
     colorCarpeta: document.getElementById('colorCarpeta'),
-    previewIcono: document.getElementById('previewIcono'),
-    previewNombre: document.getElementById('previewNombre'),
     btnCerrarModalCarpeta: document.getElementById('btnCerrarModalCarpeta'),
     btnCancelarCarpeta: document.getElementById('btnCancelarCarpeta'),
     btnGuardarCarpeta: document.getElementById('btnGuardarCarpeta'),
@@ -67,10 +66,7 @@ const elementos = {
     modalEditarCarpeta: document.getElementById('modalEditarCarpeta'),
     editarIdCarpeta: document.getElementById('editarIdCarpeta'),
     editarNombreCarpeta: document.getElementById('editarNombreCarpeta'),
-    editarIconoCarpeta: document.getElementById('editarIconoCarpeta'),
     editarColorCarpeta: document.getElementById('editarColorCarpeta'),
-    previewEditarIcono: document.getElementById('previewEditarIcono'),
-    previewEditarNombre: document.getElementById('previewEditarNombre'),
     btnCerrarModalEditarCarpeta: document.getElementById('btnCerrarModalEditarCarpeta'),
     btnCancelarEditarCarpeta: document.getElementById('btnCancelarEditarCarpeta'),
     btnGuardarEditarCarpeta: document.getElementById('btnGuardarEditarCarpeta'),
@@ -82,7 +78,15 @@ const elementos = {
     editarDescripcionDocumento: document.getElementById('editarDescripcionDocumento'),
     btnCerrarModalEditarDocumento: document.getElementById('btnCerrarModalEditarDocumento'),
     btnCancelarEditarDocumento: document.getElementById('btnCancelarEditarDocumento'),
-    btnGuardarEditarDocumento: document.getElementById('btnGuardarEditarDocumento')
+    btnGuardarEditarDocumento: document.getElementById('btnGuardarEditarDocumento'),
+
+    // Modal Vista Previa
+    modalPreviewDocumento: document.getElementById('modalPreviewDocumento'),
+    tituloPreviewDocumento: document.getElementById('tituloPreviewDocumento'),
+    contenedorPreview: document.getElementById('contenedorPreview'),
+    btnCerrarModalPreview: document.getElementById('btnCerrarModalPreview'),
+    btnCerrarPreview: document.getElementById('btnCerrarPreview'),
+    btnDescargarDesdePreview: document.getElementById('btnDescargarDesdePreview')
 };
 
 // =====================================================
@@ -99,14 +103,12 @@ function inicializarModuloDocumentos() {
     // Eventos de botones principales
     elementos.btnNuevaCarpeta.addEventListener('click', abrirModalNuevaCarpeta);
     elementos.btnSubirDocumento.addEventListener('click', abrirModalSubirDocumento);
+    elementos.btnPegar.addEventListener('click', pegarElemento);
     
     // Eventos Modal Nueva Carpeta
     elementos.btnCerrarModalCarpeta.addEventListener('click', cerrarModalNuevaCarpeta);
     elementos.btnCancelarCarpeta.addEventListener('click', cerrarModalNuevaCarpeta);
     elementos.btnGuardarCarpeta.addEventListener('click', guardarNuevaCarpeta);
-    elementos.nombreCarpeta.addEventListener('input', actualizarPreviewCarpeta);
-    elementos.iconoCarpeta.addEventListener('change', actualizarPreviewCarpeta);
-    elementos.colorCarpeta.addEventListener('input', actualizarPreviewCarpeta);
     
     // Eventos Modal Subir Documento
     elementos.btnCerrarModalDocumento.addEventListener('click', cerrarModalSubirDocumento);
@@ -126,18 +128,20 @@ function inicializarModuloDocumentos() {
     elementos.btnCerrarModalEditarCarpeta.addEventListener('click', cerrarModalEditarCarpeta);
     elementos.btnCancelarEditarCarpeta.addEventListener('click', cerrarModalEditarCarpeta);
     elementos.btnGuardarEditarCarpeta.addEventListener('click', guardarEdicionCarpeta);
-    elementos.editarNombreCarpeta.addEventListener('input', actualizarPreviewEditarCarpeta);
-    elementos.editarIconoCarpeta.addEventListener('change', actualizarPreviewEditarCarpeta);
-    elementos.editarColorCarpeta.addEventListener('input', actualizarPreviewEditarCarpeta);
     
     // Eventos Modal Editar Documento
     elementos.btnCerrarModalEditarDocumento.addEventListener('click', cerrarModalEditarDocumento);
     elementos.btnCancelarEditarDocumento.addEventListener('click', cerrarModalEditarDocumento);
     elementos.btnGuardarEditarDocumento.addEventListener('click', guardarEdicionDocumento);
+
+    // Eventos Modal Vista Previa
+    elementos.btnCerrarModalPreview.addEventListener('click', cerrarModalPreview);
+    elementos.btnCerrarPreview.addEventListener('click', cerrarModalPreview);
     
     // Cargar datos iniciales
     cargarEstructuraCarpetas();
     cargarEstadisticas();
+    actualizarBotonPegar();
 }
 
 // =====================================================
@@ -194,7 +198,7 @@ function renderizarArbolCarpetas(carpetas, contenedor = elementos.arbolCarpetas,
         const itemRaiz = document.createElement('div');
         itemRaiz.className = 'item-arbol nivel-0 activo';
         itemRaiz.innerHTML = `
-            <span class="icono-carpeta">🏠</span>
+            <span class="icono-carpeta"><i class="ti ti-home" style="color:#2a4d8f"></i></span>
             <span class="nombre-carpeta">Inicio</span>
         `;
         itemRaiz.addEventListener('click', (e) => {
@@ -220,7 +224,7 @@ function renderizarArbolCarpetas(carpetas, contenedor = elementos.arbolCarpetas,
         
         item.innerHTML = `
             ${tieneSubcarpetas ? '<span class="toggle-subcarpetas">▶</span>' : '<span class="espaciador"></span>'}
-            <span class="icono-carpeta" style="color: ${carpeta.color}">${carpeta.icono}</span>
+            <span class="icono-carpeta"><i class="ti ti-folder" style="color:${carpeta.color || '#2a4d8f'}"></i></span>
             <span class="nombre-carpeta">${carpeta.nombre_carpeta}</span>
             <span class="contador-items">${carpeta.num_documentos || 0}</span>
         `;
@@ -289,7 +293,12 @@ function cargarContenidoRaiz() {
     renderizarCarpetas(carpetasRaiz);
     
     // No mostrar documentos en la raíz
-    elementos.listaDocumentos.innerHTML = '<div class="mensaje-vacio">Selecciona una carpeta para ver sus documentos</div>';
+    elementos.listaDocumentos.innerHTML = `
+        <div class="mensaje-vacio-ilustrado">
+            <span class="icono-vacio"><i class="ti ti-folder-open"></i></span>
+            <p>Selecciona una carpeta para ver sus documentos</p>
+            <span class="texto-secundario-vacio">Los documentos que subas aparecerán aquí</span>
+        </div>`;
 }
 
 function cargarContenidoCarpeta(carpeta) {
@@ -316,7 +325,7 @@ function actualizarBreadcrumb() {
     // Inicio
     const btnInicio = document.createElement('button');
     btnInicio.className = 'breadcrumb-item';
-    btnInicio.innerHTML = '<span>🏠</span> Inicio';
+    btnInicio.innerHTML = '<i class="ti ti-home"></i> Inicio';
     btnInicio.addEventListener('click', () => navegarACarpeta(null));
     breadcrumb.appendChild(btnInicio);
     
@@ -329,7 +338,7 @@ function actualizarBreadcrumb() {
         
         const btnCarpeta = document.createElement('button');
         btnCarpeta.className = 'breadcrumb-item activo';
-        btnCarpeta.innerHTML = `<span>${carpetaActual.icono}</span> ${carpetaActual.nombre_carpeta}`;
+        btnCarpeta.textContent = carpetaActual.nombre_carpeta;
         breadcrumb.appendChild(btnCarpeta);
     } else {
         btnInicio.classList.add('activo');
@@ -348,22 +357,18 @@ function renderizarCarpetas(carpetas) {
     let html = '';
     carpetas.forEach(carpeta => {
         html += `
-            <div class="tarjeta-carpeta" data-id="${carpeta.id_carpeta}" style="border-color: ${carpeta.color}">
+            <div class="tarjeta-carpeta" data-id="${carpeta.id_carpeta}">
                 <div class="carpeta-header">
-                    <span class="carpeta-icono" style="color: ${carpeta.color}">${carpeta.icono}</span>
+                    <span class="carpeta-icono"><i class="ti ti-folder" style="color:${carpeta.color || '#2a4d8f'}"></i></span>
                     <div class="carpeta-menu">
                         <button class="btn-menu-carpeta" data-id="${carpeta.id_carpeta}">⋮</button>
                         <div class="menu-opciones" style="display: none;">
-                            <button class="opcion-menu" onclick="abrirCarpeta(${carpeta.id_carpeta})">
-                                <span>📂</span> Abrir
-                            </button>
+                            <button class="opcion-menu" onclick="abrirCarpeta(${carpeta.id_carpeta})">Abrir</button>
+                            <button class="opcion-menu" onclick="copiarElemento('carpeta', ${carpeta.id_carpeta}, '${(carpeta.nombre_carpeta || '').replace(/'/g, "\\'")}')">Copiar</button>
                             ${!carpeta.es_sistema ? `
-                                <button class="opcion-menu" onclick="editarCarpeta(${carpeta.id_carpeta})">
-                                    <span>✏️</span> Editar
-                                </button>
-                                <button class="opcion-menu opcion-peligro" onclick="eliminarCarpeta(${carpeta.id_carpeta})">
-                                    <span>🗑️</span> Eliminar
-                                </button>
+                                <button class="opcion-menu" onclick="cortarElemento('carpeta', ${carpeta.id_carpeta}, '${(carpeta.nombre_carpeta || '').replace(/'/g, "\\'")}')">Cortar</button>
+                                <button class="opcion-menu" onclick="editarCarpeta(${carpeta.id_carpeta})">Editar</button>
+                                <button class="opcion-menu opcion-peligro" onclick="eliminarCarpeta(${carpeta.id_carpeta})">Eliminar</button>
                             ` : ''}
                         </div>
                     </div>
@@ -371,13 +376,13 @@ function renderizarCarpetas(carpetas) {
                 <div class="carpeta-body" onclick="navegarACarpeta(${JSON.stringify(carpeta).replace(/"/g, '&quot;')})">
                     <h4 class="carpeta-nombre">${carpeta.nombre_carpeta}</h4>
                     <div class="carpeta-stats">
-                        <span class="stat">📁 ${carpeta.num_subcarpetas || 0} carpetas</span>
-                        <span class="stat">📄 ${carpeta.num_documentos || 0} archivos</span>
+                        <span class="stat">${carpeta.num_subcarpetas || 0} carpetas</span>
+                        <span class="stat">${carpeta.num_documentos || 0} archivos</span>
                     </div>
                 </div>
                 <div class="carpeta-footer">
                     <span class="carpeta-creador" title="Creado por ${carpeta.creado_por_nombre}">
-                        👤 ${carpeta.creado_por_nombre || 'Sistema'}
+                        ${carpeta.creado_por_nombre || 'Sistema'}
                     </span>
                 </div>
             </div>
@@ -448,38 +453,49 @@ function renderizarDocumentos(documentos) {
     
     let html = '';
     documentos.forEach(doc => {
-        const icono = obtenerIconoDocumento(doc.extension);
+        const extension = (doc.extension || '').toUpperCase();
         const fecha = formatearFecha(doc.fecha_subida);
         const tamano = formatearTamano(doc.tamano_archivo);
+        const tituloEscapado = (doc.titulo || '').replace(/'/g, "\\'");
         
         html += `
             <div class="item-documento" data-id="${doc.id_documento}">
-                <div class="documento-icono">${icono}</div>
+                <div class="documento-icono">${extension || 'ARCH'}</div>
                 <div class="documento-info">
                     <h4 class="documento-titulo">${doc.titulo}</h4>
                     <p class="documento-descripcion">${doc.descripcion || 'Sin descripción'}</p>
                     <div class="documento-meta">
-                        <span>📅 ${fecha}</span>
-                        <span>💾 ${tamano}</span>
-                        <span>👤 ${doc.subido_por_nombre}</span>
+                        <span>${fecha}</span>
+                        <span>${tamano}</span>
+                        <span>${doc.subido_por_nombre}</span>
                     </div>
                 </div>
                 <div class="documento-acciones">
-                    <button class="btn-accion-doc" onclick="descargarDocumento(${doc.id_documento}, '${doc.archivo}')" title="Descargar">
-                        ⬇️
-                    </button>
-                    <button class="btn-accion-doc" onclick="editarDocumento(${doc.id_documento})" title="Editar">
-                        ✏️
-                    </button>
-                    <button class="btn-accion-doc btn-peligro" onclick="eliminarDocumento(${doc.id_documento})" title="Eliminar">
-                        🗑️
-                    </button>
+                    <button class="btn-accion-doc" onclick="previsualizarDocumento(${doc.id_documento}, '${doc.archivo}', '${doc.extension}', '${tituloEscapado}')" title="Vista previa">Ver</button>
+                    <div class="carpeta-menu">
+                        <button class="btn-menu-carpeta btn-menu-documento" data-id="${doc.id_documento}">⋮</button>
+                        <div class="menu-opciones" style="display: none;">
+                            <button class="opcion-menu" onclick="descargarDocumento(${doc.id_documento}, '${doc.archivo}')">Descargar</button>
+                            <button class="opcion-menu" onclick="copiarElemento('documento', ${doc.id_documento}, '${tituloEscapado}')">Copiar</button>
+                            <button class="opcion-menu" onclick="cortarElemento('documento', ${doc.id_documento}, '${tituloEscapado}')">Cortar</button>
+                            <button class="opcion-menu" onclick="editarDocumento(${doc.id_documento})">Editar</button>
+                            <button class="opcion-menu opcion-peligro" onclick="eliminarDocumento(${doc.id_documento})">Eliminar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
     });
     
     elementos.listaDocumentos.innerHTML = html;
+
+    // Eventos de menús de documentos
+    document.querySelectorAll('.btn-menu-documento').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenuCarpeta(e.target);
+        });
+    });
 }
 
 // =====================================================
@@ -489,21 +505,12 @@ function abrirModalNuevaCarpeta() {
     elementos.modalNuevaCarpeta.style.display = 'flex';
     setTimeout(() => elementos.modalNuevaCarpeta.classList.add('mostrar'), 10);
     elementos.nombreCarpeta.value = '';
-    elementos.iconoCarpeta.value = '📁';
-    elementos.colorCarpeta.value = '#3498db';
-    actualizarPreviewCarpeta();
     elementos.nombreCarpeta.focus();
 }
 
 function cerrarModalNuevaCarpeta() {
     elementos.modalNuevaCarpeta.classList.remove('mostrar');
     setTimeout(() => elementos.modalNuevaCarpeta.style.display = 'none', 300);
-}
-
-function actualizarPreviewCarpeta() {
-    elementos.previewIcono.textContent = elementos.iconoCarpeta.value;
-    elementos.previewIcono.style.color = elementos.colorCarpeta.value;
-    elementos.previewNombre.textContent = elementos.nombreCarpeta.value || 'Nueva Carpeta';
 }
 
 function guardarNuevaCarpeta() {
@@ -519,7 +526,6 @@ function guardarNuevaCarpeta() {
         nombre_carpeta: nombre,
         id_paciente: ID_PACIENTE_ACTUAL,
         id_carpeta_padre: carpetaActual ? carpetaActual.id_carpeta : null,
-        icono: elementos.iconoCarpeta.value,
         color: elementos.colorCarpeta.value
     };
     
@@ -559,9 +565,7 @@ function editarCarpeta(idCarpeta) {
                 const carpeta = data.carpeta;
                 elementos.editarIdCarpeta.value = carpeta.id_carpeta;
                 elementos.editarNombreCarpeta.value = carpeta.nombre_carpeta;
-                elementos.editarIconoCarpeta.value = carpeta.icono;
-                elementos.editarColorCarpeta.value = carpeta.color;
-                actualizarPreviewEditarCarpeta();
+                elementos.editarColorCarpeta.value = carpeta.color || '#5a6a89';
                 
                 elementos.modalEditarCarpeta.style.display = 'flex';
                 setTimeout(() => elementos.modalEditarCarpeta.classList.add('mostrar'), 10);
@@ -575,18 +579,11 @@ function cerrarModalEditarCarpeta() {
     setTimeout(() => elementos.modalEditarCarpeta.style.display = 'none', 300);
 }
 
-function actualizarPreviewEditarCarpeta() {
-    elementos.previewEditarIcono.textContent = elementos.editarIconoCarpeta.value;
-    elementos.previewEditarIcono.style.color = elementos.editarColorCarpeta.value;
-    elementos.previewEditarNombre.textContent = elementos.editarNombreCarpeta.value || 'Carpeta';
-}
-
 function guardarEdicionCarpeta() {
     const datos = {
         accion: 'editar_carpeta',
         id_carpeta: elementos.editarIdCarpeta.value,
         nombre_carpeta: elementos.editarNombreCarpeta.value.trim(),
-        icono: elementos.editarIconoCarpeta.value,
         color: elementos.editarColorCarpeta.value
     };
     
@@ -658,12 +655,12 @@ function cerrarModalSubirDocumento() {
 }
 
 function cargarSelectCarpetas() {
-    let html = '<option value="">📁 Raíz (sin carpeta)</option>';
+    let html = '<option value="">Raíz (sin carpeta)</option>';
     
     function agregarCarpetas(carpetas, nivel = 0) {
         carpetas.forEach(carpeta => {
             const espaciado = '&nbsp;&nbsp;'.repeat(nivel);
-            html += `<option value="${carpeta.id_carpeta}">${espaciado}${carpeta.icono} ${carpeta.nombre_carpeta}</option>`;
+            html += `<option value="${carpeta.id_carpeta}">${espaciado}${carpeta.nombre_carpeta}</option>`;
             if (carpeta.subcarpetas && carpeta.subcarpetas.length > 0) {
                 agregarCarpetas(carpeta.subcarpetas, nivel + 1);
             }
@@ -875,18 +872,7 @@ function eliminarDocumento(idDocumento) {
 // 🛠️ FUNCIONES AUXILIARES
 // =====================================================
 function obtenerIconoDocumento(extension) {
-    const iconos = {
-        pdf: '📕',
-        doc: '📘',
-        docx: '📘',
-        xls: '📗',
-        xlsx: '📗',
-        jpg: '🖼️',
-        jpeg: '🖼️',
-        png: '🖼️',
-        gif: '🖼️'
-    };
-    return iconos[extension?.toLowerCase()] || '📄';
+    return (extension || 'arch').toUpperCase();
 }
 
 function formatearTamano(bytes) {
@@ -940,6 +926,124 @@ function mostrarMensaje(mensaje, tipo = 'exito') {
         aviso.style.transform = 'translateX(100%)';
         setTimeout(() => aviso.remove(), 400);
     }, 3000);
+}
+
+// =====================================================
+// 📋 COPIAR / CORTAR / PEGAR
+// =====================================================
+function copiarElemento(tipo, id, nombre) {
+    portapapeles = { tipo, id, nombre, accion: 'copiar' };
+    actualizarBotonPegar();
+    mostrarMensaje(`"${nombre}" copiado. Navega a la carpeta destino y presiona "Pegar"`, 'exito');
+}
+
+function cortarElemento(tipo, id, nombre) {
+    portapapeles = { tipo, id, nombre, accion: 'cortar' };
+    actualizarBotonPegar();
+    mostrarMensaje(`"${nombre}" listo para mover. Navega a la carpeta destino y presiona "Pegar"`, 'exito');
+}
+
+function actualizarBotonPegar() {
+    if (!elementos.btnPegar) return;
+    elementos.btnPegar.disabled = !portapapeles;
+    elementos.btnPegar.title = portapapeles ? `Pegar "${portapapeles.nombre}"` : 'Pegar';
+}
+
+function pegarElemento() {
+    if (!portapapeles) return;
+
+    const idCarpetaDestino = carpetaActual ? carpetaActual.id_carpeta : null;
+
+    // No permitir pegar una carpeta dentro de sí misma
+    if (portapapeles.tipo === 'carpeta' && idCarpetaDestino === portapapeles.id) {
+        mostrarMensaje('❌ No puedes pegar una carpeta dentro de sí misma', 'error');
+        return;
+    }
+
+    let accion, datos;
+    if (portapapeles.tipo === 'documento') {
+        accion = portapapeles.accion === 'copiar' ? 'copiar_documento' : 'mover_documento';
+        datos = { accion, id_documento: portapapeles.id, id_carpeta_destino: idCarpetaDestino };
+    } else {
+        accion = portapapeles.accion === 'copiar' ? 'copiar_carpeta' : 'mover_carpeta';
+        datos = { accion, id_carpeta: portapapeles.id, id_carpeta_destino: idCarpetaDestino, id_paciente: ID_PACIENTE_ACTUAL };
+    }
+
+    fetch('../CONTROLADORES/controlador_documentos.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datos)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje('✅ ' + data.mensaje, 'exito');
+            // Cortar consume el portapapeles; copiar lo deja disponible para pegar varias veces
+            if (portapapeles.accion === 'cortar') {
+                portapapeles = null;
+                actualizarBotonPegar();
+            }
+            cargarEstructuraCarpetas();
+        } else {
+            mostrarMensaje('❌ ' + data.mensaje, 'error');
+        }
+    })
+    .catch(err => {
+        console.error('❌ Error al pegar:', err);
+        mostrarMensaje('❌ Error al pegar el elemento', 'error');
+    });
+}
+
+// =====================================================
+// 👁️ VISTA PREVIA DE DOCUMENTOS
+// =====================================================
+var EXTENSIONES_IMAGEN = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+var EXTENSIONES_OFFICE = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+
+function previsualizarDocumento(idDocumento, archivo, extension, titulo) {
+    elementos.tituloPreviewDocumento.textContent = titulo || 'Vista previa';
+    elementos.btnDescargarDesdePreview.onclick = () => descargarDocumento(idDocumento, archivo);
+
+    const ext = (extension || '').toLowerCase();
+    // URL absoluta del archivo (necesaria para PDF/imagen y para visores externos de Office)
+    const urlArchivo = new URL('../' + archivo, window.location.href).href;
+
+    if (ext === 'pdf') {
+        elementos.contenedorPreview.innerHTML = `<iframe src="${urlArchivo}"></iframe>`;
+    } else if (EXTENSIONES_IMAGEN.includes(ext)) {
+        elementos.contenedorPreview.innerHTML = `<img src="${urlArchivo}" alt="${titulo}">`;
+    } else if (EXTENSIONES_OFFICE.includes(ext)) {
+        const esLocal = /^(localhost|127\.0\.0\.1)/.test(window.location.hostname);
+        if (esLocal) {
+            // Los visores de Office/Google necesitan una URL pública; en localhost no funcionan
+            elementos.contenedorPreview.innerHTML = `
+                <div class="preview-no-disponible">
+                    La vista previa de archivos Word/Excel/PowerPoint requiere que el sitio
+                    esté publicado en internet (no funciona en localhost).<br>
+                    Descarga el archivo para verlo, o prueba la vista previa una vez en producción.
+                </div>`;
+        } else {
+            const urlVisor = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(urlArchivo)}`;
+            elementos.contenedorPreview.innerHTML = `<iframe src="${urlVisor}"></iframe>`;
+        }
+    } else {
+        elementos.contenedorPreview.innerHTML = `
+            <div class="preview-no-disponible">
+                Vista previa no disponible para este tipo de archivo.<br>
+                Descárgalo para verlo.
+            </div>`;
+    }
+
+    elementos.modalPreviewDocumento.style.display = 'flex';
+    setTimeout(() => elementos.modalPreviewDocumento.classList.add('mostrar'), 10);
+}
+
+function cerrarModalPreview() {
+    elementos.modalPreviewDocumento.classList.remove('mostrar');
+    setTimeout(() => {
+        elementos.modalPreviewDocumento.style.display = 'none';
+        elementos.contenedorPreview.innerHTML = '';
+    }, 300);
 }
 
 // =====================================================

@@ -4,7 +4,7 @@
 
 /* ── Contenedor principal ── */
 .contenedor-historia-clinica {
-    padding: 20px;
+    padding: 14px;
     background: #f4f6f8;
     min-height: 100vh;
 }
@@ -14,38 +14,39 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
-    padding: 14px 20px;
+    margin-bottom: 10px;
+    padding: 8px 14px;
     background: white;
     border-radius: 10px;
     border: 0.5px solid #e0e0e0;
 }
 
 .encabezado-historia h2 {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 500;
     color: #2c3e50;
     margin: 0;
+    white-space: nowrap;
 }
 
 .buscador-paciente {
     position: relative;
     flex: 1;
-    max-width: 460px;
-    margin: 0 20px;
+    max-width: 380px;
+    margin: 0 14px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: #f4f6f8;
     border: 0.5px solid #ddd;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 5px 10px;
 }
 
 .input-busqueda-paciente {
     border: none;
     background: transparent;
-    font-size: 13px;
+    font-size: 12px;
     color: #2c3e50;
     outline: none;
     flex: 1;
@@ -137,8 +138,10 @@
 }
 
 .btn-generar-pdf {
-    width: 100%;
-    padding: 7px 12px;
+    width: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 12px;
     background: transparent;
     color: #c0392b;
     border: 0.5px solid #c0392b;
@@ -158,13 +161,13 @@
 .btn-generar-pdf.cargando { opacity: 0.6; cursor: wait; pointer-events: none; }
 
 /* Mensaje cumpleaños */
-.contenedor-mensaje-cumpleanos { margin-top: 4px; text-align: center; width: 100%; }
+.contenedor-mensaje-cumpleanos { flex-shrink: 0; white-space: nowrap; }
 
 .mensaje-cumpleanos {
     display: inline-block;
     background: #e8f0fb;
     color: #2a4d8f;
-    padding: 5px 10px;
+    padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 500;
@@ -207,28 +210,46 @@
     font-weight: 500;
 }
 
-/* ── Apoderado ── */
+/* ── Apoderado (dentro del sidebar del paciente) ── */
 .info-apoderado-seccion {
     background: #f8f9fa;
     border-left: 3px solid #2a4d8f;
     border-radius: 0 6px 6px 0;
-    padding: 10px 14px;
-    margin-bottom: 12px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    margin-bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
 }
 
 .info-apoderado-seccion h4 {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: #2a4d8f;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .grid-datos-apoderado {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.grid-datos-apoderado .dato-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.grid-datos-apoderado .dato-label {
+    font-size: 10px;
+    color: #95a5a6;
+}
+.grid-datos-apoderado .dato-valor {
+    font-size: 11.5px;
+    color: #2c3e50;
+    word-break: break-word;
 }
 
 /* ── Alergias ── */
@@ -295,8 +316,202 @@
 }
 .btn-accion-pequeno:hover { background: #2a4d8f; color: white; }
 
+/* ── Layout: sidebar del paciente + módulos ── */
+.layout-historia {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.columna-derecha-historia {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ── Sidebar del paciente (colapsable) ── */
+.sidebar-paciente {
+    width: 260px;
+    flex-shrink: 0;
+    background: white;
+    border-radius: 10px;
+    border: 0.5px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(20,25,35,0.04);
+    position: relative;
+    transition: width 0.2s ease;
+}
+
+.sidebar-paciente.colapsado {
+    width: 20px;
+}
+.sidebar-paciente.colapsado .sidebar-paciente-contenido { display: none; }
+
+.btn-toggle-sidebar-paciente {
+    position: absolute;
+    top: 10px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 0.5px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    color: #6c757d;
+    font-size: 13px;
+    transition: 0.15s;
+}
+.btn-toggle-sidebar-paciente:hover { color: #2a4d8f; border-color: #2a4d8f; }
+.sidebar-paciente.colapsado .btn-toggle-sidebar-paciente { right: auto; left: -12px; }
+
+.sidebar-paciente-contenido {
+    padding: 18px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+}
+
+.avatar-paciente-sidebar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid #dcdfe4;
+    margin-bottom: 4px;
+}
+.avatar-paciente-sidebar img { width: 100%; height: 100%; object-fit: cover; }
+
+.sidebar-paciente-contenido .nombre-paciente {
+    font-size: 14px;
+    margin: 0;
+}
+
+.dni-paciente-sidebar {
+    font-size: 11.5px;
+    color: #95a5a6;
+    margin: 0 0 6px;
+}
+
+.datos-sidebar-paciente {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding-top: 8px;
+    border-top: 0.5px solid #f0f0f0;
+    margin-top: 4px;
+}
+.dato-sidebar {
+    font-size: 11.5px;
+    color: #5a6a78;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-ver-alergias {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 10px;
+    background: #f8f9fa;
+    color: #7f8c8d;
+    border: none;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: 0.15s;
+}
+.btn-ver-alergias.con-alergias { background: #fdecea; color: #c0392b; }
+.btn-ver-alergias:hover { filter: brightness(0.96); }
+
+.btn-generar-pdf-sidebar {
+    width: 100%;
+    margin-top: 6px;
+    padding: 7px 10px;
+    background: transparent;
+    color: #c0392b;
+    border: 0.5px solid #c0392b;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: 0.15s;
+}
+.btn-generar-pdf-sidebar:hover { background: #c0392b; color: white; }
+.btn-generar-pdf-sidebar:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-generar-pdf-sidebar.cargando { opacity: 0.6; cursor: wait; pointer-events: none; }
+
+.contenedor-mensaje-cumpleanos { margin-top: 8px; width: 100%; }
+.mensaje-cumpleanos {
+    display: inline-block;
+    background: #e8f0fb;
+    color: #2a4d8f;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    font-weight: 500;
+    border: 0.5px solid #2a4d8f;
+    white-space: nowrap;
+}
+
+.titulo-checklist-sidebar {
+    width: 100%;
+    text-align: left;
+    font-size: 11px;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 0.5px solid #f0f0f0;
+}
+
+.checklist-sidebar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+}
+
+.check-item-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 4px;
+    font-size: 12.5px;
+    color: #2c3e50;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.check-item-sidebar:hover { background: #f4f6f8; }
+.check-item-sidebar.no-clic { cursor: default; }
+.check-item-sidebar.no-clic:hover { background: transparent; }
+
+.check-item-sidebar .check-icono {
+    font-size: 12px;
+    color: #b0b8c8;
+    font-weight: 600;
+}
+.check-item-sidebar.completo .check-icono { color: #27ae60; }
+
 /* ── Pestañas de módulos ── */
 .seccion-modulos {
+    flex: 1;
+    min-width: 0;
     background: white;
     border-radius: 10px;
     border: 0.5px solid #e0e0e0;
@@ -453,6 +668,54 @@
     overflow-y: auto;
 }
 
+.modal-ancho .modal-contenido, .modal-ancho { max-width: 640px; }
+
+.label-campo {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #495057;
+    margin: 8px 0 4px;
+}
+.label-campo:first-child { margin-top: 0; }
+
+.input-textarea, .input-texto {
+    width: 100%;
+    padding: 8px 10px;
+    border: 0.5px solid #dcdfe4;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    resize: vertical;
+    box-sizing: border-box;
+}
+.input-textarea:focus, .input-texto:focus { outline: none; border-color: #2a4d8f; }
+
+.fila-doble {
+    display: flex;
+    gap: 16px;
+}
+.fila-doble > div { flex: 1; }
+
+.fila-opciones {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+    border-bottom: 0.5px solid #f0f0f0;
+    font-size: 12px;
+    color: #495057;
+}
+.fila-opciones:last-child { border-bottom: none; }
+.fila-opciones .label-campo { margin: 0; min-width: 140px; }
+.fila-opciones label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+.input-tipo {
+    width: 140px;
+    padding: 4px 8px;
+}
+
 .contenedor-busqueda-medicamento { position: relative; margin-bottom: 16px; }
 
 .buscar-medicamento { display: flex; gap: 8px; }
@@ -596,7 +859,13 @@
 .mensaje-sistema.exito { background: #27ae60; }
 .mensaje-sistema.error { background: #e74c3c; }
 .mensaje-sistema .icono { font-size: 18px; }
-
+    
+.info-modificado {
+    font-size: 11px;
+    color: #95a5a6;
+    margin: 0 0 10px;
+    font-style: italic;
+}
 /* ── Scrollbar ── */
 .resultados-medicamentos::-webkit-scrollbar,
 .lista-alergias-modal::-webkit-scrollbar { width: 6px; }

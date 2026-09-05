@@ -1,11 +1,16 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once '../MODELOS/modelo_historia_clinica.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 $modelo = new ModeloHistoriaClinica();
+$idUsuario = $_SESSION['usuario']['id_usuario'] ?? null;
 
-// Obtener la acción
+// Obtener la accion
 $accion = '';
 
 // Verificar si es POST con JSON
@@ -19,13 +24,13 @@ if ($data && isset($data['accion'])) {
 }
 
 // =====================================================
-// 📋 PROCESAMIENTO DE ACCIONES
+// PROCESAMIENTO DE ACCIONES
 // =====================================================
 
 try {
     switch ($accion) {
 
-        // 🔹 Buscar pacientes
+        // Buscar pacientes
         case 'buscar_paciente':
             $termino = $_GET['termino'] ?? '';
             
@@ -38,7 +43,7 @@ try {
             echo json_encode($pacientes);
             break;
 
-        // 🔹 Cargar historia clínica completa
+        // Cargar historia clinica completa
         case 'cargar_historia':
             $idPaciente = $_GET['id_paciente'] ?? 0;
             
@@ -50,7 +55,7 @@ try {
                 exit;
             }
 
-            // Obtener información del paciente
+            // Obtener informacion del paciente
             $paciente = $modelo->obtenerPacienteCompleto($idPaciente);
             
             if (!$paciente) {
@@ -61,21 +66,44 @@ try {
                 exit;
             }
 
-            // Obtener o crear historia clínica
+            // Obtener o crear historia clinica
             $historia = $modelo->obtenerOCrearHistoriaClinica($idPaciente);
             
-            // Obtener estadísticas
+            // Obtener estadisticas
             $estadisticas = $modelo->obtenerEstadisticasPaciente($idPaciente);
+
+            // Checklist de secciones (antecedentes, examenes) para el sidebar
+            $secciones = $modelo->obtenerSeccionesHistoria($historia['id_historia']);
 
             echo json_encode([
                 'success' => true,
                 'paciente' => $paciente,
                 'historia' => $historia,
-                'estadisticas' => $estadisticas
+                'estadisticas' => $estadisticas,
+                'secciones' => $secciones
             ]);
             break;
 
-        // 🔹 Listar alergias del paciente
+        // Cargar solo el checklist de secciones (para refrescar el sidebar sin recargar todo)
+        case 'cargar_secciones':
+            $idHistoria = $_GET['id_historia'] ?? 0;
+
+            if (!$idHistoria) {
+                echo json_encode([
+                    'success' => false,
+                    'mensaje' => 'ID de historia no proporcionado'
+                ]);
+                exit;
+            }
+
+            $secciones = $modelo->obtenerSeccionesHistoria($idHistoria);
+            echo json_encode([
+                'success' => true,
+                'secciones' => $secciones
+            ]);
+            break;
+
+        // Listar alergias del paciente
         case 'listar_alergias':
             $idPaciente = $_GET['id_paciente'] ?? 0;
             
@@ -88,7 +116,7 @@ try {
             echo json_encode($alergias);
             break;
 
-        // 🔹 NUEVO: Buscar medicamentos
+        // Buscar medicamentos
         case 'buscar_medicamentos':
             $termino = $_GET['termino'] ?? '';
             
@@ -101,7 +129,7 @@ try {
             echo json_encode($medicamentos);
             break;
 
-        // 🔹 Guardar alergias del paciente
+        // Guardar alergias del paciente
         case 'guardar_alergias':
             if (!isset($data['id_paciente']) || !isset($data['alergias'])) {
                 echo json_encode([
@@ -118,7 +146,7 @@ try {
             if (!is_array($medicamentos)) {
                 echo json_encode([
                     'success' => false,
-                    'mensaje' => 'Formato de datos inválido'
+                    'mensaje' => 'Formato de datos invalido'
                 ]);
                 exit;
             }
@@ -138,7 +166,7 @@ try {
             }
             break;
 
-        // 🔹 Obtener estadísticas del paciente
+        // Obtener estadisticas del paciente
         case 'obtener_estadisticas':
             $idPaciente = $_GET['id_paciente'] ?? 0;
             
@@ -157,7 +185,137 @@ try {
             ]);
             break;
 
-        // 🔹 Actualizar notas de historia clínica
+        // Guardar motivo de consulta
+        case 'guardar_motivo_consulta':
+            if (!isset($data['id_historia']) || !isset($data['motivo_consulta'])) {
+                echo json_encode([
+                    'success' => false,
+                    'mensaje' => 'Datos incompletos'
+                ]);
+                exit;
+            }
+
+            $resultado = $modelo->actualizarMotivoConsulta($data['id_historia'], $data['motivo_consulta']);
+
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Motivo de consulta guardado' : 'Error al guardar el motivo de consulta'
+            ]);
+            break;
+
+        // Guardar Antecedentes
+        case 'guardar_antecedentes':
+            if (!isset($data['id_historia'])) {
+                echo json_encode([
+                    'success' => false,
+                    'mensaje' => 'ID de historia no proporcionado'
+                ]);
+                exit;
+            }
+
+            $resultado = $modelo->guardarAntecedentes(
+                $data['id_historia'],
+                $data['medica'] ?? '',
+                $data['odontologicos'] ?? '',
+                $data['familiares'] ?? '',
+                $idUsuario
+            );
+
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Antecedentes guardados correctamente' : 'Error al guardar antecedentes'
+            ]);
+            break;
+
+        // Guardar Examen Clinico General
+        case 'guardar_examen_general':
+            if (!isset($data['id_historia'])) {
+                echo json_encode(['success' => false, 'mensaje' => 'ID de historia no proporcionado']);
+                exit;
+            }
+            $resultado = $modelo->guardarExamenGeneral(
+                $data['id_historia'],
+                $data['talla_mts'] ?? '',
+                $data['peso_kg'] ?? '',
+                $data['temperatura'] ?? '',
+                $data['saturacion'] ?? '',
+                $idUsuario
+            );
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Examen clinico general guardado correctamente' : 'Error al guardar el examen general'
+            ]);
+            break;
+
+        case 'guardar_antecedentes_personales':
+            if (!isset($data['id_historia'])) {
+                echo json_encode(['success' => false, 'mensaje' => 'ID de historia no proporcionado']);
+                exit;
+            }
+            // Medica/Odontologicos siguen viviendo en historia_antecedentes
+            $modelo->guardarAntecedentes(
+                $data['id_historia'],
+                $data['medica'] ?? '',
+                $data['odontologicos'] ?? '',
+                '',
+                $idUsuario
+            );
+            $resultado = $modelo->guardarAntecedentesPersonales($data['id_historia'], $data, $idUsuario);
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Antecedentes personales guardados correctamente' : 'Error al guardar antecedentes personales'
+            ]);
+            break;
+
+        case 'guardar_antecedentes_familiares':
+            if (!isset($data['id_historia'])) {
+                echo json_encode(['success' => false, 'mensaje' => 'ID de historia no proporcionado']);
+                exit;
+            }
+            $resultado = $modelo->guardarAntecedentesFamiliares($data['id_historia'], $data, $idUsuario);
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Antecedentes familiares guardados correctamente' : 'Error al guardar antecedentes familiares'
+            ]);
+            break;
+
+        // Guardar Examen Extraoral
+        case 'guardar_examen_extraoral':
+            if (!isset($data['id_historia'])) {
+                echo json_encode([
+                    'success' => false,
+                    'mensaje' => 'ID de historia no proporcionado'
+                ]);
+                exit;
+            }
+
+            $resultado = $modelo->guardarExamenExtraoral($data['id_historia'], $data, $idUsuario);
+
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Examen extraoral guardado correctamente' : 'Error al guardar el examen extraoral'
+            ]);
+            break;
+
+        // Guardar Examen Intraoral
+        case 'guardar_examen_intraoral':
+            if (!isset($data['id_historia'])) {
+                echo json_encode([
+                    'success' => false,
+                    'mensaje' => 'ID de historia no proporcionado'
+                ]);
+                exit;
+            }
+
+            $resultado = $modelo->guardarExamenIntraoral($data['id_historia'], $data, $idUsuario);
+
+            echo json_encode([
+                'success' => $resultado,
+                'mensaje' => $resultado ? 'Examen intraoral guardado correctamente' : 'Error al guardar el examen intraoral'
+            ]);
+            break;
+
+        // Actualizar notas de historia clinica
         case 'actualizar_notas':
             if (!isset($data['id_historia']) || !isset($data['notas'])) {
                 echo json_encode([
@@ -185,17 +343,17 @@ try {
             }
             break;
 
-        // 🔹 Acción no válida
+        // Accion no valida
         default:
             echo json_encode([
                 'success' => false,
-                'mensaje' => 'Acción no válida: ' . $accion
+                'mensaje' => 'Accion no valida: ' . $accion
             ]);
             break;
     }
 
 } catch (Exception $e) {
-    error_log("❌ Error en controlador_historia_clinica: " . $e->getMessage());
+    error_log("Error en controlador_historia_clinica: " . $e->getMessage());
     echo json_encode([
         'success' => false,
         'mensaje' => 'Error en el servidor: ' . $e->getMessage()

@@ -7,7 +7,7 @@ header('Content-Type: application/json; charset=utf-8');
 $modelo = new ModeloDocumentos();
 
 // Obtener ID del usuario de la sesión
-$idUsuario = $_SESSION['id_usuario'] ?? null;
+$idUsuario = $_SESSION['usuario']['id_usuario'] ?? null;
 
 if (!$idUsuario) {
     echo json_encode([
@@ -184,7 +184,7 @@ try {
             break;
 
         case 'mover_carpeta':
-            if (!isset($data['id_carpeta']) || !isset($data['id_carpeta_destino'])) {
+            if (!isset($data['id_carpeta']) || !array_key_exists('id_carpeta_destino', $data)) {
                 throw new Exception('Datos incompletos');
             }
 
@@ -197,6 +197,25 @@ try {
             echo json_encode([
                 'success' => $resultado,
                 'mensaje' => $resultado ? 'Carpeta movida correctamente' : 'Error al mover carpeta'
+            ]);
+            break;
+
+        case 'copiar_carpeta':
+            if (!isset($data['id_carpeta']) || !isset($data['id_paciente'])) {
+                throw new Exception('Datos incompletos');
+            }
+
+            $idNueva = $modelo->copiarCarpeta(
+                $data['id_carpeta'],
+                $data['id_carpeta_destino'] ?? null,
+                $data['id_paciente'],
+                $idUsuario
+            );
+
+            echo json_encode([
+                'success' => (bool)$idNueva,
+                'mensaje' => $idNueva ? 'Carpeta copiada correctamente' : 'Error al copiar carpeta',
+                'id_carpeta' => $idNueva
             ]);
             break;
 
@@ -328,7 +347,7 @@ try {
             break;
 
         case 'mover_documento':
-            if (!isset($data['id_documento']) || !isset($data['id_carpeta_destino'])) {
+            if (!isset($data['id_documento']) || !array_key_exists('id_carpeta_destino', $data)) {
                 throw new Exception('Datos incompletos');
             }
 
@@ -341,6 +360,24 @@ try {
             echo json_encode([
                 'success' => $resultado,
                 'mensaje' => $resultado ? 'Documento movido correctamente' : 'Error al mover documento'
+            ]);
+            break;
+
+        case 'copiar_documento':
+            if (!isset($data['id_documento'])) {
+                throw new Exception('ID de documento no proporcionado');
+            }
+
+            $idNuevo = $modelo->copiarDocumento(
+                $data['id_documento'],
+                $data['id_carpeta_destino'] ?? null,
+                $idUsuario
+            );
+
+            echo json_encode([
+                'success' => (bool)$idNuevo,
+                'mensaje' => $idNuevo ? 'Documento copiado correctamente' : 'Error al copiar documento',
+                'id_documento' => $idNuevo
             ]);
             break;
 

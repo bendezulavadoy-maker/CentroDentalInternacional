@@ -9,21 +9,21 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
     <div class="header-documentos">
         <div class="estadisticas-documentos">
             <div class="stat-item">
-                <span class="stat-icono">📁</span>
+                <span class="stat-icono"><i class="ti ti-folder"></i></span>
                 <div class="stat-info">
                     <span class="stat-valor" id="totalCarpetas">0</span>
                     <span class="stat-label">Carpetas</span>
                 </div>
             </div>
             <div class="stat-item">
-                <span class="stat-icono">📄</span>
+                <span class="stat-icono"><i class="ti ti-file-text"></i></span>
                 <div class="stat-info">
                     <span class="stat-valor" id="totalDocumentos">0</span>
                     <span class="stat-label">Documentos</span>
                 </div>
             </div>
             <div class="stat-item">
-                <span class="stat-icono">💾</span>
+                <span class="stat-icono"><i class="ti ti-database"></i></span>
                 <div class="stat-info">
                     <span class="stat-valor" id="tamanoTotal">0 MB</span>
                     <span class="stat-label">Espacio usado</span>
@@ -32,11 +32,14 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         </div>
 
         <div class="acciones-header">
+            <button class="btn-accion-header" id="btnPegar" title="Pegar" disabled>
+                <i class="ti ti-clipboard"></i> Pegar
+            </button>
             <button class="btn-accion-header" id="btnNuevaCarpeta" title="Nueva carpeta">
-                <span>📁</span> Nueva Carpeta
+                <i class="ti ti-folder-plus"></i> Nueva Carpeta
             </button>
             <button class="btn-accion-header btn-primario" id="btnSubirDocumento" title="Subir documento">
-                <span>⬆️</span> Subir Documento
+                <i class="ti ti-upload"></i> Subir Documento
             </button>
         </div>
     </div>
@@ -53,7 +56,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         <!-- Columna izquierda: Árbol de carpetas -->
         <div class="columna-arbol">
             <div class="header-arbol">
-                <h3>📁 Estructura de Carpetas</h3>
+                <h3>Estructura de Carpetas</h3>
             </div>
             <div class="arbol-carpetas" id="arbolCarpetas">
                 <div class="cargando-arbol">⏳ Cargando estructura...</div>
@@ -64,7 +67,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         <div class="columna-contenido">
             <!-- Carpetas del nivel actual -->
             <div class="seccion-carpetas">
-                <h3 class="titulo-seccion">📁 Carpetas</h3>
+                <h3 class="titulo-seccion">Carpetas</h3>
                 <div class="grid-carpetas" id="gridCarpetas">
                     <div class="mensaje-vacio">No hay carpetas en esta ubicación</div>
                 </div>
@@ -72,7 +75,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
 
             <!-- Documentos del nivel actual -->
             <div class="seccion-documentos">
-                <h3 class="titulo-seccion">📄 Documentos</h3>
+                <h3 class="titulo-seccion">Documentos</h3>
                 <div class="lista-documentos" id="listaDocumentos">
                     <div class="mensaje-vacio">No hay documentos en esta carpeta</div>
                 </div>
@@ -87,7 +90,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
 <div id="modalNuevaCarpeta" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
-            <h3>📁 Nueva Carpeta</h3>
+            <h3>Nueva Carpeta</h3>
             <button type="button" class="btn-cerrar-modal" id="btnCerrarModalCarpeta">✖</button>
         </div>
         <div class="modal-cuerpo">
@@ -101,39 +104,9 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                            required 
                            maxlength="100">
                 </div>
-
                 <div class="form-group">
-                    <label>Personalización</label>
-                    <div class="grid-personalizacion">
-                        <div class="selector-icono">
-                            <label for="iconoCarpeta">Icono</label>
-                            <select id="iconoCarpeta" class="select-icono">
-                                <option value="📁">📁 Carpeta</option>
-                                <option value="📋">📋 Clipboard</option>
-                                <option value="🩻">🩻 Radiografía</option>
-                                <option value="📸">📸 Fotografía</option>
-                                <option value="🧪">🧪 Pruebas</option>
-                                <option value="💊">💊 Medicamentos</option>
-                                <option value="🏥">🏥 Hospital</option>
-                                <option value="📄">📄 Documento</option>
-                                <option value="📊">📊 Gráficos</option>
-                                <option value="📝">📝 Notas</option>
-                            </select>
-                        </div>
-
-                        <div class="selector-color">
-                            <label for="colorCarpeta">Color</label>
-                            <input type="color" 
-                                   id="colorCarpeta" 
-                                   class="input-color" 
-                                   value="#3498db">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="preview-carpeta">
-                    <span class="preview-icono" id="previewIcono">📁</span>
-                    <span class="preview-nombre" id="previewNombre">Nueva Carpeta</span>
+                    <label for="colorCarpeta">Color</label>
+                    <input type="color" id="colorCarpeta" class="input-color" value="#5a6a89">
                 </div>
             </form>
         </div>
@@ -159,7 +132,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
             <form id="formSubirDocumento" enctype="multipart/form-data">
                 <div class="zona-subida" id="zonaSubida">
                     <div class="zona-subida-contenido">
-                        <span class="icono-subida">📤</span>
+                        <span class="icono-subida"><i class="ti ti-cloud-upload"></i></span>
                         <p class="texto-principal">Arrastra y suelta tu archivo aquí</p>
                         <p class="texto-secundario">o haz clic para seleccionar</p>
                         <input type="file" 
@@ -177,12 +150,12 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
 
                 <div class="archivo-seleccionado" id="archivoSeleccionado" style="display: none;">
                     <div class="info-archivo">
-                        <span class="icono-archivo" id="iconoArchivoSeleccionado">📄</span>
+                        <span class="icono-archivo" id="iconoArchivoSeleccionado"></span>
                         <div class="detalles-archivo">
                             <p class="nombre-archivo" id="nombreArchivoSeleccionado"></p>
                             <p class="tamano-archivo" id="tamanoArchivoSeleccionado"></p>
                         </div>
-                        <button type="button" class="btn-eliminar-archivo" id="btnEliminarArchivo">🗑️</button>
+                        <button type="button" class="btn-eliminar-archivo" id="btnEliminarArchivo">✕</button>
                     </div>
                 </div>
 
@@ -208,7 +181,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                 <div class="form-group">
                     <label for="carpetaDestino">Guardar en carpeta</label>
                     <select id="carpetaDestino" name="id_carpeta" class="input-select">
-                        <option value="">📁 Raíz (sin carpeta)</option>
+                        <option value="">Raíz (sin carpeta)</option>
                     </select>
                 </div>
             </form>
@@ -228,7 +201,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
 <div id="modalEditarCarpeta" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
-            <h3>✏️ Editar Carpeta</h3>
+            <h3>Editar Carpeta</h3>
             <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarCarpeta">✖</button>
         </div>
         <div class="modal-cuerpo">
@@ -243,38 +216,9 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                            required 
                            maxlength="100">
                 </div>
-
                 <div class="form-group">
-                    <label>Personalización</label>
-                    <div class="grid-personalizacion">
-                        <div class="selector-icono">
-                            <label for="editarIconoCarpeta">Icono</label>
-                            <select id="editarIconoCarpeta" class="select-icono">
-                                <option value="📁">📁 Carpeta</option>
-                                <option value="📋">📋 Clipboard</option>
-                                <option value="🩻">🩻 Radiografía</option>
-                                <option value="📸">📸 Fotografía</option>
-                                <option value="🧪">🧪 Pruebas</option>
-                                <option value="💊">💊 Medicamentos</option>
-                                <option value="🏥">🏥 Hospital</option>
-                                <option value="📄">📄 Documento</option>
-                                <option value="📊">📊 Gráficos</option>
-                                <option value="📝">📝 Notas</option>
-                            </select>
-                        </div>
-
-                        <div class="selector-color">
-                            <label for="editarColorCarpeta">Color</label>
-                            <input type="color" 
-                                   id="editarColorCarpeta" 
-                                   class="input-color">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="preview-carpeta">
-                    <span class="preview-icono" id="previewEditarIcono">📁</span>
-                    <span class="preview-nombre" id="previewEditarNombre">Carpeta</span>
+                    <label for="editarColorCarpeta">Color</label>
+                    <input type="color" id="editarColorCarpeta" class="input-color">
                 </div>
             </form>
         </div>
@@ -293,7 +237,7 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
 <div id="modalEditarDocumento" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
-            <h3>✏️ Editar Documento</h3>
+            <h3>Editar Documento</h3>
             <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarDocumento">✖</button>
         </div>
         <div class="modal-cuerpo">
@@ -322,6 +266,27 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
             <button type="button" class="btn-primario" id="btnGuardarEditarDocumento">
                 <span>💾</span> Guardar Cambios
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- 👁️ MODAL: Vista previa de documento -->
+<!-- ===================================================== -->
+<div id="modalPreviewDocumento" class="modal-overlay">
+    <div class="modal-contenido modal-ancha">
+        <div class="modal-encabezado">
+            <h3 id="tituloPreviewDocumento">Vista previa</h3>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalPreview">✖</button>
+        </div>
+        <div class="modal-cuerpo">
+            <div class="contenedor-preview" id="contenedorPreview">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+        <div class="modal-botones">
+            <button type="button" class="btn-secundario" id="btnCerrarPreview">Cerrar</button>
+            <button type="button" class="btn-primario" id="btnDescargarDesdePreview">Descargar</button>
         </div>
     </div>
 </div>
