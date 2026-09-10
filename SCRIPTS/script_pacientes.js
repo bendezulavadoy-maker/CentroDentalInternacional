@@ -351,8 +351,8 @@ function iniciarModuloPacientes() {
             inputTelefono.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9); validarCampoTelefono(this); });
             inputTelefono.addEventListener('blur', function() { validarCampoTelefono(this); });
         }
-        if (inputNombre) inputNombre.addEventListener('input', function() { validarCampoTexto(this, 'nombre'); });
-        if (inputApellidos) inputApellidos.addEventListener('input', function() { validarCampoTexto(this, 'apellidos'); });
+        if (inputNombre) inputNombre.addEventListener('input', function() {  this.value = this.value.toUpperCase(); validarCampoTexto(this, 'nombre'); });
+        if (inputApellidos) inputApellidos.addEventListener('input', function() { this.value = this.value.toUpperCase(); validarCampoTexto(this, 'apellidos'); });
         if (inputCorreo) inputCorreo.addEventListener('blur', function() { validarCampoCorreo(this); });
     
         function validarCampoDNI(input) {

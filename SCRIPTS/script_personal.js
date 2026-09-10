@@ -22,8 +22,44 @@ function iniciarModuloPersonal() {
 
     let modoEdicion = false;
     let idEdicion = null;
+    let dniOriginal = '';
     let fotoActual = null;
     let personalCompleto = []; // Almacena todos los registros para búsqueda
+
+    // =====================================================
+    // Modal: confirmar actualización de código de usuario
+    // =====================================================
+    const modalConfirmarCodigo = document.getElementById('modalConfirmarCodigo');
+    const btnCerrarModalCodigo = document.getElementById('btnCerrarModalCodigo');
+    const btnNoActualizarCodigo = document.getElementById('btnNoActualizarCodigo');
+    const btnSiActualizarCodigo = document.getElementById('btnSiActualizarCodigo');
+
+    function confirmarActualizarCodigo(dniAnterior, dniNuevo) {
+        return new Promise(resolve => {
+            if (!modalConfirmarCodigo) { resolve(false); return; }
+
+            const primeros4 = dniNuevo.substring(0, 4);
+            document.getElementById('dniAnteriorTexto').textContent = dniAnterior;
+            document.getElementById('dniNuevoTexto').textContent = dniNuevo;
+            document.getElementById('codigoNuevoTexto').textContent = 'DENTINT' + primeros4;
+
+            function cerrar(resultado) {
+                modalConfirmarCodigo.classList.remove('mostrar');
+                btnSiActualizarCodigo.removeEventListener('click', onSi);
+                btnNoActualizarCodigo.removeEventListener('click', onNo);
+                btnCerrarModalCodigo.removeEventListener('click', onNo);
+                resolve(resultado);
+            }
+            function onSi() { cerrar(true); }
+            function onNo() { cerrar(false); }
+
+            btnSiActualizarCodigo.addEventListener('click', onSi);
+            btnNoActualizarCodigo.addEventListener('click', onNo);
+            btnCerrarModalCodigo.addEventListener('click', onNo);
+
+            modalConfirmarCodigo.classList.add('mostrar');
+        });
+    }
 
     // =====================================================
     // EXPRESIONES REGULARES PARA VALIDACIÓN
@@ -156,6 +192,7 @@ function iniciarModuloPersonal() {
     // Validar nombre
     if (inputNombre) {
         inputNombre.addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();  
             validarCampoTexto(this, 'nombre');
         });
     }
@@ -163,6 +200,7 @@ function iniciarModuloPersonal() {
     // Validar apellidos
     if (inputApellidos) {
         inputApellidos.addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();  
             validarCampoTexto(this, 'apellidos');
         });
     }
@@ -547,6 +585,7 @@ function iniciarModuloPersonal() {
 
         modoEdicion = true;
         idEdicion = p.id_usuario || idEdicion;
+        dniOriginal = p.dni || '';
         fotoActual = p.foto || fotoActual;
         if (tituloFormulario) tituloFormulario.textContent = 'Editar personal';
 
@@ -601,7 +640,7 @@ function iniciarModuloPersonal() {
     // =====================================================
     // Guardar / actualizar
     // =====================================================
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
 
         // Validar formulario completo
@@ -615,7 +654,16 @@ function iniciarModuloPersonal() {
         if (modoEdicion) {
             datos.append('accion', 'editar');
             datos.append('id_usuario', idEdicion);
-            
+
+            // Si el DNI cambió, preguntar si también se actualiza el código de usuario
+            const dniActual = (form.dni ? form.dni.value : '').trim();
+            if (dniActual && dniActual !== dniOriginal) {
+                const actualizar = await confirmarActualizarCodigo(dniOriginal, dniActual);
+                datos.append('actualizar_codigo', actualizar ? '1' : '0');
+            } else {
+                datos.append('actualizar_codigo', '0');
+            }
+
             if (!fotoInput.files || fotoInput.files.length === 0) {
                 datos.append('foto_actual', fotoActual || '');
             }
@@ -628,13 +676,18 @@ function iniciarModuloPersonal() {
             .then(data => {
                 if (data.success) {
                     if (modoEdicion) {
-                        mostrarMensajeSistema('Datos actualizados correctamente');
+                        if (data.codigo_usuario) {
+                            mostrarMensajeSistema(`Datos actualizados. Nuevo código de usuario: ${data.codigo_usuario}`, 'exito');
+                        } else {
+                            mostrarMensajeSistema('Datos actualizados correctamente');
+                        }
                         fetch(`../CONTROLADORES/controlador_personal.php?accion=ver&id=${idEdicion}`)
                             .then(res => res.json())
                             .then(p => {
                                 mostrarDetalle(p, false);
                                 modoEdicion = false;
                                 fotoActual = null;
+                                dniOriginal = '';
                             });
                     } else {
                         mostrarMensajeSistema('Personal registrado correctamente', 'exito');

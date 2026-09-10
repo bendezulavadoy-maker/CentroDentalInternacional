@@ -76,7 +76,7 @@ class ModeloPersonal {
     public function registrarPersonal($nombre, $apellidos, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento = null, $foto = null) {
         try {
             // Generar código único
-            $codigoBase = 'DENTINT' . substr($dni, -4);
+            $codigoBase = 'DENTINT' . substr($dni, 0, 4);
             $codigoFinal = $codigoBase;
             $contador = 1;
 
@@ -167,30 +167,56 @@ class ModeloPersonal {
     // =====================================================
     // 🔹 Editar personal
     // =====================================================
-    public function editarPersonal($id, $nombre, $apellidos, $correo, $id_rol, $id_estado, $fecha_nacimiento, $foto) {
+    public function editarPersonal($id, $nombre, $apellidos, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $foto, $actualizarCodigo = false) {
         try {
+            $codigoNuevo = null;
+
+            if ($actualizarCodigo) {
+                // Regenerar codigo_usuario a partir de los primeros 4 digitos del nuevo DNI
+                $codigoBase = 'DENTINT' . substr($dni, 0, 4);
+                $codigoFinal = $codigoBase;
+                $contador = 1;
+                while (true) {
+                    $sqlCheck = "SELECT COUNT(*) AS existe FROM usuarios WHERE codigo_usuario = :codigo AND id_usuario != :id";
+                    $stmtCheck = $this->conexion->prepare($sqlCheck);
+                    $stmtCheck->execute([':codigo' => $codigoFinal, ':id' => $id]);
+                    $existe = $stmtCheck->fetch(PDO::FETCH_ASSOC)['existe'];
+                    if ($existe == 0) break;
+                    $codigoFinal = $codigoBase . '-' . $contador;
+                    $contador++;
+                }
+                $codigoNuevo = $codigoFinal;
+            }
+
             $sql = "UPDATE usuarios 
                     SET nombre = :nombre, 
                         apellidos = :apellidos, 
+                        dni = :dni,
                         correo = :correo, 
                         id_rol = :id_rol, 
                         id_estado = :id_estado, 
                         fecha_nacimiento = :fecha_nacimiento, 
-                        foto = :foto 
+                        foto = :foto" . ($codigoNuevo ? ", codigo_usuario = :codigo_usuario" : "") . "
                     WHERE id_usuario = :id";
             
             $stmt = $this->conexion->prepare($sql);
-            
-            return $stmt->execute([
+
+            $params = [
                 ':nombre' => $nombre,
                 ':apellidos' => $apellidos,
+                ':dni' => $dni,
                 ':correo' => $correo,
                 ':id_rol' => $id_rol,
                 ':id_estado' => $id_estado,
                 ':fecha_nacimiento' => $fecha_nacimiento,
                 ':foto' => $foto,
                 ':id' => $id
-            ]);
+            ];
+            if ($codigoNuevo) $params[':codigo_usuario'] = $codigoNuevo;
+
+            $exito = $stmt->execute($params);
+
+            return $exito ? ['exito' => true, 'codigo_usuario' => $codigoNuevo] : false;
         } catch (PDOException $e) {
             error_log("❌ Error al editar personal: " . $e->getMessage());
             return false;

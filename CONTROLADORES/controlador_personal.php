@@ -196,11 +196,20 @@ switch ($accion) {
         $id = $_POST['id_usuario'];
         $nombre = trim($_POST['nombre']);
         $apellidos = trim($_POST['apellidos']);
+        $dni = trim($_POST['dni'] ?? '');
         $correo = trim($_POST['correo']);
         $id_rol = $_POST['id_rol'];
         $id_estado = $_POST['id_estado'];
         $fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null;
-        
+        $actualizarCodigo = ($_POST['actualizar_codigo'] ?? '0') === '1';
+
+        // Validar DNI
+        $validacionDNI = validarDNI($dni);
+        if (!$validacionDNI['valido']) {
+            echo json_encode(['success' => false, 'mensaje' => $validacionDNI['mensaje']]);
+            exit;
+        }
+
         // Validar nombre
         $validacionNombre = validarNombre($nombre, 'Nombre');
         if (!$validacionNombre['valido']) {
@@ -242,9 +251,16 @@ switch ($accion) {
         }
 
         // Actualizar personal
-        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta);
-        
-        echo json_encode($resultado ? ['success' => true] : ['success' => false, 'mensaje' => 'Error al actualizar']);
+        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta, $actualizarCodigo);
+
+        if ($resultado) {
+            echo json_encode([
+                'success' => true,
+                'codigo_usuario' => $resultado['codigo_usuario'] ?? null
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'mensaje' => 'Error al actualizar']);
+        }
         break;
 
     // 🔹 Listar roles

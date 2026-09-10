@@ -148,4 +148,28 @@
 
 </div>
 
+<!-- Modal: confirmar actualizacion de codigo de usuario al cambiar el DNI -->
+<div id="modalConfirmarCodigo" class="modal-overlay">
+    <div class="modal-contenido" style="max-width: 400px;">
+        <div class="modal-encabezado">
+            <h3>El DNI ha cambiado</h3>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalCodigo">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div style="padding: 20px;">
+            <p style="margin: 0 0 8px; font-size: 13.5px; color: #45505c;">
+                El DNI cambió de <strong id="dniAnteriorTexto"></strong> a <strong id="dniNuevoTexto"></strong>.
+            </p>
+            <p style="margin: 0; font-size: 13.5px; color: #45505c;">
+                ¿Deseas actualizar también el código de usuario (inicio de sesión) a <strong id="codigoNuevoTexto"></strong>?
+            </p>
+        </div>
+        <div class="modal-botones">
+            <button type="button" class="btn-secundario" id="btnNoActualizarCodigo">No, dejar igual</button>
+            <button type="button" class="btn-guardar" id="btnSiActualizarCodigo">Sí, actualizar</button>
+        </div>
+    </div>
+</div>
+
 <script src="../SCRIPTS/script_personal.js"></script>
