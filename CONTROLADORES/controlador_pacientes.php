@@ -39,8 +39,8 @@ function validarNombre($nombre, $campo = 'Nombre') {
 }
 
 function validarCorreo($correo) {
+    if ($correo === null || trim($correo) === '') return ['valido' => true]; // Opcional
     $correo = trim($correo);
-    if (empty($correo)) return ['valido' => false, 'mensaje' => 'El correo es obligatorio'];
     if (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/', $correo))
         return ['valido' => false, 'mensaje' => 'El formato del correo no es válido'];
     if (!filter_var($correo, FILTER_VALIDATE_EMAIL))
@@ -54,10 +54,8 @@ function validarCamposObligatorios($datos) {
         'nombre'            => 'Nombre',
         'apellidos'         => 'Apellidos',
         'dni'               => 'DNI',
-        'correo'            => 'Correo',
         'telefono'          => 'Teléfono',
         'direccion'         => 'Dirección',
-        'ocupacion'         => 'Ocupación',
     ];
 
     foreach ($camposRequeridos as $campo => $nombre) {
@@ -73,10 +71,6 @@ function validarCamposObligatorios($datos) {
     // ✅ Verificar estado civil (acepta 'estado_civil' o 'id_estado_civil')
     $estadoCivil = $datos['estado_civil'] ?? $datos['id_estado_civil'] ?? '';
     if (empty($estadoCivil)) return ['valido' => false, 'mensaje' => 'Estado Civil es obligatorio'];
-
-    // ✅ Verificar grado instrucción (acepta 'grado_instruccion' o 'id_grado_instruccion')
-    $gradoInstruccion = $datos['grado_instruccion'] ?? $datos['id_grado_instruccion'] ?? '';
-    if (empty($gradoInstruccion)) return ['valido' => false, 'mensaje' => 'Grado de Instrucción es obligatorio'];
 
     return ['valido' => true];
 }
@@ -102,7 +96,8 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'El DNI ya está registrado en el sistema']); exit;
         }
         $correo = trim($_POST['correo']);
-        if ($modelo->existeCorreo($correo)) {
+        $correo = $correo === '' ? null : $correo;
+        if (!empty($correo) && $modelo->existeCorreo($correo)) {
             echo json_encode(['success' => false, 'mensaje' => 'El correo ya está registrado en el sistema']); exit;
         }
         $validacionObligatorios = validarCamposObligatorios($_POST);
@@ -120,6 +115,7 @@ switch ($accion) {
         $id_sexo             = obtenerCampoFlex($_POST, 'sexo', 'id_sexo');
         $id_estado_civil     = obtenerCampoFlex($_POST, 'estado_civil', 'id_estado_civil');
         $id_grado_instruccion = obtenerCampoFlex($_POST, 'grado_instruccion', 'id_grado_instruccion');
+        $id_grado_instruccion = ($id_grado_instruccion === '' || $id_grado_instruccion === null) ? null : $id_grado_instruccion;
         $observaciones       = $_POST['observaciones'] ?? null;
 
         $validacionTelefono = validarTelefono($telefono);
@@ -201,7 +197,8 @@ switch ($accion) {
         }
 
         $correo = trim($_POST['correo']);
-        if ($modelo->existeCorreoExceptoPaciente($correo, $id)) {
+        $correo = $correo === '' ? null : $correo;
+        if (!empty($correo) && $modelo->existeCorreoExceptoPaciente($correo, $id)) {
             echo json_encode(['success' => false, 'mensaje' => 'El correo ya está registrado por otro paciente']); exit;
         }
 
@@ -220,6 +217,7 @@ switch ($accion) {
         $id_sexo              = obtenerCampoFlex($_POST, 'sexo', 'id_sexo');
         $id_estado_civil      = obtenerCampoFlex($_POST, 'estado_civil', 'id_estado_civil');
         $id_grado_instruccion = obtenerCampoFlex($_POST, 'grado_instruccion', 'id_grado_instruccion');
+        $id_grado_instruccion = ($id_grado_instruccion === '' || $id_grado_instruccion === null) ? null : $id_grado_instruccion;
         $observaciones        = $_POST['observaciones'] ?? null;
 
         $validacionTelefono = validarTelefono($telefono);

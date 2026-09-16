@@ -113,15 +113,15 @@
                     </div>
 
                     <div class="grupo-campo">
-                        <label>Grado de Instrucción <span class="campo-obligatorio">*</span></label>
-                        <select name="grado_instruccion" id="selectGrado_instruccion" required>
+                        <label>Grado de Instrucción</label>
+                        <select name="grado_instruccion" id="selectGrado_instruccion">
                             <option value="">Selecciona...</option>
                         </select>
                     </div>
 
                     <div class="grupo-campo">
-                        <label>Ocupación <span class="campo-obligatorio">*</span></label>
-                        <input type="text" name="ocupacion" required placeholder="Ej: Docente, Estudiante...">
+                        <label>Ocupación</label>
+                        <input type="text" name="ocupacion" placeholder="Ej: Docente, Estudiante...">
                     </div>
 
                     <div class="grupo-campo">
@@ -131,8 +131,8 @@
                     </div>
 
                     <div class="grupo-campo">
-                        <label>Correo <span class="campo-obligatorio">*</span></label>
-                        <input type="email" name="correo" required placeholder="correo@ejemplo.com">
+                        <label>Correo</label>
+                        <input type="email" name="correo" placeholder="correo@ejemplo.com">
                     </div>
 
                     <div class="grupo-campo campo-ancho">

@@ -351,8 +351,8 @@ function iniciarModuloPacientes() {
             inputTelefono.addEventListener('input', function() { this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9); validarCampoTelefono(this); });
             inputTelefono.addEventListener('blur', function() { validarCampoTelefono(this); });
         }
-        if (inputNombre) inputNombre.addEventListener('input', function() {  this.value = this.value.toUpperCase(); validarCampoTexto(this, 'nombre'); });
-        if (inputApellidos) inputApellidos.addEventListener('input', function() { this.value = this.value.toUpperCase(); validarCampoTexto(this, 'apellidos'); });
+        if (inputNombre) inputNombre.addEventListener('input', function() { validarCampoTexto(this, 'nombre'); });
+        if (inputApellidos) inputApellidos.addEventListener('input', function() { validarCampoTexto(this, 'apellidos'); });
         if (inputCorreo) inputCorreo.addEventListener('blur', function() { validarCampoCorreo(this); });
     
         function validarCampoDNI(input) {
@@ -387,7 +387,7 @@ function iniciarModuloPacientes() {
         function validarCampoCorreo(input) {
             eliminarMensajeError(input);
             const valor = input.value.trim();
-            if (valor === '') { mostrarError(input, 'El correo es obligatorio'); return false; }
+            if (valor === '') { input.classList.remove('campo-invalido'); return true; } // Opcional
             if (!REGEX_CORREO.test(valor)) { mostrarError(input, 'Formato de correo inválido (ej: usuario@dominio.com)'); return false; }
             input.classList.add('campo-valido');
             return true;
@@ -417,7 +417,6 @@ function iniciarModuloPacientes() {
             if (!validarCampoTelefono(inputTelefono)) esValido = false;
             if (!selectSexo.value) { mostrarError(selectSexo, 'Debe seleccionar un sexo'); esValido = false; }
             if (!selectEstadoCivil.value) { mostrarError(selectEstadoCivil, 'Debe seleccionar un estado civil'); esValido = false; }
-            if (!selectGradoInstruccion.value) { mostrarError(selectGradoInstruccion, 'Debe seleccionar un grado de instrucción'); esValido = false; }
             return esValido;
         }
     
