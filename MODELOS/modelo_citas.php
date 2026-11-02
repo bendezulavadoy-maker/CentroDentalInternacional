@@ -9,7 +9,7 @@ class ModeloCitas {
     }
 
     // =====================================================
-    // 🔹 Registrar nueva cita
+    // Registrar nueva cita
     // =====================================================
     // Estados y transiciones de negocio
     private $estadosFinales  = [4];           // 4=Completada — nadie edita ni elimina
@@ -24,7 +24,7 @@ class ModeloCitas {
     private $nombresEstado = [1=>'Programada',2=>'Confirmada',3=>'Cancelada',4=>'Completada',5=>'No asistió'];
 
     // =====================================================
-    // 🔹 Validar transición de estado
+    // Validar transición de estado
     // =====================================================
     public function validarTransicionEstado($id_cita, $nuevo_estado) {
         try {
@@ -54,7 +54,7 @@ class ModeloCitas {
     }
 
     // =====================================================
-    // 🔹 Citas vencidas (fecha pasada, aún abiertas)
+    // Citas vencidas (fecha pasada, aún abiertas)
     // =====================================================
     public function listarCitasVencidas() {
         try {
@@ -81,7 +81,7 @@ class ModeloCitas {
     }
 
     // =====================================================
-    // 🔹 Cerrar cita vencida (solo No asistió o Cancelada)
+    // Cerrar cita vencida (solo No asistió o Cancelada)
     // =====================================================
     public function cerrarCitaVencida($id_cita, $nuevo_estado) {
         try {
@@ -146,7 +146,7 @@ class ModeloCitas {
             
             if ($resultado) {
                 $idNuevo = $this->conexion->lastInsertId();
-                error_log("✅ Cita registrada ID: $idNuevo");
+                error_log("Cita registrada ID: $idNuevo");
                 
                 if (isset($datos['alergias_medicamentos']) && !empty($datos['alergias_medicamentos'])) {
                     $alergias_filtradas = array_filter($datos['alergias_medicamentos'], function($val) {
@@ -166,17 +166,17 @@ class ModeloCitas {
                 ];
             }
             
-            error_log("❌ No se pudo insertar");
+            error_log("No se pudo insertar");
             return ['success' => false, 'mensaje' => 'Error al insertar en la base de datos'];
 
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error de base de datos'];
         }
     }
 
     // =====================================================
-    // 🔹 Editar cita — CORREGIDO: guarda todos los campos
+    // Editar cita — CORREGIDO: guarda todos los campos
     // =====================================================
     public function editarCita($id, $datos) {
         try {
@@ -242,7 +242,7 @@ class ModeloCitas {
             ]);
             
             if ($resultado) {
-                error_log("✅ Cita actualizada ID: $id");
+                error_log("Cita actualizada ID: $id");
                 
                 if (isset($datos['alergias_medicamentos'])) {
                     $alergias_filtradas = array_filter($datos['alergias_medicamentos'], function($val) {
@@ -260,13 +260,13 @@ class ModeloCitas {
             return $resultado;
             
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Eliminar cita
+    // Eliminar cita
     // =====================================================
     public function eliminarCita($id) {
         try {
@@ -297,13 +297,13 @@ class ModeloCitas {
                 ? ['success' => true, 'mensaje' => 'Cita eliminada'] 
                 : ['success' => false, 'mensaje' => 'Error al eliminar'];
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error de base de datos'];
         }
     }
 
     // =====================================================
-    // 🔹 Listar citas
+    // Listar citas
     // =====================================================
     public function listarCitas() {
         try {
@@ -323,6 +323,7 @@ class ModeloCitas {
                         p.nombre AS paciente_nombre,
                         p.apellido AS paciente_apellido,
                         p.dni AS paciente_dni,
+                        td.abreviatura AS paciente_tipo_doc,
                         u.nombre AS doctor_nombre,
                         u.apellidos AS doctor_apellidos,
                         ec.estado,
@@ -331,6 +332,7 @@ class ModeloCitas {
                         s.nombre_sede AS sede
                     FROM citas c
                     INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
+                    LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     INNER JOIN usuarios u  ON c.id_doctor = u.id_usuario
                     LEFT JOIN estado_cita ec      ON c.id_estado_cita = ec.id_estado_cita
                     LEFT JOIN tipo_servicio ts     ON c.id_tipo_servicio = ts.id_tipo_servicio
@@ -342,13 +344,13 @@ class ModeloCitas {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return [];
         }
     }
 
     // =====================================================
-    // 🔹 Ver cita por ID
+    // Ver cita por ID
     // =====================================================
     public function verCita($id) {
         try {
@@ -357,6 +359,7 @@ class ModeloCitas {
                         p.nombre AS paciente_nombre,
                         p.apellido AS paciente_apellido,
                         p.dni AS paciente_dni,
+                        td.abreviatura AS paciente_tipo_doc,
                         p.telefono AS telefono_paciente,
                         u.nombre AS doctor_nombre,
                         u.apellidos AS doctor_apellidos,
@@ -370,6 +373,7 @@ class ModeloCitas {
                         pt.nombre_plan AS nombre_plan
                     FROM citas c
                     INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
+                    LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     INNER JOIN usuarios u ON c.id_doctor = u.id_usuario
                     LEFT JOIN estado_cita ec ON c.id_estado_cita = ec.id_estado_cita
                     LEFT JOIN tipo_servicio ts ON c.id_tipo_servicio = ts.id_tipo_servicio
@@ -389,13 +393,13 @@ class ModeloCitas {
             
             return $cita;
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Validar disponibilidad de slot (doble validación servidor)
+    // Validar disponibilidad de slot (doble validación servidor)
     // =====================================================
     public function validarSlotDisponible($id_doctor, $id_sede, $fecha, $hora, $duracion_minutos, $excluir_cita = 0) {
         try {
@@ -480,13 +484,13 @@ class ModeloCitas {
             return ['valido' => true];
 
         } catch (PDOException $e) {
-            error_log("❌ validarSlot: " . $e->getMessage());
+            error_log("validarSlot: " . $e->getMessage());
             return ['valido' => false, 'mensaje' => 'Error al validar disponibilidad'];
         }
     }
 
     // =====================================================
-    // 💊 GUARDAR ALERGIAS
+    // GUARDAR ALERGIAS
     // =====================================================
     private function guardarAlergiasPaciente($id_paciente, $alergias) {
         try {
@@ -508,13 +512,13 @@ class ModeloCitas {
             }
             return true;
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 💊 OBTENER ALERGIAS
+    // OBTENER ALERGIAS
     // =====================================================
     public function obtenerAlergiasPaciente($id_paciente) {
         try {
@@ -531,22 +535,24 @@ class ModeloCitas {
             $stmt->execute([':id_paciente' => $id_paciente]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("❌ Error: " . $e->getMessage());
+            error_log("Error: " . $e->getMessage());
             return [];
         }
     }
 
     // =====================================================
-    // 🔍 BÚSQUEDAS Y CATÁLOGOS
+    // BÚSQUEDAS Y CATÁLOGOS
     // =====================================================
     public function buscarPacientes($termino) {
         try {
-            $sql = "SELECT id_paciente, nombre, apellido, dni
-                    FROM pacientes
-                    WHERE nombre LIKE :termino 
-                       OR apellido LIKE :termino 
-                       OR dni LIKE :termino
-                    ORDER BY nombre, apellido
+            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.dni,
+                           td.abreviatura AS tipo_documento_abrev
+                    FROM pacientes p
+                    LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
+                    WHERE p.nombre LIKE :termino 
+                       OR p.apellido LIKE :termino 
+                       OR p.dni LIKE :termino
+                    ORDER BY p.nombre, p.apellido
                     LIMIT 10";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([':termino' => "%$termino%"]);
@@ -558,13 +564,15 @@ class ModeloCitas {
 
     public function buscarDoctores($termino) {
         try {
-            $sql = "SELECT id_usuario, nombre, apellidos, dni
-                    FROM usuarios
-                    WHERE id_rol = 2
-                      AND (nombre LIKE :termino 
-                           OR apellidos LIKE :termino 
-                           OR dni LIKE :termino)
-                    ORDER BY nombre, apellidos
+            $sql = "SELECT u.id_usuario, u.nombre, u.apellidos, u.dni,
+                           td.abreviatura AS tipo_documento_abrev
+                    FROM usuarios u
+                    LEFT JOIN tipo_documento td ON u.id_tipo_documento = td.id_tipo_documento
+                    WHERE u.id_rol = 2
+                      AND (u.nombre LIKE :termino 
+                           OR u.apellidos LIKE :termino 
+                           OR u.dni LIKE :termino)
+                    ORDER BY u.nombre, u.apellidos
                     LIMIT 10";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([':termino' => "%$termino%"]);
@@ -619,7 +627,7 @@ class ModeloCitas {
     }
 
     // =====================================================
-    // 📋 LOG DE AUDITORÍA (no crítico, falla silenciosamente)
+    // LOG DE AUDITORÍA (no crítico, falla silenciosamente)
     // =====================================================
     private function registrarLogCita($id_cita, $accion, $datos_anteriores, $datos_nuevos) {
         try {

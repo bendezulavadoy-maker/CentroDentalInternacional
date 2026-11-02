@@ -12,7 +12,7 @@
         <div class="barra-busqueda-filtros">
             <div class="grupo-busqueda">
                 <input type="text" id="inputBusqueda"
-                       placeholder="Buscar por paciente, doctor o DNI..."
+                       placeholder="Buscar por paciente, doctor o documento..."
                        class="input-busqueda">
             </div>
             <div class="grupo-filtros">
@@ -97,7 +97,7 @@
                         <label>Paciente <span class="campo-obligatorio">*</span></label>
                         <div class="input-con-autocompletar">
                             <input type="text" id="inputPaciente"
-                                   placeholder="Buscar por nombre o DNI..."
+                                   placeholder="Buscar por nombre o documento..."
                                    autocomplete="off">
                             <input type="hidden" id="idPacienteSeleccionado" name="id_paciente">
                             <div id="sugerenciasPaciente" class="sugerencias-autocompletar"></div>
@@ -194,7 +194,7 @@
                     <h4 class="subtitulo-seccion">Información Médica — Alergias</h4>
 
                     <div id="mensajeAlergiasExistentes" style="display:none;" class="mensaje-alergias-existentes">
-                        <div class="icono-alerta">⚠️</div>
+                        <div class="icono-alerta"><i class="ti ti-alert-triangle"></i></div>
                         <div class="contenido-alerta">
                             <strong>El paciente ya tiene estos medicamentos alérgicos registrados:</strong>
                             <div id="listaAlergiasExistentes" class="lista-alergias-existentes"></div>
@@ -222,7 +222,7 @@
                         <input type="hidden" name="alergias_medicamentos_hidden" id="alergiasMedicamentosHidden">
                     </div>
 
-                    <button type="submit" class="btn-guardar" id="btnGuardarCita">💾 Guardar Cita</button>
+                    <button type="submit" class="btn-guardar" id="btnGuardarCita">Guardar Cita</button>
 
                 </div>
             </div>

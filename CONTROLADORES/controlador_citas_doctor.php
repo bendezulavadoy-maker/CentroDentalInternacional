@@ -1,4 +1,5 @@
 <?php
+require_once '../CONFIG/requerir_sesion_api.php';
 // controlador_citas_doctor.php - VERSIÓN CORREGIDA CON RESPUESTA ACCIÓN
 require_once '../MODELOS/modelo_citas_doctor.php';
 

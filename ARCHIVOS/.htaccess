@@ -1,0 +1,14 @@
+# Los documentos de los pacientes NO se pueden abrir por su direccion: solo a traves del sistema
+# (controlador_documentos.php, que comprueba la sesion y los permisos antes de entregar el archivo).
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+# Por si algun archivo llegara a servirse: que nunca se ejecute como programa
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+Options -Indexes

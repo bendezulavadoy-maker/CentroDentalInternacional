@@ -1,4 +1,5 @@
 
 .env
 vendor/
+error_log
 ARCHIVOS/documentos_pacientes/

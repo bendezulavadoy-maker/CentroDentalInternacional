@@ -1,11 +1,42 @@
 <?php
-$idPaciente = $_GET['id_paciente'] ?? 0;
+require_once '../CONFIG/verificar_sesion.php';
+require_once '../CONFIG/permisos.php';
+require_once '../CONFIG/parametros.php';
+
+// El paciente SIEMPRE se convierte a numero (antes se imprimia tal cual dentro de un <script>)
+$idPaciente = (int)($_GET['id_paciente'] ?? 0);
+
+// Que botones se muestran. Es solo la primera pintura: el servidor vuelve a decidir en cada accion.
+$permisos = [
+    'subir' => false, 'crear_carpeta' => false, 'descargar' => false,
+    'renombrar' => false, 'mover' => false, 'eliminar' => false, 'papelera' => false,
+];
+if ($idPaciente > 0) {
+    $p = Permisos::enPaciente(['documentos.subir', 'documentos.crear_carpeta', 'documentos.descargar',
+                               'documentos.renombrar', 'documentos.mover', 'documentos.eliminar'], $idPaciente);
+    $permisos = [
+        'subir' => $p['documentos.subir'], 'crear_carpeta' => $p['documentos.crear_carpeta'],
+        'descargar' => $p['documentos.descargar'], 'renombrar' => $p['documentos.renombrar'],
+        'mover' => $p['documentos.mover'], 'eliminar' => $p['documentos.eliminar'],
+        'papelera' => Permisos::puede('documentos.papelera'),
+    ];
+}
+$config = [
+    'id_paciente'   => $idPaciente,
+    'permisos'      => $permisos,
+    'papelera_dias' => Parametros::entero('papelera_dias', 15),
+    'max_mb'        => (int)floor(Parametros::maxBytesDocumento() / 1048576),
+    'extensiones'   => Parametros::extensionesDocumento(),
+];
+$configJson = htmlspecialchars(json_encode($config), ENT_QUOTES, 'UTF-8');
+function ocultoSi($permitido) { return $permitido ? '' : ' style="display:none;"'; }
 ?>
 
 <link rel="stylesheet" href="../ESTILOS/style_modulo_documentos.css">
 
-<div class="contenedor-modulo-documentos">
-    <!-- 📊 Header con estadísticas -->
+<div class="contenedor-modulo-documentos" id="moduloDocumentos" data-config="<?= $configJson ?>">
+
+    <!-- Encabezado con estadisticas y acciones -->
     <div class="header-documentos">
         <div class="estadisticas-documentos">
             <div class="stat-item">
@@ -32,40 +63,44 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         </div>
 
         <div class="acciones-header">
-            <button class="btn-accion-header" id="btnPegar" title="Pegar" disabled>
+            <button class="btn-accion-header" id="btnPapelera" title="Papelera"<?= ocultoSi($permisos['papelera']) ?>>
+                <i class="ti ti-trash"></i> Papelera
+            </button>
+            <button class="btn-accion-header" id="btnPegar" title="Pegar" disabled<?= ocultoSi($permisos['mover'] || $permisos['subir'] || $permisos['crear_carpeta']) ?>>
                 <i class="ti ti-clipboard"></i> Pegar
             </button>
-            <button class="btn-accion-header" id="btnNuevaCarpeta" title="Nueva carpeta">
+            <button class="btn-accion-header" id="btnNuevaCarpeta" title="Nueva carpeta"<?= ocultoSi($permisos['crear_carpeta']) ?>>
                 <i class="ti ti-folder-plus"></i> Nueva Carpeta
             </button>
-            <button class="btn-accion-header btn-primario" id="btnSubirDocumento" title="Subir documento">
+            <button class="btn-accion-header btn-primario" id="btnSubirDocumento" title="Subir documento"<?= ocultoSi($permisos['subir']) ?>>
                 <i class="ti ti-upload"></i> Subir Documento
             </button>
         </div>
     </div>
 
-    <!-- 🗂️ Navegación de ruta (Breadcrumb) -->
+    <!-- Ruta de navegacion -->
     <div class="breadcrumb-navegacion">
         <button class="breadcrumb-item activo" data-id="raiz">
-            <span>🏠</span> Inicio
+            <i class="ti ti-home"></i> Inicio
         </button>
     </div>
 
-    <!-- 📁 Área principal: Carpetas y Documentos -->
+    <!-- Barras de seleccion y de portapapeles -->
+    <div class="barra-portapapeles" id="barraPortapapeles" style="display:none;"></div>
+    <div class="barra-seleccion" id="barraSeleccion" style="display:none;"></div>
+
+    <!-- Area principal -->
     <div class="contenedor-principal">
-        <!-- Columna izquierda: Árbol de carpetas -->
         <div class="columna-arbol">
             <div class="header-arbol">
                 <h3>Estructura de Carpetas</h3>
             </div>
             <div class="arbol-carpetas" id="arbolCarpetas">
-                <div class="cargando-arbol">⏳ Cargando estructura...</div>
+                <div class="cargando-arbol">Cargando estructura...</div>
             </div>
         </div>
 
-        <!-- Columna derecha: Contenido -->
         <div class="columna-contenido">
-            <!-- Carpetas del nivel actual -->
             <div class="seccion-carpetas">
                 <h3 class="titulo-seccion">Carpetas</h3>
                 <div class="grid-carpetas" id="gridCarpetas">
@@ -73,36 +108,28 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                 </div>
             </div>
 
-            <!-- Documentos del nivel actual -->
             <div class="seccion-documentos">
                 <h3 class="titulo-seccion">Documentos</h3>
                 <div class="lista-documentos" id="listaDocumentos">
-                    <div class="mensaje-vacio">No hay documentos en esta carpeta</div>
+                    <div class="mensaje-vacio">No hay documentos en esta ubicación</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- 🗂️ MODAL: Nueva Carpeta -->
-<!-- ===================================================== -->
+<!-- MODAL: Nueva carpeta -->
 <div id="modalNuevaCarpeta" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
             <h3>Nueva Carpeta</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalCarpeta">✖</button>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalCarpeta"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <form id="formNuevaCarpeta">
                 <div class="form-group">
                     <label for="nombreCarpeta">Nombre de la carpeta</label>
-                    <input type="text" 
-                           id="nombreCarpeta" 
-                           class="input-text" 
-                           placeholder="Ej: Estudios de laboratorio" 
-                           required 
-                           maxlength="100">
+                    <input type="text" id="nombreCarpeta" class="input-text" placeholder="Ej: Estudios de laboratorio" required maxlength="100">
                 </div>
                 <div class="form-group">
                     <label for="colorCarpeta">Color</label>
@@ -112,21 +139,17 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCancelarCarpeta">Cancelar</button>
-            <button type="button" class="btn-primario" id="btnGuardarCarpeta">
-                <span>💾</span> Crear Carpeta
-            </button>
+            <button type="button" class="btn-primario" id="btnGuardarCarpeta">Crear Carpeta</button>
         </div>
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- ⬆️ MODAL: Subir Documento -->
-<!-- ===================================================== -->
+<!-- MODAL: Subir documento -->
 <div id="modalSubirDocumento" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
-            <h3>⬆️ Subir Documento</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalDocumento">✖</button>
+            <h3>Subir Documento</h3>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalDocumento"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <form id="formSubirDocumento" enctype="multipart/form-data">
@@ -135,16 +158,9 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                         <span class="icono-subida"><i class="ti ti-cloud-upload"></i></span>
                         <p class="texto-principal">Arrastra y suelta tu archivo aquí</p>
                         <p class="texto-secundario">o haz clic para seleccionar</p>
-                        <input type="file" 
-                               id="inputArchivo" 
-                               name="archivo" 
-                               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" 
-                               hidden 
-                               required>
-                        <button type="button" class="btn-seleccionar" id="btnSeleccionarArchivo">
-                            Seleccionar Archivo
-                        </button>
-                        <p class="texto-info">Formatos: PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (máx. 10MB)</p>
+                        <input type="file" id="inputArchivo" name="archivo" hidden required>
+                        <button type="button" class="btn-seleccionar" id="btnSeleccionarArchivo">Seleccionar Archivo</button>
+                        <p class="texto-info" id="textoInfoArchivo"></p>
                     </div>
                 </div>
 
@@ -155,66 +171,49 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
                             <p class="nombre-archivo" id="nombreArchivoSeleccionado"></p>
                             <p class="tamano-archivo" id="tamanoArchivoSeleccionado"></p>
                         </div>
-                        <button type="button" class="btn-eliminar-archivo" id="btnEliminarArchivo">✕</button>
+                        <button type="button" class="btn-eliminar-archivo" id="btnEliminarArchivo"><i class="ti ti-x"></i></button>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="tituloDocumento">Título del documento</label>
-                    <input type="text" 
-                           id="tituloDocumento" 
-                           name="titulo" 
-                           class="input-text" 
-                           placeholder="Ej: Radiografía panorámica - Enero 2024" 
-                           maxlength="200">
+                    <input type="text" id="tituloDocumento" name="titulo" class="input-text" placeholder="Ej: Radiografía panorámica - Enero 2024" maxlength="200">
                 </div>
 
                 <div class="form-group">
                     <label for="descripcionDocumento">Descripción (opcional)</label>
-                    <textarea id="descripcionDocumento" 
-                              name="descripcion" 
-                              class="input-textarea" 
-                              rows="3" 
+                    <textarea id="descripcionDocumento" name="descripcion" class="input-textarea" rows="3" maxlength="1000"
                               placeholder="Agrega una descripción o notas sobre este documento..."></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="carpetaDestino">Guardar en carpeta</label>
                     <select id="carpetaDestino" name="id_carpeta" class="input-select">
-                        <option value="">Raíz (sin carpeta)</option>
+                        <option value="">Inicio (sin carpeta)</option>
                     </select>
                 </div>
             </form>
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCancelarDocumento">Cancelar</button>
-            <button type="button" class="btn-primario" id="btnGuardarDocumento" disabled>
-                <span>⬆️</span> Subir Documento
-            </button>
+            <button type="button" class="btn-primario" id="btnGuardarDocumento" disabled>Subir Documento</button>
         </div>
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- ✏️ MODAL: Editar Carpeta -->
-<!-- ===================================================== -->
+<!-- MODAL: Renombrar carpeta -->
 <div id="modalEditarCarpeta" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
             <h3>Editar Carpeta</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarCarpeta">✖</button>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarCarpeta"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <form id="formEditarCarpeta">
                 <input type="hidden" id="editarIdCarpeta">
-                
                 <div class="form-group">
                     <label for="editarNombreCarpeta">Nombre de la carpeta</label>
-                    <input type="text" 
-                           id="editarNombreCarpeta" 
-                           class="input-text" 
-                           required 
-                           maxlength="100">
+                    <input type="text" id="editarNombreCarpeta" class="input-text" required maxlength="100">
                 </div>
                 <div class="form-group">
                     <label for="editarColorCarpeta">Color</label>
@@ -224,65 +223,83 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCancelarEditarCarpeta">Cancelar</button>
-            <button type="button" class="btn-primario" id="btnGuardarEditarCarpeta">
-                <span>💾</span> Guardar Cambios
-            </button>
+            <button type="button" class="btn-primario" id="btnGuardarEditarCarpeta">Guardar Cambios</button>
         </div>
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- ✏️ MODAL: Editar Documento -->
-<!-- ===================================================== -->
+<!-- MODAL: Renombrar documento -->
 <div id="modalEditarDocumento" class="modal-overlay">
     <div class="modal-contenido modal-mediano">
         <div class="modal-encabezado">
             <h3>Editar Documento</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarDocumento">✖</button>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEditarDocumento"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <form id="formEditarDocumento">
                 <input type="hidden" id="editarIdDocumento">
-                
                 <div class="form-group">
                     <label for="editarTituloDocumento">Título del documento</label>
-                    <input type="text" 
-                           id="editarTituloDocumento" 
-                           class="input-text" 
-                           required 
-                           maxlength="200">
+                    <input type="text" id="editarTituloDocumento" class="input-text" required maxlength="200">
                 </div>
-
                 <div class="form-group">
                     <label for="editarDescripcionDocumento">Descripción</label>
-                    <textarea id="editarDescripcionDocumento" 
-                              class="input-textarea" 
-                              rows="3"></textarea>
+                    <textarea id="editarDescripcionDocumento" class="input-textarea" rows="3" maxlength="1000"></textarea>
                 </div>
             </form>
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCancelarEditarDocumento">Cancelar</button>
-            <button type="button" class="btn-primario" id="btnGuardarEditarDocumento">
-                <span>💾</span> Guardar Cambios
-            </button>
+            <button type="button" class="btn-primario" id="btnGuardarEditarDocumento">Guardar Cambios</button>
         </div>
     </div>
 </div>
 
-<!-- ===================================================== -->
-<!-- 👁️ MODAL: Vista previa de documento -->
-<!-- ===================================================== -->
+<!-- MODAL: Confirmar eliminacion (envia a la papelera) -->
+<div id="modalConfirmarEliminar" class="modal-overlay">
+    <div class="modal-contenido modal-mediano">
+        <div class="modal-encabezado">
+            <h3>Eliminar</h3>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalEliminar"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="modal-cuerpo">
+            <p class="texto-confirmacion" id="textoConfirmarEliminar"></p>
+            <ul class="lista-confirmacion" id="listaConfirmarEliminar"></ul>
+            <p class="texto-ayuda-confirmacion" id="ayudaConfirmarEliminar"></p>
+        </div>
+        <div class="modal-botones">
+            <button type="button" class="btn-secundario" id="btnCancelarEliminar">Cancelar</button>
+            <button type="button" class="btn-peligro" id="btnConfirmarEliminar">Enviar a la papelera</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Papelera (solo quien tiene ese permiso) -->
+<div id="modalPapelera" class="modal-overlay">
+    <div class="modal-contenido modal-ancha">
+        <div class="modal-encabezado">
+            <h3>Papelera</h3>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalPapelera"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="modal-cuerpo">
+            <p class="texto-ayuda-confirmacion" id="ayudaPapelera"></p>
+            <div class="lista-papelera" id="listaPapelera"></div>
+        </div>
+        <div class="modal-botones">
+            <button type="button" class="btn-secundario" id="btnCerrarPapelera">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Vista previa (PDF e imagenes; Word y Excel se descargan) -->
 <div id="modalPreviewDocumento" class="modal-overlay">
     <div class="modal-contenido modal-ancha">
         <div class="modal-encabezado">
             <h3 id="tituloPreviewDocumento">Vista previa</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalPreview">✖</button>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalPreview"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
-            <div class="contenedor-preview" id="contenedorPreview">
-                <!-- Se llena dinámicamente -->
-            </div>
+            <div class="contenedor-preview" id="contenedorPreview"></div>
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCerrarPreview">Cerrar</button>
@@ -291,8 +308,4 @@ $idPaciente = $_GET['id_paciente'] ?? 0;
     </div>
 </div>
 
-<script>
-    // Pasar el ID del paciente al script
-    const ID_PACIENTE_ACTUAL = <?php echo $idPaciente; ?>;
-</script>
 <script src="../SCRIPTS/script_modulo_documentos.js"></script>

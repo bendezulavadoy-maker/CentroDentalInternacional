@@ -1,13 +1,20 @@
 // =====================================================
-// 🚀 MÓDULO DE GESTIÓN DE CITAS ODONTOLÓGICAS - PARTE 1/6
+// MÓDULO DE GESTIÓN DE CITAS ODONTOLÓGICAS - PARTE 1/6
 // Inicialización, Variables Globales y Elementos del DOM
 // =====================================================
 
 function iniciarModuloCitas() {
-    console.log("🔵 === INICIANDO MÓDULO DE CITAS ===");
+
+    // Escapa texto antes de insertarlo como HTML: un dato con etiquetas (por ejemplo un
+    // motivo escrito por un paciente desde el portal) se muestra como texto, no se ejecuta.
+    function esc(valor) {
+        return String(valor ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
     
     // =====================================================
-    // 📌 ELEMENTOS DEL DOM
+    // ELEMENTOS DEL DOM
     // =====================================================
     const tablaBody = document.querySelector('#tablaCitas tbody');
     const seccionListado = document.getElementById('seccionListadoCitas');
@@ -63,7 +70,7 @@ function iniciarModuloCitas() {
     const idCitaEditar = document.getElementById('idCitaEditar');
 
     // =====================================================
-    // 📊 VARIABLES LOCALES (NO GLOBALES)
+    // VARIABLES LOCALES (NO GLOBALES)
     // =====================================================
     let modoEdicion = false;
     let idEdicion = null;
@@ -73,25 +80,23 @@ function iniciarModuloCitas() {
     let alergiasActualesPaciente = [];
     let estadoFiltroActual = '';
 
-    // ✅ VERIFICAR SI LOS ELEMENTOS EXISTEN
+    // VERIFICAR SI LOS ELEMENTOS EXISTEN
     if (!tablaBody || !form || !seccionListado) {
-        console.error("❌ Elementos del DOM no encontrados. El módulo de citas no puede inicializarse.");
+        console.error("Elementos del DOM no encontrados. El módulo de citas no puede inicializarse.");
         return;
     }
 
     // =====================================================
-    // 🎬 INICIALIZACIÓN
+    // INICIALIZACIÓN
     // =====================================================
     cargarSelectores();
     listarCitas();
     configurarEventos();
-    configurarEventosEstadisticas(); // ← ✅ AGREGAR ESTA LÍNEA
+    configurarEventosEstadisticas(); // ← AGREGAR ESTA LÍNEA
     establecerFechaMinima();
 
-    console.log("✅ Módulo de citas inicializado correctamente");
-
     // =====================================================
-    // 🔹 Establecer fecha mínima (hoy)
+    // Establecer fecha mínima (hoy)
     // =====================================================
     function establecerFechaMinima() {
         const hoy = new Date();
@@ -104,14 +109,12 @@ function iniciarModuloCitas() {
             fechaCita.setAttribute('min', fechaMinima);
         }
         
-        console.log("📅 Fecha mínima establecida:", fechaMinima);
     }
 
     // =====================================================
-    // 🔹 Cargar selectores dinámicamente
+    // Cargar selectores dinámicamente
     // =====================================================
     function cargarSelectores() {
-        console.log("🔵 === CARGANDO SELECTORES ===");
         
         // Cargar Estados de Cita
         // Tipos de atención
@@ -122,7 +125,7 @@ function iniciarModuloCitas() {
                 if (!sel) return;
                 sel.innerHTML = '<option value="">Selecciona el tipo</option>' +
                     data.filter(t => parseInt(t.activo) === 1).map(t =>
-                        `<option value="${t.id_tipo_atencion}" data-duracion="${t.duracion_minutos}">${t.nombre} (${t.duracion_minutos} min)</option>`
+                        `<option value="${esc(t.id_tipo_atencion)}" data-duracion="${esc(t.duracion_minutos)}">${esc(t.nombre)} (${esc(t.duracion_minutos)} min)</option>`
                     ).join('');
                 sel.addEventListener('change', () => {
                     const opt = sel.selectedOptions[0];
@@ -155,7 +158,6 @@ function iniciarModuloCitas() {
             fetch('../CONTROLADORES/controlador_citas.php?accion=listar_tipos_servicio')
                 .then(res => res.json())
                 .then(data => {
-                    console.log("✅ Tipos de servicio cargados:", data.length);
                     selTipoServicioEl.innerHTML = '<option value="">Seleccione...</option>';
                     data.forEach(servicio => {
                         const opt = document.createElement('option');
@@ -165,7 +167,7 @@ function iniciarModuloCitas() {
                     });
                 })
                 .catch(() => {
-                    console.error("❌ Error al cargar tipos de servicio");
+                    console.error("Error al cargar tipos de servicio");
                     selTipoServicioEl.innerHTML = '<option value="">Error al cargar</option>';
                 });
         }
@@ -177,7 +179,6 @@ function iniciarModuloCitas() {
         fetch('../CONTROLADORES/controlador_citas.php?accion=listar_sedes')
             .then(res => res.json())
             .then(data => {
-                console.log("✅ Sedes cargadas:", data.length);
                 selectSede.innerHTML = '<option value="">Seleccione...</option>';
                 data.forEach(sede => {
                     const opt = document.createElement('option');
@@ -188,20 +189,19 @@ function iniciarModuloCitas() {
                 window._sedesListasResolve(); // ← señal: sedes ya cargadas
             })
             .catch(() => {
-                console.error("❌ Error al cargar sedes");
+                console.error("Error al cargar sedes");
                 selectSede.innerHTML = '<option value="">Error al cargar</option>';
                 window._sedesListasResolve(); // resolvemos igual para no bloquear
             });
 
-        console.log("ℹ️ Catálogo de medicamentos se cargará dinámicamente como chips");
     }
 
    // =====================================================
-    // 🚀 PARTE 2/6: Configuración de Eventos y Autocompletar
+    // PARTE 2/6: Configuración de Eventos y Autocompletar
     // =====================================================
 
     // =====================================================
-    // 🔹 Configurar eventos
+    // Configurar eventos
     // =====================================================
     function configurarEventos() {
         // Slots: recargar al cambiar sede, fecha o duración
@@ -209,7 +209,6 @@ function iniciarModuloCitas() {
         document.getElementById('selectDuracion')?.addEventListener('change', cargarSlots);
         document.getElementById('fechaCita')?.addEventListener('change', cargarSlots);
 
-        console.log("🔵 === CONFIGURANDO EVENTOS ===");
         
         // Botones principales
         btnNueva.addEventListener('click', mostrarFormularioNuevo);
@@ -226,7 +225,6 @@ function iniciarModuloCitas() {
         // Detectar cuando se limpia el campo de paciente
         inputPaciente.addEventListener('input', (e) => {
             if (e.target.value.trim() === '') {
-                console.log('🔵 Campo paciente limpiado - Ocultando alergias');
                 limpiarSeccionAlergias();
                 idPacienteSeleccionado.value = '';
             }
@@ -236,7 +234,6 @@ function iniciarModuloCitas() {
         [selectEstadoCita, selectSede].forEach(select => {
             if (!select) return;
             select.addEventListener('change', (e) => {
-                console.log(`🔵 Select ${e.target.id} cambiado a:`, e.target.value);
             });
         });
         
@@ -276,14 +273,12 @@ function iniciarModuloCitas() {
             });
         });
         
-        console.log("✅ Eventos configurados correctamente");
     }
 
 // =====================================================
-// 📊 CONFIGURAR EVENTOS DE ESTADÍSTICAS - ✅ NUEVO
+// CONFIGURAR EVENTOS DE ESTADÍSTICAS - NUEVO
 // =====================================================
 function configurarEventosEstadisticas() {
-    console.log("🔵 === CONFIGURANDO EVENTOS DE ESTADÍSTICAS ===");
     
     // Usar delegación de eventos en el contenedor padre
     const contenedorEstadisticas = document.querySelector('.stats-container') || 
@@ -302,9 +297,6 @@ function configurarEventosEstadisticas() {
         
         const estadoSeleccionado = caja.dataset.estado || '';
         
-        console.log('🔵 ========================================');
-        console.log('🔵 CLICK EN ESTADÍSTICA:', estadoSeleccionado);
-        console.log('🔵 ========================================');
         
         // Actualizar UI
         document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('filtro-activo'));
@@ -313,20 +305,17 @@ function configurarEventosEstadisticas() {
         // Establecer filtro
         estadoFiltroActual = estadoSeleccionado;
         
-        // ✅ CRÍTICO: Recargar datos desde BD
-        console.log('🔄 Recargando desde BD antes de filtrar...');
+        // CRÍTICO: Recargar datos desde BD
         fetch('../CONTROLADORES/controlador_citas.php?accion=listar')
             .then(res => res.json())
             .then(data => {
-                console.log('✅ Datos recargados desde BD:', data.length);
                 citasCompleto = [...data];
-                console.log('📦 citasCompleto actualizado:', citasCompleto.length);
                 
                 // Filtrar
                 filtrarCitas();
             })
             .catch(err => {
-                console.error('❌ Error al recargar:', err);
+                console.error('Error al recargar:', err);
                 // Si falla, filtrar con datos actuales
                 filtrarCitas();
             });
@@ -336,16 +325,14 @@ function configurarEventosEstadisticas() {
     contenedorEstadisticas._clickHandlerCitas = clickHandler;
     contenedorEstadisticas.addEventListener('click', clickHandler);
     
-    console.log("✅ Eventos de estadísticas configurados");
 }
     // =====================================================
-    // 🔍 Buscar pacientes (autocompletar)
+    // Buscar pacientes (autocompletar)
     // =====================================================
     function buscarPacientes(e) {
         clearTimeout(timeoutBusquedaPaciente);
         const termino = e.target.value.trim();
         
-        console.log("🔍 Buscando pacientes:", termino);
         
         if (termino.length < 2) {
             sugerenciasPaciente.style.display = 'none';
@@ -358,19 +345,17 @@ function configurarEventosEstadisticas() {
             fetch(`../CONTROLADORES/controlador_citas.php?accion=autocompletar_paciente&termino=${encodeURIComponent(termino)}`)
                 .then(res => res.json())
                 .then(pacientes => {
-                    console.log("✅ Pacientes encontrados:", pacientes.length);
                     mostrarSugerenciasPaciente(pacientes);
                     
                     // Si solo hay 1 resultado, auto-seleccionar
                     if (pacientes.length === 1) {
-                        console.log("🔵 Solo un paciente encontrado, auto-seleccionando...");
                         setTimeout(() => {
                             seleccionarPaciente(pacientes[0]);
                         }, 500);
                     }
                 })
                 .catch(err => {
-                    console.error('❌ Error al buscar pacientes:', err);
+                    console.error('Error al buscar pacientes:', err);
                 });
         }, 300);
     }
@@ -388,8 +373,8 @@ function configurarEventosEstadisticas() {
             const div = document.createElement('div');
             div.className = 'sugerencia-item';
             div.innerHTML = `
-                <div class="sugerencia-principal">${paciente.nombre} ${paciente.apellido}</div>
-                <div class="sugerencia-secundaria">DNI: ${paciente.dni}</div>
+                <div class="sugerencia-principal">${esc(paciente.nombre)} ${esc(paciente.apellido)}</div>
+                <div class="sugerencia-secundaria">${esc(paciente.tipo_documento_abrev || 'DNI')}: ${esc(paciente.dni)}</div>
             `;
             div.addEventListener('click', () => {
                 seleccionarPaciente(paciente);
@@ -400,35 +385,30 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🔹 Seleccionar paciente
+    // Seleccionar paciente
     // =====================================================
     function seleccionarPaciente(paciente) {
-        console.log("🔵 === PACIENTE SELECCIONADO ===");
-        console.log("📋 ID Paciente:", paciente.id_paciente);
-        console.log("👤 Nombre:", paciente.nombre, paciente.apellido);
         
-        inputPaciente.value = `${paciente.nombre} ${paciente.apellido} - DNI: ${paciente.dni}`;
+        inputPaciente.value = `${paciente.nombre} ${paciente.apellido} - ${paciente.tipo_documento_abrev || 'DNI'}: ${paciente.dni}`;
         idPacienteSeleccionado.value = paciente.id_paciente;
         sugerenciasPaciente.style.display = 'none';
         
         inputPaciente.classList.add('campo-valido');
         inputPaciente.classList.remove('campo-invalido');
         
-        console.log("🔵 Llamando a verificarYMostrarAlergias()...");
         
-        // ✅ Verificar alergias al seleccionar paciente
+        // Verificar alergias al seleccionar paciente
         verificarYMostrarAlergias(paciente.id_paciente);
         cargarPlanesPaciente(paciente.id_paciente);
     }
 
     // =====================================================
-    // 🔍 Buscar doctores (autocompletar)
+    // Buscar doctores (autocompletar)
     // =====================================================
     function buscarDoctores(e) {
         clearTimeout(timeoutBusquedaDoctor);
         const termino = e.target.value.trim();
         
-        console.log("🔍 Buscando doctores:", termino);
         
         if (termino.length < 2) {
             sugerenciasDoctor.style.display = 'none';
@@ -440,17 +420,16 @@ function configurarEventosEstadisticas() {
             fetch(`../CONTROLADORES/controlador_citas.php?accion=autocompletar_doctor&termino=${encodeURIComponent(termino)}`)
                 .then(res => res.json())
                 .then(doctores => {
-                    console.log("✅ Doctores encontrados:", doctores.length);
                     mostrarSugerenciasDoctor(doctores);
                 })
                 .catch(err => {
-                    console.error('❌ Error al buscar doctores:', err);
+                    console.error('Error al buscar doctores:', err);
                 });
         }, 300);
     }
 
     // =====================================================
-    // 🔹 Mostrar sugerencias de doctores
+    // Mostrar sugerencias de doctores
     // =====================================================
     function mostrarSugerenciasDoctor(doctores) {
         if (doctores.length === 0) {
@@ -464,8 +443,8 @@ function configurarEventosEstadisticas() {
             const div = document.createElement('div');
             div.className = 'sugerencia-item';
             div.innerHTML = `
-                <div class="sugerencia-principal">Dr(a). ${doctor.nombre} ${doctor.apellidos}</div>
-                <div class="sugerencia-secundaria">DNI: ${doctor.dni}</div>
+                <div class="sugerencia-principal">Dr(a). ${esc(doctor.nombre)} ${esc(doctor.apellidos)}</div>
+                <div class="sugerencia-secundaria">${esc(doctor.tipo_documento_abrev || 'DNI')}: ${esc(doctor.dni)}</div>
             `;
             div.addEventListener('click', () => {
                 seleccionarDoctor(doctor);
@@ -476,12 +455,9 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🔹 Seleccionar doctor
+    // Seleccionar doctor
     // =====================================================
     function seleccionarDoctor(doctor) {
-        console.log("🔵 === DOCTOR SELECCIONADO ===");
-        console.log("📋 ID Doctor:", doctor.id_usuario);
-        console.log("👨‍⚕️ Nombre:", doctor.nombre, doctor.apellidos);
         
         inputDoctor.value = `Dr(a). ${doctor.nombre} ${doctor.apellidos}`;
         idDoctorSeleccionado.value = doctor.id_usuario;
@@ -494,28 +470,19 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🚀 PARTE 3/6: Gestión de Alergias
+    // PARTE 3/6: Gestión de Alergias
     // =====================================================
 
     // =====================================================
-    // 💊 VERIFICAR Y MOSTRAR ALERGIAS DEL PACIENTE
+    // VERIFICAR Y MOSTRAR ALERGIAS DEL PACIENTE
     // =====================================================
     function verificarYMostrarAlergias(idPaciente) {
-        console.log("🔵 ========================================");
-        console.log("🔵 === VERIFICAR Y MOSTRAR ALERGIAS ===");
-        console.log("🔵 ========================================");
-        console.log("📋 ID Paciente recibido:", idPaciente);
-        console.log("🔵 URL a consultar:", `../CONTROLADORES/controlador_citas.php?accion=obtener_alergias_paciente&id_paciente=${idPaciente}`);
         
         fetch(`../CONTROLADORES/controlador_citas.php?accion=obtener_alergias_paciente&id_paciente=${idPaciente}`)
             .then(res => {
-                console.log("📡 Respuesta recibida del servidor");
-                console.log("📡 Status:", res.status, res.statusText);
                 return res.json();
             })
             .then(alergias => {
-                console.log("✅ Alergias obtenidas:", alergias.length);
-                console.log("📦 Datos completos de alergias:", JSON.stringify(alergias, null, 2));
                 
                 alergiasActualesPaciente = alergias;
                 
@@ -523,199 +490,150 @@ function configurarEventosEstadisticas() {
                 const textoPreguntaInicial = document.getElementById('textoPreguntaInicial');
                 const textoOpcionSi = document.getElementById('textoOpcionSi');
                 
-                console.log("🔵 [DEBUG] Elementos del DOM encontrados:");
-                console.log("  - contenedorPreguntaInicial:", contenedorPreguntaInicial ? "✅ EXISTE" : "❌ NO EXISTE");
-                console.log("  - textoPreguntaInicial:", textoPreguntaInicial ? "✅ EXISTE" : "❌ NO EXISTE");
-                console.log("  - textoOpcionSi:", textoOpcionSi ? "✅ EXISTE" : "❌ NO EXISTE");
                 
                 if (alergias.length > 0) {
-                    console.log("💊 El paciente YA TIENE alergias registradas");
-                    console.log("💊 Llamando a mostrarMensajeAlergiasExistentes()...");
                     
                     mostrarMensajeAlergiasExistentes(alergias);
                     
                     textoPreguntaInicial.textContent = "¿Desea registrar más medicamentos alérgicos?";
                     textoOpcionSi.textContent = "Sí, registrar más";
                     
-                    console.log("✅ Textos actualizados para paciente CON alergias");
                     
                 } else {
-                    console.log("ℹ️ El paciente NO tiene alergias registradas");
                     
                     mensajeAlergiasExistentes.style.display = 'none';
                     
                     textoPreguntaInicial.textContent = "¿El paciente tiene alergias a medicamentos?";
                     textoOpcionSi.textContent = "Sí";
                     
-                    console.log("✅ Textos actualizados para paciente SIN alergias");
                 }
                 
-                console.log("🔵 [DEBUG] Mostrando contenedorPreguntaInicial...");
                 contenedorPreguntaInicial.style.display = 'block';
-                console.log("✅ contenedorPreguntaInicial.style.display =", contenedorPreguntaInicial.style.display);
                 
-                console.log("🔵 [DEBUG] Reseteando radio button a 'no'...");
                 const radioNo = document.querySelector('input[name="tiene_alergia"][value="no"]');
                 if (radioNo) {
                     radioNo.checked = true;
-                    console.log("✅ Radio 'no' marcado");
                 } else {
-                    console.error("❌ Radio 'no' no encontrado!");
+                    console.error("Radio 'no' no encontrado!");
                 }
                 
-                console.log("🔵 [DEBUG] Ocultando contenedor de chips...");
                 const contenedorChips = document.getElementById('contenedorChipsMedicamentos');
                 if (contenedorChips) {
                     contenedorChips.style.display = 'none';
-                    console.log("✅ contenedorChipsMedicamentos oculto");
                 } else {
-                    console.error("❌ contenedorChipsMedicamentos no encontrado!");
+                    console.error("contenedorChipsMedicamentos no encontrado!");
                 }
                 
-                console.log("🔵 ========================================");
-                console.log("✅ verificarYMostrarAlergias() COMPLETADO");
-                console.log("🔵 ========================================");
                 
             })
             .catch(err => {
-                console.error('❌ ========================================');
-                console.error('❌ ERROR al cargar alergias del paciente');
-                console.error('❌ ========================================');
-                console.error('❌ Error completo:', err);
-                console.error('❌ Stack:', err.stack);
+                console.error('========================================');
+                console.error('ERROR al cargar alergias del paciente');
+                console.error('========================================');
+                console.error('Error completo:', err);
+                console.error('Stack:', err.stack);
                 limpiarSeccionAlergias();
             });
     }
 
     // =====================================================
-    // 💊 MOSTRAR MENSAJE DE ALERGIAS EXISTENTES
+    // MOSTRAR MENSAJE DE ALERGIAS EXISTENTES
     // =====================================================
     function mostrarMensajeAlergiasExistentes(alergias) {
-        console.log("🔵 === MOSTRAR MENSAJE ALERGIAS EXISTENTES ===");
-        console.log("💊 Total de alergias a mostrar:", alergias.length);
         
         if (!mensajeAlergiasExistentes || !listaAlergiasExistentes) {
-            console.error("❌ Elementos del DOM no encontrados");
-            console.error("❌ mensajeAlergiasExistentes:", mensajeAlergiasExistentes);
-            console.error("❌ listaAlergiasExistentes:", listaAlergiasExistentes);
+            console.error("Elementos del DOM no encontrados");
+            console.error("mensajeAlergiasExistentes:", mensajeAlergiasExistentes);
+            console.error("listaAlergiasExistentes:", listaAlergiasExistentes);
             return;
         }
         
-        console.log("🔵 Limpiando lista existente...");
         listaAlergiasExistentes.innerHTML = '';
         
-        console.log("🔵 Agregando chips de alergias...");
         alergias.forEach((alergia, index) => {
-            console.log(`  💊 Alergia ${index + 1}:`, alergia.medicamento);
             const chip = document.createElement('span');
             chip.className = 'chip-alergia-existente';
             chip.textContent = alergia.medicamento;
             listaAlergiasExistentes.appendChild(chip);
         });
         
-        console.log("🔵 Mostrando mensaje de alergias...");
         mensajeAlergiasExistentes.style.display = 'flex';
-        console.log("✅ mensajeAlergiasExistentes.style.display =", mensajeAlergiasExistentes.style.display);
         
-        console.log("✅ Mensaje de alergias existentes mostrado correctamente");
     }
 
     // =====================================================
-    // 💊 LIMPIAR SECCIÓN DE ALERGIAS
+    // LIMPIAR SECCIÓN DE ALERGIAS
     // =====================================================
     function limpiarSeccionAlergias() {
-        console.log("🔵 === LIMPIAR SECCIÓN DE ALERGIAS ===");
         
         alergiasActualesPaciente = [];
-        console.log("✅ alergiasActualesPaciente limpiado");
         
         if (mensajeAlergiasExistentes) {
             mensajeAlergiasExistentes.style.display = 'none';
-            console.log("✅ mensajeAlergiasExistentes oculto");
         }
         
         if (listaAlergiasExistentes) {
             listaAlergiasExistentes.innerHTML = '';
-            console.log("✅ listaAlergiasExistentes limpiado");
         }
         
         const contenedorPreguntaInicial = document.getElementById('contenedorPreguntaInicial');
         if (contenedorPreguntaInicial) {
             contenedorPreguntaInicial.style.display = 'none';
-            console.log("✅ contenedorPreguntaInicial oculto");
         }
         
         const contenedorChips = document.getElementById('contenedorChipsMedicamentos');
         if (contenedorChips) {
             contenedorChips.style.display = 'none';
-            console.log("✅ contenedorChipsMedicamentos oculto");
         }
         
         const radioNo = document.querySelector('input[name="tiene_alergia"][value="no"]');
         if (radioNo) {
             radioNo.checked = true;
-            console.log("✅ Radio 'no' marcado");
         }
         
-        console.log("✅ Sección de alergias limpiada completamente");
     }
 
     // =====================================================
-    // 🔹 Toggle campos de alergia
+    // Toggle campos de alergia
     // =====================================================
     function toggleCamposAlergia() {
     const tieneAlergia = document.querySelector('input[name="tiene_alergia"]:checked').value;
     
-    console.log("🔵 === TOGGLE CAMPOS ALERGIA ===");
-    console.log("💊 Opción seleccionada:", tieneAlergia);
     
     const contenedorChips = document.getElementById('contenedorChipsMedicamentos');
     const chipsMedicamentos = document.getElementById('chipsMedicamentos');
     
     if (tieneAlergia === 'si') {
-        console.log("✅ Usuario seleccionó SÍ - Mostrando chips...");
         contenedorChips.style.display = 'block';
         
-        // ✅ CORRECCIÓN: Verificar si realmente hay chips con contenido
+        // CORRECCIÓN: Verificar si realmente hay chips con contenido
         const tieneChipsReales = chipsMedicamentos.querySelectorAll('.chip-medicamento').length > 0;
         
-        console.log("🔵 Verificando estado de chips:");
-        console.log("   - hasChildNodes():", chipsMedicamentos.hasChildNodes());
-        console.log("   - Cantidad de chips reales:", chipsMedicamentos.querySelectorAll('.chip-medicamento').length);
-        console.log("   - tieneChipsReales:", tieneChipsReales);
         
         if (!tieneChipsReales) {
-            console.log("🔵 No hay chips reales, cargando medicamentos...");
             cargarChipsMedicamentos();
         } else {
-            console.log("✅ Chips ya cargados correctamente (" + chipsMedicamentos.querySelectorAll('.chip-medicamento').length + " medicamentos)");
         }
     } else {
-        console.log("ℹ️ Usuario seleccionó NO - Ocultando chips...");
         contenedorChips.style.display = 'none';
         limpiarSeleccionChips();
     }
 }
 
     // =====================================================
-    // 💊 CARGAR CHIPS DE MEDICAMENTOS
+    // CARGAR CHIPS DE MEDICAMENTOS
     // =====================================================
     function cargarChipsMedicamentos() {
-        console.log("🔵 === CARGAR CHIPS DE MEDICAMENTOS ===");
         
         const chipsMedicamentos = document.getElementById('chipsMedicamentos');
-        chipsMedicamentos.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">⏳ Cargando medicamentos...</div>';
+        chipsMedicamentos.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">Cargando medicamentos...</div>';
         
-        console.log("🔵 Consultando catálogo de medicamentos...");
         
         fetch('../CONTROLADORES/controlador_citas.php?accion=listar_alergias_medicamentos')
             .then(res => {
-                console.log("📡 Respuesta recibida del servidor");
                 return res.json();
             })
             .then(medicamentos => {
-                console.log("✅ Medicamentos cargados:", medicamentos.length);
-                console.log("📦 Datos:", JSON.stringify(medicamentos.slice(0, 3), null, 2), "...");
                 
                 chipsMedicamentos.innerHTML = '';
                 
@@ -732,60 +650,51 @@ function configurarEventosEstadisticas() {
                     chipsMedicamentos.appendChild(chip);
                     
                     if (index < 3) {
-                        console.log(`  💊 Chip ${index + 1}: ID=${medicamento.id_alergia_medicamentos}, Nombre=${medicamento.medicamento}`);
                     }
                 });
                 
-                console.log("✅ Total de chips generados:", medicamentos.length);
             })
             .catch(err => {
-                console.error('❌ Error al cargar medicamentos:', err);
-                chipsMedicamentos.innerHTML = '<div style="text-align:center; padding:20px; color:#f44336;">❌ Error al cargar medicamentos</div>';
+                console.error('Error al cargar medicamentos:', err);
+                chipsMedicamentos.innerHTML = '<div style="text-align:center; padding:20px; color:#f44336;">Error al cargar medicamentos</div>';
             });
     }
 
     // =====================================================
-    // 💊 TOGGLE CHIP DE MEDICAMENTO
+    // TOGGLE CHIP DE MEDICAMENTO
     // =====================================================
     function toggleChipMedicamento(chip) {
         const idMedicamento = chip.dataset.id;
         
-        console.log("🔵 Toggle chip - ID:", idMedicamento, "Nombre:", chip.textContent);
         
         if (chip.classList.contains('seleccionado')) {
             chip.classList.remove('seleccionado');
-            console.log("➖ Medicamento deseleccionado");
         } else {
             chip.classList.add('seleccionado');
-            console.log("➕ Medicamento seleccionado");
         }
         
         actualizarCampoOcultoAlergias();
     }
 
     // =====================================================
-    // 💊 ACTUALIZAR CAMPO OCULTO CON IDS SELECCIONADOS
+    // ACTUALIZAR CAMPO OCULTO CON IDS SELECCIONADOS
     // =====================================================
     function actualizarCampoOcultoAlergias() {
         const chipsSeleccionados = document.querySelectorAll('.chip-medicamento.seleccionado');
         const idsSeleccionados = Array.from(chipsSeleccionados).map(chip => chip.dataset.id);
         
-        console.log("📦 IDs seleccionados actualizados:", idsSeleccionados);
         
         const campoOculto = document.getElementById('alergiasMedicamentosHidden');
         campoOculto.value = idsSeleccionados.join(',');
         
-        console.log("✅ Campo oculto actualizado:", campoOculto.value);
     }
 
     // =====================================================
-    // 💊 LIMPIAR SELECCIÓN DE CHIPS
+    // LIMPIAR SELECCIÓN DE CHIPS
     // =====================================================
     function limpiarSeleccionChips() {
-        console.log("🔵 Limpiando selección de chips");
         
         const chipsSeleccionados = document.querySelectorAll('.chip-medicamento.seleccionado');
-        console.log("📊 Chips a limpiar:", chipsSeleccionados.length);
         
         chipsSeleccionados.forEach(chip => {
             chip.classList.remove('seleccionado');
@@ -794,88 +703,64 @@ function configurarEventosEstadisticas() {
         const campoOculto = document.getElementById('alergiasMedicamentosHidden');
         if (campoOculto) {
             campoOculto.value = '';
-            console.log("✅ Campo oculto limpiado");
         }
     }
 
     // =====================================================
-    // 💊 OBTENER ALERGIAS SELECCIONADAS
+    // OBTENER ALERGIAS SELECCIONADAS
     // =====================================================
     function obtenerAlergiasSeleccionadas() {
-        console.log("🔵 === OBTENER ALERGIAS SELECCIONADAS ===");
         
         const tieneAlergia = document.querySelector('input[name="tiene_alergia"]:checked').value;
         
-        console.log("💊 ¿Desea agregar nuevas alergias?:", tieneAlergia);
         
         if (tieneAlergia === 'no') {
-            console.log("ℹ️ No se agregarán nuevas alergias");
             return [];
         }
         
         const campoOculto = document.getElementById('alergiasMedicamentosHidden');
         const idsString = campoOculto.value.trim();
         
-        console.log("📦 Valor del campo oculto:", idsString);
         
         if (!idsString) {
-            console.log("ℹ️ No hay medicamentos seleccionados");
             return [];
         }
         
         const idsSeleccionados = idsString.split(',').filter(id => id.trim() !== '');
         
-        console.log("💊 Total de IDs seleccionados:", idsSeleccionados.length);
-        console.log("📦 IDs:", idsSeleccionados);
         
         const idsExistentes = alergiasActualesPaciente.map(a => a.id_alergia_medicamentos.toString());
         
-        console.log("📦 IDs ya existentes:", idsExistentes);
         
         const idsNuevos = idsSeleccionados.filter(id => !idsExistentes.includes(id));
         
-        console.log("💊 Alergias nuevas (filtradas):", idsNuevos.length);
-        console.log("📦 IDs finales:", idsNuevos);
         
         if (idsNuevos.length === 0 && idsSeleccionados.length > 0) {
-            console.log("⚠️ Todas ya estaban registradas");
         }
         
         return idsNuevos;
     }
 
    // =====================================================
-    // 🚀 PARTE 4/6: Guardar, Editar y Validar Citas
+    // PARTE 4/6: Guardar, Editar y Validar Citas
     // =====================================================
 
     // =====================================================
-    // 💾 GUARDAR CITA - ✅ TOTALMENTE CORREGIDO
+    // GUARDAR CITA - TOTALMENTE CORREGIDO
     // =====================================================
     function guardarCita(e) {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log('🔵 ========================================');
-        console.log('🔵 === INICIO DE GUARDAR CITA ===');
-        console.log('🔵 ========================================');
         
-        // ✅ SOLUCIÓN: Leer desde el formulario, NO de variables globales
+        // SOLUCIÓN: Leer desde el formulario, NO de variables globales
         const esEdicion = form.dataset.modo === 'edicion';
         const idParaEditar = form.dataset.idCita || null;
         
-        console.log('🔍 Datos desde formulario (data attributes):');
-        console.log('   - form.dataset.modo:', form.dataset.modo);
-        console.log('   - form.dataset.idCita:', form.dataset.idCita);
-        console.log('   - esEdicion:', esEdicion);
-        console.log('   - idParaEditar:', idParaEditar);
         
-        console.log('🔍 Variables globales (referencia):');
-        console.log('   - modoEdicion:', modoEdicion);
-        console.log('   - idEdicion:', idEdicion);
         
         if (!validarFormularioCita()) {
-            console.log('❌ Validación fallida');
-            mostrarMensajeSistema('❌ Complete todos los campos obligatorios', 'error');
+            mostrarMensajeSistema('Complete todos los campos obligatorios', 'error');
             return;
         }
         
@@ -883,27 +768,20 @@ function configurarEventosEstadisticas() {
         const textoOriginal = btnGuardar.textContent;
         
         if (btnGuardar.disabled) {
-            console.log('⚠️ Botón ya deshabilitado - Evitando doble submit');
             return;
         }
         
         btnGuardar.disabled = true;
-        btnGuardar.textContent = '⏳ Guardando...';
+        btnGuardar.textContent = 'Guardando...';
         
         const formData = new FormData();
         
-        console.log('🔵 ========================================');
-        console.log('🔵 DETERMINANDO ACCIÓN');
-        console.log('🔵 ========================================');
         
         if (esEdicion && idParaEditar) {
-            console.log('🔄 MODO: EDICIÓN');
-            console.log('   - ID a editar:', idParaEditar);
             
             formData.append('accion', 'editar');
             formData.append('id_cita', idParaEditar);
         } else {
-            console.log('🆕 MODO: REGISTRAR NUEVA');
             
             formData.append('accion', 'registrar');
         }
@@ -929,7 +807,6 @@ function configurarEventosEstadisticas() {
             });
         }
         
-        console.log('📦 FormData preparado. Enviando...');
         
         fetch('../CONTROLADORES/controlador_citas.php', {
             method: 'POST',
@@ -944,8 +821,6 @@ function configurarEventosEstadisticas() {
                 btnGuardar.textContent = textoOriginal;
                 
                 if (data.success) {
-                    console.log(' OPERACIÓN EXITOSA');
-                    console.log('   Tipo:', esEdicion ? 'EDICIÓN' : 'REGISTRO');
                     
                     mostrarMensajeSistema(
                         esEdicion ? ' Cita actualizada correctamente' : ' Cita registrada con éxito',
@@ -962,25 +837,24 @@ function configurarEventosEstadisticas() {
                     
                     //  DESPUÉS:
                    setTimeout(() => {
-                   console.log('🔵 Redirigiendo a listado...');
                    mostrarListado(true); // ← Pasar true para forzar recarga
                   }, 1500);
                 } else {
-                    console.error('❌ Error:', data.mensaje);
-                    mostrarMensajeSistema(`❌ ${data.mensaje}`, 'error');
+                    console.error('Error:', data.mensaje);
+                    mostrarMensajeSistema(`${data.mensaje}`, 'error');
                 }
             } catch (parseError) {
-                console.error('❌ Error al parsear:', parseError);
-                mostrarMensajeSistema('❌ Respuesta inválida', 'error');
+                console.error('Error al parsear:', parseError);
+                mostrarMensajeSistema('Respuesta inválida', 'error');
                 btnGuardar.disabled = false;
                 btnGuardar.textContent = textoOriginal;
             }
         })
         .catch(err => {
-            console.error('❌ Error en petición:', err);
+            console.error('Error en petición:', err);
             btnGuardar.disabled = false;
             btnGuardar.textContent = textoOriginal;
-            mostrarMensajeSistema('❌ Error en la petición', 'error');
+            mostrarMensajeSistema('Error en la petición', 'error');
         });
     }
 
@@ -988,24 +862,20 @@ function configurarEventosEstadisticas() {
     // Validar formulario
     // =====================================================
     function validarFormularioCita() {
-        console.log('🔵 === VALIDANDO FORMULARIO ===');
         
         let esValido = true;
         
         if (!idPacienteSeleccionado.value) {
-            console.log('❌ Paciente no seleccionado');
             mostrarError(inputPaciente, 'Debe seleccionar un paciente');
             esValido = false;
         }
         
         if (!idDoctorSeleccionado.value) {
-            console.log('❌ Doctor no seleccionado');
             mostrarError(inputDoctor, 'Debe seleccionar un doctor');
             esValido = false;
         }
         
         if (!fechaCita.value) {
-            console.log('❌ Fecha vacía');
             mostrarError(fechaCita, 'La fecha es obligatoria');
             esValido = false;
         }
@@ -1021,7 +891,6 @@ function configurarEventosEstadisticas() {
         }
         
         if (!selectEstadoCita.value) {
-            console.log('❌ Estado no seleccionado');
             mostrarError(selectEstadoCita, 'Debe seleccionar un estado');
             esValido = false;
         }
@@ -1029,18 +898,15 @@ function configurarEventosEstadisticas() {
         // Tipo de servicio es opcional — no se valida como obligatorio
         
         if (!selectSede.value) {
-            console.log('❌ Sede no seleccionada');
             mostrarError(selectSede, 'Debe seleccionar una sede');
             esValido = false;
         }
         
         if (!textareaMotivo.value.trim()) {
-            console.log('❌ Motivo vacío');
             mostrarError(textareaMotivo, 'Debe describir el motivo');
             esValido = false;
         }
         
-        console.log('🔵 Resultado validación:', esValido ? '✅ VÁLIDO' : '❌ INVÁLIDO');
         
         return esValido;
     }
@@ -1067,39 +933,25 @@ function configurarEventosEstadisticas() {
     //  CARGAR CITA PARA EDITAR - CON LOGS DETALLADOS
     // =====================================================
     function cargarCitaParaEditar(id) {
-        console.log('🔵 ========================================');
-        console.log('🔵 === CARGAR CITA PARA EDITAR ===');
-        console.log('🔵 ========================================');
-        console.log('📋 ID de cita recibido:', id);
-        console.log('📋 Tipo de ID:', typeof id);
         
         fetch(`../CONTROLADORES/controlador_citas.php?accion=ver&id=${id}`)
             .then(res => res.text())
             .then(text => {
-                console.log('📄 Respuesta RAW (primeros 500):', text.substring(0, 500));
                 
                 try {
                     const cita = JSON.parse(text);
-                    console.log('✅ JSON parseado correctamente');
-                    console.log('📦 Datos de cita:', JSON.stringify(cita, null, 2));
                     
                     if (cita.success === false) {
-                        console.error('❌ Error del servidor:', cita.mensaje);
-                        mostrarMensajeSistema('❌ Error al cargar', 'error');
+                        console.error('Error del servidor:', cita.mensaje);
+                        mostrarMensajeSistema('Error al cargar', 'error');
                         return;
                     }
                     
-                    console.log('🔵 ========================================');
-                    console.log('🔵 ACTIVANDO MODO EDICIÓN (DATA ATTRIBUTES)');
-                    console.log('🔵 ========================================');
                     
-                    // ✅ SOLUCIÓN: Guardar en el formulario, NO en variables globales
+                    // SOLUCIÓN: Guardar en el formulario, NO en variables globales
                     form.dataset.modo = 'edicion';
                     form.dataset.idCita = cita.id_cita;
                     
-                    console.log('✅ Datos guardados en formulario:');
-                    console.log('   - form.dataset.modo:', form.dataset.modo);
-                    console.log('   - form.dataset.idCita:', form.dataset.idCita);
                     
                     // También actualizar variables globales (para compatibilidad)
                     modoEdicion = true;
@@ -1108,39 +960,35 @@ function configurarEventosEstadisticas() {
                     llenarFormularioEdicion(cita);
                     
                     document.getElementById('tituloCita').textContent = 'Editar Cita';
-                    document.getElementById('btnGuardarCita').textContent = '🔄 Actualizar Cita';
+                    document.getElementById('btnGuardarCita').textContent = 'Actualizar Cita';
                     
                     seccionListado.style.display = 'none';
                     seccionDetalle.style.display = 'none';
                     seccionNueva.style.display = 'block';
                     btnNueva.style.display = 'none';
                     
-                    console.log('✅ Formulario cargado para edición');
-                    console.log('🔵 ========================================');
                 } catch (parseError) {
-                    console.error('❌ Error al parsear JSON:', parseError);
-                    mostrarMensajeSistema('❌ Respuesta inválida', 'error');
+                    console.error('Error al parsear JSON:', parseError);
+                    mostrarMensajeSistema('Respuesta inválida', 'error');
                 }
             })
             .catch(err => {
-                console.error('❌ Error en petición:', err);
-                mostrarMensajeSistema('❌ Error al cargar', 'error');
+                console.error('Error en petición:', err);
+                mostrarMensajeSistema('Error al cargar', 'error');
             });
     }
 
 // =====================================================
-    // 🚀 PARTE 5/6: Ver, Eliminar, Listar y Filtrar Citas
+    // PARTE 5/6: Ver, Eliminar, Listar y Filtrar Citas
     // =====================================================
 
     // =====================================================
-    // 📝 Llenar formulario para edición
+    // Llenar formulario para edición
     // =====================================================
     function llenarFormularioEdicion(cita) {
-        console.log('🔵 === LLENANDO FORMULARIO EDICIÓN ===');
-        console.log('📦 Cita:', JSON.stringify(cita, null, 2));
         
         // -- Paciente --
-        inputPaciente.value = `${cita.paciente_nombre} ${cita.paciente_apellido} - DNI: ${cita.paciente_dni}`;
+        inputPaciente.value = `${cita.paciente_nombre} ${cita.paciente_apellido} - ${cita.paciente_tipo_doc || 'DNI'}: ${cita.paciente_dni}`;
         idPacienteSeleccionado.value = cita.id_paciente;
         inputPaciente.classList.add('campo-valido');
         
@@ -1177,7 +1025,6 @@ function configurarEventosEstadisticas() {
             // -- Cargar slots y pre-seleccionar la hora actual --
             // Se hace DESPUÉS de setear doctor, sede y fecha
             cargarSlotsConPreseleccion(horaActual);
-            console.log('✅ Sede seteada y slots cargados. Hora a preseleccionar:', horaActual);
         });
         const selTipoAtencion = document.getElementById('selectTipoAtencion');
         if (selTipoAtencion) selTipoAtencion.value = cita.id_tipo_atencion || '';
@@ -1209,15 +1056,12 @@ function configurarEventosEstadisticas() {
         // NOTA: cargarSlotsConPreseleccion se llama dentro de sedesListas.then() (ver arriba)
         // para garantizar que las opciones del select de sede ya estén disponibles.
         
-        console.log('✅ Formulario de edición llenado. Hora a preseleccionar:', horaActual);
     }
 
     // =====================================================
-    // 👁️ Ver detalle de cita
+    // Ver detalle de cita
     // =====================================================
     function verDetalleCita(id) {
-        console.log('🔵 === VER DETALLE ===');
-        console.log('📋 ID:', id);
         
         fetch(`../CONTROLADORES/controlador_citas.php?accion=ver&id=${id}`)
             .then(res => res.text())
@@ -1226,24 +1070,24 @@ function configurarEventosEstadisticas() {
                     const cita = JSON.parse(text);
                     
                     if (cita.success === false) {
-                        mostrarMensajeSistema('❌ Error al cargar', 'error');
+                        mostrarMensajeSistema('Error al cargar', 'error');
                         return;
                     }
                     
                     mostrarDetalle(cita);
                 } catch (parseError) {
-                    console.error('❌ Error:', parseError);
-                    mostrarMensajeSistema('❌ Respuesta inválida', 'error');
+                    console.error('Error:', parseError);
+                    mostrarMensajeSistema('Respuesta inválida', 'error');
                 }
             })
             .catch(err => {
-                console.error('❌ Error:', err);
-                mostrarMensajeSistema('❌ Error al cargar', 'error');
+                console.error('Error:', err);
+                mostrarMensajeSistema('Error al cargar', 'error');
             });
     }
 
     // =====================================================
-    // 📄 Mostrar detalle de cita
+    // Mostrar detalle de cita
     // =====================================================
     function mostrarDetalle(cita) {
         const estadoClase = obtenerClaseEstado(cita.estado);
@@ -1252,12 +1096,12 @@ function configurarEventosEstadisticas() {
         let seccionAlergias = '';
         if (cita.alergias_medicamentos && cita.alergias_medicamentos.length > 0) {
             const chipsAlergias = cita.alergias_medicamentos
-                .map(a => `<span class="chip-alergia-existente">${a.medicamento}</span>`)
+                .map(a => `<span class="chip-alergia-existente">${esc(a.medicamento)}</span>`)
                 .join('');
             
             seccionAlergias = `
             <div class="seccion-detalle seccion-alerta">
-                <h4>⚕️ Información Médica - Alergias</h4>
+                <h4>Información Médica - Alergias</h4>
                 <div class="datos-detalle">
                     <p><strong>Medicamentos Alérgicos (${cita.alergias_medicamentos.length}):</strong></p>
                     <div class="lista-alergias-existentes" style="margin-top: 10px;">
@@ -1271,40 +1115,40 @@ function configurarEventosEstadisticas() {
         detalleDiv.innerHTML = `
             <div class="tarjeta-detalle">
                 <div class="encabezado-detalle">
-                    <h3>📋 Detalle de la Cita #${cita.id_cita}</h3>
-                    <span class="badge-estado-grande ${estadoClase}">${cita.estado}</span>
+                    <h3>Detalle de la Cita #${esc(cita.id_cita)}</h3>
+                    <span class="badge-estado-grande ${estadoClase}">${esc(cita.estado)}</span>
                 </div>
                 
                 <div class="contenido-detalle">
                     <div class="seccion-detalle">
-                        <h4>👤 Información del Paciente</h4>
+                        <h4>Información del Paciente</h4>
                         <div class="datos-detalle">
-                            <p><strong>Nombre:</strong> ${cita.paciente_nombre} ${cita.paciente_apellido}</p>
-                            <p><strong>DNI:</strong> ${cita.paciente_dni}</p>
+                            <p><strong>Nombre:</strong> ${esc(cita.paciente_nombre)} ${esc(cita.paciente_apellido)}</p>
+                            <p><strong>${esc(cita.paciente_tipo_doc || 'DNI')}:</strong> ${esc(cita.paciente_dni)}</p>
                         </div>
                     </div>
                     
                     <div class="seccion-detalle">
-                        <h4>👨‍⚕️ Doctor Asignado</h4>
+                        <h4>Doctor Asignado</h4>
                         <div class="datos-detalle">
-                            <p><strong>Nombre:</strong> Dr(a). ${cita.doctor_nombre} ${cita.doctor_apellidos}</p>
+                            <p><strong>Nombre:</strong> Dr(a). ${esc(cita.doctor_nombre)} ${esc(cita.doctor_apellidos)}</p>
                         </div>
                     </div>
                     
                     <div class="seccion-detalle">
-                        <h4>📅 Fecha y Hora</h4>
+                        <h4>Fecha y Hora</h4>
                         <div class="datos-detalle">
-                            <p><strong>Fecha:</strong> ${formatearFechaLarga(cita.fecha)}</p>
-                            <p><strong>Hora:</strong> ${horaFormateada}</p>
+                            <p><strong>Fecha:</strong> ${esc(formatearFechaLarga(cita.fecha))}</p>
+                            <p><strong>Hora:</strong> ${esc(horaFormateada)}</p>
                         </div>
                     </div>
                     
                     <div class="seccion-detalle">
-                        <h4>🦷 Detalles del Servicio</h4>
+                        <h4>Detalles del Servicio</h4>
                         <div class="datos-detalle">
-                            <p><strong>Tipo de Servicio:</strong> ${cita.nombre_servicio || 'N/A'}</p>
-                            <p><strong>Sede:</strong> ${cita.sede || 'N/A'}</p>
-                            <p><strong>Motivo:</strong> ${cita.motivo || 'N/A'}</p>
+                            <p><strong>Tipo de Servicio:</strong> ${esc(cita.nombre_servicio || 'N/A')}</p>
+                            <p><strong>Sede:</strong> ${esc(cita.sede || 'N/A')}</p>
+                            <p><strong>Motivo:</strong> ${esc(cita.motivo || 'N/A')}</p>
                         </div>
                     </div>
                     
@@ -1312,8 +1156,8 @@ function configurarEventosEstadisticas() {
                 </div>
                 
                 <div class="acciones-detalle">
-                    <button class="btn-editar" id="btnEditarDetalle">✏️ Editar</button>
-                    <button class="btn-eliminar-grande" id="btnEliminarDetalle">🗑️ Eliminar</button>
+                    <button class="btn-editar" id="btnEditarDetalle"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="btn-eliminar-grande" id="btnEliminarDetalle"><i class="ti ti-trash"></i> Eliminar</button>
                 </div>
             </div>
         `;
@@ -1333,16 +1177,15 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🗑️ ELIMINAR CITA
+    // ELIMINAR CITA
     // =====================================================
     function confirmarEliminarCita(id) {
-        if (confirm('⚠️ ¿Eliminar esta cita?\n\nNo se puede deshacer.')) {
+        if (confirm('¿Eliminar esta cita?\n\nNo se puede deshacer.')) {
             eliminarCita(id);
         }
     }
 
     function eliminarCita(id) {
-        console.log('🗑️ Eliminando cita:', id);
         
         fetch('../CONTROLADORES/controlador_citas.php', {
             method: 'POST',
@@ -1356,30 +1199,30 @@ function configurarEventosEstadisticas() {
             try {
                 const data = JSON.parse(text);
                 
-                // ✅ DESPUÉS:
+                // DESPUÉS:
                 if (data.success) {
-                  mostrarMensajeSistema('✅ Cita eliminada', 'exito');
+                  mostrarMensajeSistema('Cita eliminada', 'exito');
                   mostrarListado(true); // ← Pasar true para forzar recarga
                 }else {
-                    mostrarMensajeSistema('❌ Error al eliminar', 'error');
+                    mostrarMensajeSistema('Error al eliminar', 'error');
                 }
             } catch (parseError) {
-                console.error('❌ Error:', parseError);
-                mostrarMensajeSistema('❌ Respuesta inválida', 'error');
+                console.error('Error:', parseError);
+                mostrarMensajeSistema('Respuesta inválida', 'error');
             }
         })
         .catch(err => {
-            console.error('❌ Error:', err);
-            mostrarMensajeSistema('❌ Error al eliminar', 'error');
+            console.error('Error:', err);
+            mostrarMensajeSistema('Error al eliminar', 'error');
         });
     }
 
     // =====================================================
-    // 📋 LISTAR CITAS
+    // LISTAR CITAS
     // =====================================================
     function listarCitas() {
         if (tablaBody) {
-            tablaBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;">⏳ Cargando citas...</td></tr>`;
+            tablaBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;">Cargando citas...</td></tr>`;
         }
         // Cargar citas y verificar vencidas en paralelo
         Promise.all([
@@ -1393,15 +1236,14 @@ function configurarEventosEstadisticas() {
             fetch('../CONTROLADORES/controlador_citas.php?accion=listar')
                 .then(r => r.json())
                 .then(data => { citasCompleto = [...data]; filtrarCitas(); })
-                .catch(() => mostrarMensajeSistema('❌ Error al cargar citas', 'error'));
+                .catch(() => mostrarMensajeSistema('Error al cargar citas', 'error'));
         });
     }
 
     // =====================================================
-    // 🎨 Renderizar tabla
+    // Renderizar tabla
     // =====================================================
     function renderizarTablaCitas(datos) {
-        console.log('🎨 Renderizando:', datos.length);
         
         tablaBody.innerHTML = '';
         
@@ -1409,7 +1251,7 @@ function configurarEventosEstadisticas() {
             tablaBody.innerHTML = `
                 <tr>
                     <td colspan="9" style="text-align:center; padding:20px; color:#999;">
-                        📭 No hay citas con los filtros seleccionados
+                        No hay citas con los filtros seleccionados
                     </td>
                 </tr>
             `;
@@ -1422,26 +1264,26 @@ function configurarEventosEstadisticas() {
             
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td>${cita.id_cita}</td>
+                <td>${esc(cita.id_cita)}</td>
                 <td>
-                    <strong style="font-size:13px;color:#2c3e50;">${cita.paciente_nombre} ${cita.paciente_apellido}</strong><br>
-                    <small style="color:#95a5a6;font-size:11px;">DNI: ${cita.paciente_dni}</small>
+                    <strong style="font-size:13px;color:#2c3e50;">${esc(cita.paciente_nombre)} ${esc(cita.paciente_apellido)}</strong><br>
+                    <small style="color:#95a5a6;font-size:11px;">${esc(cita.paciente_tipo_doc || 'DNI')}: ${esc(cita.paciente_dni)}</small>
                 </td>
                 <td>
-                    <span style="font-size:13px;color:#2c3e50;">Dr(a). ${cita.doctor_nombre} ${cita.doctor_apellidos}</span>
+                    <span style="font-size:13px;color:#2c3e50;">Dr(a). ${esc(cita.doctor_nombre)} ${esc(cita.doctor_apellidos)}</span>
                 </td>
-                <td style="white-space:nowrap;">${formatearFecha(cita.fecha)}</td>
-                <td><span style="font-size:13px;font-weight:600;color:#2c3e50;">⏰ ${horaFormateada}</span></td>
-                <td><span class="badge-estado ${estadoClase}">${cita.estado}</span></td>
-                <td><span class="badge-servicio">${cita.tipo_atencion || cita.nombre_servicio || '—'}</span></td>
-                <td><span class="sede-info">📍 ${cita.sede || 'N/A'}</span></td>
+                <td style="white-space:nowrap;">${esc(formatearFecha(cita.fecha))}</td>
+                <td><span style="font-size:13px;font-weight:600;color:#2c3e50;">${esc(horaFormateada)}</span></td>
+                <td><span class="badge-estado ${estadoClase}">${esc(cita.estado)}</span></td>
+                <td><span class="badge-servicio">${esc(cita.tipo_atencion || cita.nombre_servicio || '—')}</span></td>
+                <td><span class="sede-info">${esc(cita.sede || 'N/A')}</span></td>
                 <td style="white-space:nowrap;">
-                    <button class="btn-accion btn-ver" data-id="${cita.id_cita}" title="Ver detalle">👁️</button>
+                    <button class="btn-accion btn-ver" data-id="${esc(cita.id_cita)}" title="Ver detalle"><i class="ti ti-eye"></i></button>
                     ${!['completada','cancelada','no asistió'].includes(cita.estado?.toLowerCase())
-                        ? `<button class="btn-accion btn-editar" data-id="${cita.id_cita}" title="Editar">✏️</button>`
+                        ? `<button class="btn-accion btn-editar" data-id="${esc(cita.id_cita)}" title="Editar"><i class="ti ti-edit"></i></button>`
                         : ''}
                     ${cita.estado?.toLowerCase() !== 'completada'
-                        ? `<button class="btn-accion btn-eliminar" data-id="${cita.id_cita}" title="Eliminar">🗑️</button>`
+                        ? `<button class="btn-accion btn-eliminar" data-id="${esc(cita.id_cita)}" title="Eliminar"><i class="ti ti-trash"></i></button>`
                         : ''}
                 </td>
             `;
@@ -1463,7 +1305,7 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 📊 Actualizar estadísticas
+    // Actualizar estadísticas
     // =====================================================
     function actualizarEstadisticas(datos) {
         const todas      = datos.length;
@@ -1490,19 +1332,14 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🔍 FILTRAR CITAS
+    // FILTRAR CITAS
     // =====================================================
     function filtrarCitas() {
-        console.log('🔵 === FILTRAR CITAS ===');
-        console.log('   Filtro búsqueda:', inputBusqueda?.value);
-        console.log('   Filtro fecha:', filtroFecha?.value);
-        console.log('   Filtro estado:', estadoFiltroActual);
         
         const terminoBusqueda = inputBusqueda?.value?.toLowerCase().trim() || '';
         const fechaFiltro = filtroFecha?.value || '';
         
         let citasFiltradas = [...citasCompleto];
-        console.log('   📦 Total de citas antes de filtrar:', citasFiltradas.length);
         
         // Filtro por búsqueda
         if (terminoBusqueda !== '') {
@@ -1515,7 +1352,6 @@ function configurarEventosEstadisticas() {
                        doctorNombre.includes(terminoBusqueda) ||
                        dni.includes(terminoBusqueda);
             });
-            console.log('   📦 Después de filtrar por búsqueda:', citasFiltradas.length);
         }
         
         // Filtro por estado
@@ -1523,7 +1359,6 @@ function configurarEventosEstadisticas() {
             citasFiltradas = citasFiltradas.filter(c => {
                 return c.estado?.toLowerCase() === estadoFiltroActual.toLowerCase();
             });
-            console.log('   📦 Después de filtrar por estado:', citasFiltradas.length);
         }
         
         // Filtro por fecha
@@ -1546,12 +1381,10 @@ function configurarEventosEstadisticas() {
                 }
                 return true;
             });
-            console.log('   📦 Después de filtrar por fecha:', citasFiltradas.length);
         }
         
-        console.log('   ✅ Total de citas filtradas:', citasFiltradas.length);
         
-        // ✅ CRÍTICO: Actualizar estadísticas CON DATOS COMPLETOS (sin filtros)
+        // CRÍTICO: Actualizar estadísticas CON DATOS COMPLETOS (sin filtros)
         actualizarEstadisticas(citasCompleto);
         
         // Renderizar tabla con datos filtrados
@@ -1559,11 +1392,11 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🚀 PARTE 6/6 (FINAL): Navegación y Funciones Auxiliares
+    // PARTE 6/6 (FINAL): Navegación y Funciones Auxiliares
     // =====================================================
 
     // =====================================================
-    // 🆕 MOSTRAR FORMULARIO NUEVO
+    // MOSTRAR FORMULARIO NUEVO
     // =====================================================
     function mostrarFormularioNuevo() {
         form.reset();
@@ -1593,24 +1426,20 @@ function configurarEventosEstadisticas() {
         idEdicion = null;
         
         document.getElementById('tituloCita').textContent = 'Registrar Nueva Cita';
-        document.getElementById('btnGuardarCita').textContent = '💾 Guardar Cita';
+        document.getElementById('btnGuardarCita').textContent = 'Guardar Cita';
         
         seccionListado.style.display = 'none';
         seccionDetalle.style.display = 'none';
         seccionNueva.style.display = 'block';
         btnNueva.style.display = 'none';
         
-        console.log('✅ Formulario nuevo preparado');
     }
     // =====================================================
-    // 🔙 MOSTRAR LISTADO
+    // MOSTRAR LISTADO
     // =====================================================
     function mostrarListado(forzarRecarga = false) {
-        console.log('🔙 === MOSTRAR LISTADO ===');
-        console.log('   - forzarRecarga:', forzarRecarga);
         
         // Resetear modo edición
-        console.log('🔵 Reseteando modo edición al volver al listado');
         modoEdicion = false;
         idEdicion = null;
         
@@ -1625,9 +1454,8 @@ function configurarEventosEstadisticas() {
         seccionListado.style.display = 'block';
         btnNueva.style.display = 'inline-block';
         
-        // ✅ CRÍTICO: Recargar datos si viene de guardar/editar/eliminar
+        // CRÍTICO: Recargar datos si viene de guardar/editar/eliminar
         if (forzarRecarga) {
-            console.log('🔄 Forzando recarga desde base de datos...');
             // Resetear filtro activo
             estadoFiltroActual = '';
             // Quitar clase activa de todas las cajas
@@ -1638,13 +1466,10 @@ function configurarEventosEstadisticas() {
         
         listarCitas();
         
-        console.log('✅ Listado mostrado');
-        console.log('   - modoEdicion:', modoEdicion);
-        console.log('   - idEdicion:', idEdicion);
     }
 
     // =====================================================
-    // 🛠️ FUNCIONES AUXILIARES
+    // FUNCIONES AUXILIARES
     // =====================================================
 
     function obtenerClaseEstado(estado) {
@@ -1699,14 +1524,11 @@ function configurarEventosEstadisticas() {
     }
 
     function mostrarMensajeSistema(mensaje, tipo = 'exito') {
-        console.log('📢 Mensaje:', tipo, '-', mensaje);
         
         const aviso = document.createElement('div');
         aviso.className = `mensaje-sistema ${tipo}`;
-        const icono = tipo === 'exito' ? '✅' : '❌';
         aviso.innerHTML = `
-            <span class="icono">${icono}</span>
-            <span class="texto">${mensaje}</span>
+            <span class="texto">${esc(mensaje)}</span>
         `;
         
         document.body.appendChild(aviso);
@@ -1720,10 +1542,10 @@ function configurarEventosEstadisticas() {
     }
 
 // =====================================================
-// 🎬 FIN DEL MÓDULO - Cerrar función principal
+// FIN DEL MÓDULO - Cerrar función principal
     // ── Slots disponibles ──────────────────────────────────────────
     // =====================================================
-    // 🔔 BANNER DE CITAS VENCIDAS
+    // BANNER DE CITAS VENCIDAS
     // =====================================================
     function mostrarBannerVencidas(vencidas) {
         // Eliminar banner previo si existe
@@ -1745,19 +1567,19 @@ function configurarEventosEstadisticas() {
         const filas = vencidas.map(c => `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;
                         background:white;border-radius:6px;margin-top:6px;flex-wrap:wrap;">
-                <span style="font-size:12px;color:#636e72;min-width:78px;">${formatearFecha(c.fecha)}</span>
+                <span style="font-size:12px;color:#636e72;min-width:78px;">${esc(formatearFecha(c.fecha))}</span>
                 <span style="font-size:13px;color:#2c3e50;flex:1;min-width:140px;">
-                    ${c.nombre_paciente}
-                    <small style="color:#95a5a6;"> — Dr(a). ${c.nombre_doctor}</small>
+                    ${esc(c.nombre_paciente)}
+                    <small style="color:#95a5a6;"> — Dr(a). ${esc(c.nombre_doctor)}</small>
                 </span>
-                <span style="font-size:12px;color:#7f8c8d;">${c.hora ? c.hora.substring(0,5) : ''}</span>
+                <span style="font-size:12px;color:#7f8c8d;">${esc(c.hora ? c.hora.substring(0,5) : '')}</span>
                 <div style="display:flex;gap:6px;">
-                    <button class="btn-cerrar-vencida" data-id="${c.id_cita}" data-estado="5"
+                    <button class="btn-cerrar-vencida" data-id="${esc(c.id_cita)}" data-estado="5"
                         style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:5px;
                                border:1px solid #f5b7b1;background:#fdf2f2;color:#e74c3c;cursor:pointer;">
                         No asistió
                     </button>
-                    <button class="btn-cerrar-vencida" data-id="${c.id_cita}" data-estado="3"
+                    <button class="btn-cerrar-vencida" data-id="${esc(c.id_cita)}" data-estado="3"
                         style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:5px;
                                border:1px solid #ddd;background:white;color:#636e72;cursor:pointer;">
                         Cancelada
@@ -1768,7 +1590,7 @@ function configurarEventosEstadisticas() {
 
         banner.innerHTML = `
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                <span style="font-size:18px;">⚠️</span>
+                <span style="font-size:18px;"></span>
                 <div style="flex:1;">
                     <p style="font-size:13px;font-weight:600;color:#e67e22;margin:0;">
                         ${vencidas.length} cita${vencidas.length > 1 ? 's' : ''} vencida${vencidas.length > 1 ? 's' : ''} sin cerrar
@@ -1816,20 +1638,20 @@ function configurarEventosEstadisticas() {
                         if (data.success) {
                             // Quitar la fila del banner
                             this.closest('div[style]').remove();
-                            mostrarMensajeSistema(`✅ Cita marcada como ${label}`, 'exito');
+                            mostrarMensajeSistema(`Cita marcada como ${label}`, 'exito');
                             // Si no quedan filas, quitar banner
                             if (!banner.querySelectorAll('.btn-cerrar-vencida').length) {
                                 banner.remove();
                             }
                             listarCitas();
                         } else {
-                            mostrarMensajeSistema(`❌ ${data.mensaje}`, 'error');
+                            mostrarMensajeSistema(`${data.mensaje}`, 'error');
                             this.disabled = false;
                             this.textContent = label;
                         }
                     })
                     .catch(() => {
-                        mostrarMensajeSistema('❌ Error al actualizar', 'error');
+                        mostrarMensajeSistema('Error al actualizar', 'error');
                         this.disabled = false;
                         this.textContent = label;
                     });
@@ -1838,7 +1660,7 @@ function configurarEventosEstadisticas() {
     }
 
     // =====================================================
-    // 🔒 FILTRAR ESTADOS SEGÚN TRANSICIONES PERMITIDAS
+    // FILTRAR ESTADOS SEGÚN TRANSICIONES PERMITIDAS
     // =====================================================
     function filtrarEstadosPermitidos(estadoActualId) {
         // Transiciones permitidas — espejo del modelo PHP
@@ -1912,11 +1734,11 @@ function configurarEventosEstadisticas() {
                         // Modo edición: mostrar la hora actual aunque el horario no esté disponible
                         cont.innerHTML = 
                             `<div style="display:flex;flex-wrap:wrap;gap:6px;">` +
-                            `<button type="button" class="slot-hora-btn slot-hora-seleccionado" data-hora="${horaPreseleccionar}"
+                            `<button type="button" class="slot-hora-btn slot-hora-seleccionado" data-hora="${esc(horaPreseleccionar)}"
                                 style="padding:5px 12px;border:0.5px solid #2a4d8f;border-radius:5px;background:#2a4d8f;color:white;font-size:12px;cursor:pointer;">
-                                ${horaPreseleccionar} ✓ (hora actual)
+                                ${esc(horaPreseleccionar)} ✓ (hora actual)
                             </button></div>` +
-                            `<small style="color:#e67e22;display:block;margin-top:4px;">⚠️ No hay horario configurado para ese día. Hora actual mantenida.</small>`;
+                            `<small style="color:#e67e22;display:block;margin-top:4px;">No hay horario configurado para ese día. Hora actual mantenida.</small>`;
                         if (horaHid) horaHid.value = horaPreseleccionar + ':00';
                         // Agregar listener al botón único
                         cont.querySelectorAll('.slot-hora-btn').forEach(btn => {
@@ -1925,7 +1747,7 @@ function configurarEventosEstadisticas() {
                             });
                         });
                     } else {
-                        cont.innerHTML = `<small style="color:#8b3a3a;background:#f9f0f0;padding:6px 10px;border-radius:4px;display:inline-block;">${data.mensaje || 'El doctor no tiene horario configurado para ese día. Configura el horario en Configuración → Horarios.'}</small>`;
+                        cont.innerHTML = `<small style="color:#8b3a3a;background:#f9f0f0;padding:6px 10px;border-radius:4px;display:inline-block;">${esc(data.mensaje || 'El doctor no tiene horario configurado para ese día. Configura el horario en Configuración → Horarios.')}</small>`;
                     }
                     return;
                 }
@@ -1944,7 +1766,7 @@ function configurarEventosEstadisticas() {
                             ? 'padding:5px 12px;border:0.5px solid #2a4d8f;border-radius:5px;background:#2a4d8f;color:white;font-size:12px;cursor:pointer;'
                             : 'padding:5px 12px;border:0.5px solid #dde1e5;border-radius:5px;background:white;color:#2c3e50;font-size:12px;cursor:pointer;';
                         const label = esActual ? `${slot} ✓` : slot;
-                        return `<button type="button" class="slot-hora-btn" data-hora="${slot}" style="${estilo}">${label}</button>`;
+                        return `<button type="button" class="slot-hora-btn" data-hora="${esc(slot)}" style="${estilo}">${esc(label)}</button>`;
                     }).join('') + '</div>';
 
                 // Si estamos en modo edición, preseleccionar la hora actual
@@ -1999,7 +1821,7 @@ function configurarEventosEstadisticas() {
 } // ← Cierre de iniciarModuloCitas()
 
 // =====================================================
-// 🎯 AUTO-INICIALIZACIÓN - ✅ CON PROTECCIÓN
+// AUTO-INICIALIZACIÓN - CON PROTECCIÓN
 // =====================================================
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', iniciarModuloCitas);

@@ -4,7 +4,7 @@
 <div class="contenedor-historia-clinica">
     <div class="layout-historia">
 
-        <!-- 🧍 Sidebar del paciente + checklist de Historia Clínica (siempre visible) -->
+        <!-- Sidebar del paciente + checklist de Historia Clínica (siempre visible) -->
         <aside id="sidebarPaciente" class="sidebar-paciente">
                 <button id="btnToggleSidebarPaciente" class="btn-toggle-sidebar-paciente" title="Ocultar/mostrar panel del paciente">
                     <span class="icono-toggle">‹</span>
@@ -15,24 +15,25 @@
                         <img id="fotoPaciente" src="../IMAGENES/perfiles_pacientes/default.png" alt="Foto del paciente">
                     </div>
                     <h3 class="nombre-paciente" id="nombrePaciente">---</h3>
-                    <p class="dni-paciente-sidebar">DNI <span id="dniPaciente">---</span></p>
+                    <p class="dni-paciente-sidebar"><span id="tipoDocPaciente">DNI</span> <span id="dniPaciente">---</span></p>
+                    <p class="responsable-paciente-sidebar" id="lineaResponsable" style="display:none;">Odontólogo responsable: <span id="doctorResponsable">---</span></p>
 
                     <div class="datos-sidebar-paciente">
                         <div class="dato-sidebar"><span id="sexoEdadPaciente">---</span></div>
-                        <div class="dato-sidebar">📱 <span id="telefonoPaciente">---</span></div>
-                        <div class="dato-sidebar">✉️ <span id="correoPaciente">---</span></div>
+                        <div class="dato-sidebar"><i class="ti ti-phone"></i> <span id="telefonoPaciente">---</span></div>
+                        <div class="dato-sidebar"><i class="ti ti-mail"></i> <span id="correoPaciente">---</span></div>
                     </div>
 
                     <div id="contenedorMensajeCumpleanos" class="contenedor-mensaje-cumpleanos"></div>
 
                     <button id="btnGestionarAlergias" class="btn-ver-alergias">Ver alergias</button>
                     <button id="btnGenerarPDF" class="btn-generar-pdf-sidebar" title="Generar Historia Clínica en PDF">
-                        📄 Generar PDF
+                        <i class="ti ti-file-type-pdf"></i> Generar PDF
                     </button>
 
                     <!-- Información del apoderado (solo si existe) -->
                     <div id="infoApoderado" class="info-apoderado-seccion" style="display:none;">
-                        <h4>👨‍👩‍👧 Apoderado</h4>
+                        <h4>Apoderado</h4>
                         <div class="grid-datos-apoderado">
                             <div class="dato-item">
                                 <span class="dato-label">Nombre:</span>
@@ -48,6 +49,8 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="avisoSoloLectura" class="aviso-solo-lectura" style="display:none;"></div>
 
                     <p class="titulo-checklist-sidebar">Historia clínica</p>
                     <div class="checklist-sidebar">
@@ -83,22 +86,22 @@
                 </div>
             </aside>
 
-            <!-- 📋 Columna derecha: buscador (siempre visible) + contenido -->
+            <!-- Columna derecha: buscador (siempre visible) + contenido -->
             <div class="columna-derecha-historia">
-                <!-- 🔍 Buscador de paciente -->
+                <!-- Buscador de paciente -->
                 <div class="encabezado-historia">
                     <h2>Historia Clínica</h2>
                     <div class="buscador-paciente">
                         <input type="text"
                             id="inputBuscarPaciente"
-                            placeholder="🔍 Buscar paciente por DNI o nombre..."
+                            placeholder="Buscar paciente por documento o nombre..."
                             class="input-busqueda-paciente">
                         <div id="resultadosBusqueda" class="resultados-busqueda" style="display:none;"></div>
                     </div>
-                    <button id="btnVolverPacientes" class="btn-secundario">⬅ Volver a Pacientes</button>
+                    <button id="btnVolverPacientes" class="btn-secundario"><i class="ti ti-arrow-left"></i> Volver a Pacientes</button>
                 </div>
 
-                <!-- 📑 Pestañas de módulos (oculto hasta que se cargue un paciente) -->
+                <!-- Pestañas de módulos (oculto hasta que se cargue un paciente) -->
                 <div id="contenidoHistoriaClinica" class="contenido-historia" style="display:none;">
                     <section class="seccion-modulos">
                         <div class="pestanas-modulos">
@@ -115,22 +118,22 @@
                     </section>
                 </div>
 
-                <!-- 💬 Mensaje cuando no hay paciente seleccionado -->
+                <!-- Mensaje cuando no hay paciente seleccionado -->
                 <div id="mensajeSinPaciente" class="mensaje-sin-paciente">
-                    <div class="icono-mensaje">🔍</div>
+                    <div class="icono-mensaje"><i class="ti ti-search"></i></div>
                     <p>Busque un paciente para ver su historia clínica</p>
-                    <p class="texto-pequeno">Use el buscador superior para encontrar un paciente por DNI o nombre</p>
+                    <p class="texto-pequeno">Use el buscador superior para encontrar un paciente por documento o nombre</p>
                 </div>
             </div>
         </div>
     </div>
 
-<!-- 🧑‍⚕️ Modal para gestionar alergias -->
+<!-- Modal para gestionar alergias -->
 <div id="modalAlergias" class="modal-overlay">
     <div class="modal-contenido">
         <div class="modal-encabezado">
             <h3> Gestionar Alergias a Medicamentos</h3>
-            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalAlergias">✖</button>
+            <button type="button" class="btn-cerrar-modal" id="btnCerrarModalAlergias"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <!-- Campo de búsqueda con resultados debajo -->
@@ -141,7 +144,7 @@
                         placeholder="Buscar o agregar medicamento..."
                         class="input-medicamento"
                         autocomplete="off">
-                    <button id="btnAgregarMedicamento" class="btn-agregar">➕ Agregar</button>
+                    <button id="btnAgregarMedicamento" class="btn-agregar">Agregar</button>
                 </div>
                 <!-- Resultados de búsqueda de medicamentos (AHORA DEBAJO DEL CAMPO) -->
                 <div id="resultadosMedicamentos" class="resultados-medicamentos" style="display:none;"></div>
@@ -154,34 +157,34 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" id="btnCancelarAlergias">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarAlergias">💾 Guardar Cambios</button>
+            <button type="button" class="btn-guardar" id="btnGuardarAlergias">Guardar Cambios</button>
         </div>
     </div>
 </div>
 
-<!-- 📝 Modal: Antecedentes (incluye motivo de consulta) -->
+<!-- Modal: Antecedentes (incluye motivo de consulta) -->
 <div id="modalMotivoConsulta" class="modal-overlay">
     <div class="modal-contenido">
         <div class="modal-encabezado">
             <h3>Motivo de Consulta</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalMotivoConsulta">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalMotivoConsulta"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <textarea id="txtMotivoConsulta" rows="4" class="input-textarea" placeholder="Describa el motivo de la consulta..."></textarea>
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalMotivoConsulta">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarMotivoConsulta">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarMotivoConsulta">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- 📝 Modal: Exámen Clínico General -->
+<!-- Modal: Exámen Clínico General -->
 <div id="modalExamenGeneral" class="modal-overlay">
     <div class="modal-contenido">
         <div class="modal-encabezado">
             <h3>Exámen Clínico General</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenGeneral">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenGeneral"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <div class="fila-doble">
@@ -207,17 +210,17 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalExamenGeneral">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarExamenGeneral">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarExamenGeneral">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- 📝 Modal: Antecedentes Personales -->
+<!-- Modal: Antecedentes Personales -->
 <div id="modalAntecedentesPersonales" class="modal-overlay">
     <div class="modal-contenido modal-ancho">
         <div class="modal-encabezado">
             <h3>Antecedentes Personales</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalAntecedentesPersonales">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalAntecedentesPersonales"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <label class="label-campo">Antecedentes médicos</label>
@@ -300,17 +303,17 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalAntecedentesPersonales">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarAntecedentesPersonales">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarAntecedentesPersonales">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- 📝 Modal: Antecedentes Familiares -->
+<!-- Modal: Antecedentes Familiares -->
 <div id="modalAntecedentesFamiliares" class="modal-overlay">
     <div class="modal-contenido">
         <div class="modal-encabezado">
             <h3>Antecedentes Familiares</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalAntecedentesFamiliares">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalAntecedentesFamiliares"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <label><input type="checkbox" id="chkHipertensionArterial"> Hipertensión arterial</label><br>
@@ -328,17 +331,17 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalAntecedentesFamiliares">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarAntecedentesFamiliares">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarAntecedentesFamiliares">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- 📝 Modal: Exámen Extraoral -->
+<!-- Modal: Exámen Extraoral -->
 <div id="modalExamenExtraoral" class="modal-overlay">
     <div class="modal-contenido modal-ancho">
         <div class="modal-encabezado">
             <h3>Exámen Extraoral</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenExtraoral">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenExtraoral"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <div class="fila-opciones">
@@ -388,7 +391,7 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalExamenExtraoral">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarExamenExtraoral">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarExamenExtraoral">Guardar</button>
         </div>
     </div>
 </div>
@@ -398,7 +401,7 @@
     <div class="modal-contenido">
         <div class="modal-encabezado">
             <h3>Exámen Intraoral — Tejidos Blandos</h3>
-            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenIntraoral">✖</button>
+            <button type="button" class="btn-cerrar-modal" data-cerrar-modal="modalExamenIntraoral"><i class="ti ti-x"></i></button>
         </div>
         <div class="modal-cuerpo">
             <label class="label-campo">Labios</label>
@@ -418,7 +421,7 @@
         </div>
         <div class="modal-botones">
             <button type="button" class="btn-secundario" data-cerrar-modal="modalExamenIntraoral">Cancelar</button>
-            <button type="button" class="btn-guardar" id="btnGuardarExamenIntraoral">💾 Guardar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarExamenIntraoral">Guardar</button>
         </div>
     </div>
 </div>

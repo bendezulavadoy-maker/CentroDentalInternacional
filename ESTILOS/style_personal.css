@@ -549,6 +549,9 @@ button {
 .mensaje-sistema.mostrar { right: 20px; opacity: 1; }
 .mensaje-sistema.exito { background: #2e7d32; }
 .mensaje-sistema.error { background: #c0392b; }
+.grupo-documento { display: flex; gap: 8px; }
+.grupo-documento select { flex: 0 0 92px; width: auto; }
+.grupo-documento input  { flex: 1; min-width: 0; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 820px) {

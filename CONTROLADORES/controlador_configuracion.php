@@ -1,5 +1,9 @@
 <?php
+// Sesion obligatoria (y permisos finos) para todo este controlador
+require_once '../CONFIG/permisos.php';
+require_once '../CONFIG/parametros.php';
 require_once '../MODELOS/modelo_configuracion.php';
+header('Content-Type: application/json; charset=utf-8');
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -38,6 +42,16 @@ if (str_contains($contentType, 'application/json')) {
 }
 $accion = $jsonInput['accion'] ?? $_POST['accion'] ?? $_GET['accion'] ?? '';
 
+// Roles, permisos y parametros del sistema: SOLO el Administrador.
+// Antes cualquier Asistente podia crear/eliminar roles y darse acceso a cualquier modulo.
+$accionesSoloAdministrador = ['crear_rol', 'editar_rol', 'eliminar_rol', 'listar_permisos', 'guardar_permisos',
+                              'listar_permisos_accion', 'guardar_permisos_accion', 'listar_parametros', 'guardar_parametro'];
+if (in_array($accion, $accionesSoloAdministrador, true) && !Permisos::puedeGestionarPermisos()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'mensaje' => 'Solo el administrador puede realizar esta acción']);
+    exit();
+}
+
 switch ($accion) {
 
     // ── ROLES ──────────────────────────────────────────
@@ -51,7 +65,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'El nombre es obligatorio']);
             break;
         }
-        echo json_encode($modelo->crearRol($nombre));
+        echo json_encode($modelo->crearRol($nombre, $_POST['codigo'] ?? ''));
         break;
 
     case 'editar_rol':
@@ -61,7 +75,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
             break;
         }
-        echo json_encode($modelo->editarRol($id, $nombre));
+        echo json_encode($modelo->editarRol($id, $nombre, $_POST['codigo'] ?? ''));
         break;
 
     case 'eliminar_rol':
@@ -92,6 +106,34 @@ switch ($accion) {
         echo json_encode($modelo->guardarPermisos($datos['permisos']));
         break;
 
+    case 'listar_permisos_accion':
+        echo json_encode(Permisos::matriz());
+        break;
+
+    case 'guardar_permisos_accion':
+        // { permisos: { idRol: { accion: alcance, ... }, ... } }  (solo lo que cambio)
+        $datos = json_decode(file_get_contents('php://input'), true);
+        if (!isset($datos['permisos']) || !is_array($datos['permisos'])) {
+            echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
+            break;
+        }
+        $r = Permisos::guardarVarios($datos['permisos']);
+        if (!empty($r['success'])) {
+            $r['mensaje'] = $r['cambios'] === 0 ? 'No había cambios que guardar' : 'Permisos guardados correctamente';
+        }
+        echo json_encode($r);
+        break;
+
+    // ── PARAMETROS DEL SISTEMA ─────────────────────────
+    case 'listar_parametros':
+        echo json_encode(['success' => true, 'parametros' => Parametros::listarParaAdmin()]);
+        break;
+
+    case 'guardar_parametro':
+        $datos = json_decode(file_get_contents('php://input'), true);
+        echo json_encode(Parametros::guardar($datos['clave'] ?? '', $datos['valor'] ?? ''));
+        break;
+
     // ── SEDES ──────────────────────────────────────────
     case 'listar_sedes':
         echo json_encode($modelo->listarSedes());
@@ -106,7 +148,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'Nombre y dirección son obligatorios']);
             break;
         }
-        echo json_encode($modelo->crearSede($nombre, $direccion, $telefono, $activo));
+        echo json_encode($modelo->crearSede($nombre, $direccion, $telefono, $activo, $_POST['codigo'] ?? ''));
         break;
 
     case 'editar_sede':
@@ -119,7 +161,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
             break;
         }
-        echo json_encode($modelo->editarSede($id, $nombre, $direccion, $telefono, $activo));
+        echo json_encode($modelo->editarSede($id, $nombre, $direccion, $telefono, $activo, $_POST['codigo'] ?? ''));
         break;
     // ── SERVICIOS ──────────────────────────────────────────────────
     case 'listar_servicios':
@@ -134,7 +176,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'El nombre es obligatorio']);
             break;
         }
-        echo json_encode($modelo->crearServicio($nombre, $precio, $activo));
+        echo json_encode($modelo->crearServicio($nombre, $precio, $activo, $_POST['codigo'] ?? ''));
         break;
 
     case 'editar_servicio':
@@ -146,7 +188,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
             break;
         }
-        echo json_encode($modelo->editarServicio($id, $nombre, $precio, $activo));
+        echo json_encode($modelo->editarServicio($id, $nombre, $precio, $activo, $_POST['codigo'] ?? ''));
         break;
 
     // ── PLANES ─────────────────────────────────────────────────────
@@ -179,7 +221,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'El nombre es obligatorio']);
             break;
         }
-        echo json_encode($modelo->crearAparatologia($nombre, $precio, $activo));
+        echo json_encode($modelo->crearAparatologia($nombre, $precio, $activo, $_POST['codigo'] ?? ''));
         break;
 
     case 'editar_aparatologia':
@@ -191,7 +233,7 @@ switch ($accion) {
             echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
             break;
         }
-        echo json_encode($modelo->editarAparatologia($id, $nombre, $precio, $activo));
+        echo json_encode($modelo->editarAparatologia($id, $nombre, $precio, $activo, $_POST['codigo'] ?? ''));
         break;
 
 
@@ -205,7 +247,7 @@ switch ($accion) {
         $duracion = intval($_POST['duracion_minutos'] ?? 30);
         $color    = trim($_POST['color']             ?? '#2a4d8f');
         if (empty($nombre)) { echo json_encode(['success'=>false,'mensaje'=>'Nombre requerido']); break; }
-        echo json_encode($modelo->crearTipoAtencion($nombre, $duracion, $color));
+        echo json_encode($modelo->crearTipoAtencion($nombre, $duracion, $color, $_POST['codigo'] ?? ''));
         break;
 
     case 'editar_tipo_atencion':
@@ -215,7 +257,7 @@ switch ($accion) {
         $color    = trim($_POST['color']              ?? '#2a4d8f');
         $activo   = intval($_POST['activo']           ?? 1);
         if ($id <= 0 || empty($nombre)) { echo json_encode(['success'=>false,'mensaje'=>'Datos inválidos']); break; }
-        echo json_encode($modelo->editarTipoAtencion($id, $nombre, $duracion, $color, $activo));
+        echo json_encode($modelo->editarTipoAtencion($id, $nombre, $duracion, $color, $activo, $_POST['codigo'] ?? ''));
         break;
 
     // ── Horarios de doctores ──────────────────────────────────────
@@ -293,6 +335,9 @@ switch ($accion) {
     // ── Doctores (para selector en horarios) ─────────────────────
     case 'listar_doctores':
         echo json_encode($modelo->listarDoctores());
+        break;
+    case 'siguiente_codigo':
+        echo json_encode(['codigo' => $modelo->siguienteCodigo($_GET['catalogo'] ?? '')]);
         break;
 
     default:

@@ -1,5 +1,12 @@
 function iniciarModuloConfiguracion() {
 
+    // Escapa texto antes de insertarlo como HTML
+    function escCfg(valor) {
+        return String(valor == null ? '' : valor)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     // ── TABS ──────────────────────────────────────────────────────
     const tabBtns      = document.querySelectorAll('.tab-btn');
     const tabSecciones = document.querySelectorAll('.tab-contenido');
@@ -54,20 +61,23 @@ function iniciarModuloConfiguracion() {
     // ── Cargar al iniciar ─────────────────────────────────────────
     cargarRoles();
     cargarPermisos();
+    cargarPermisosAccion();
+    cargarParametros();
     cargarSedes();
     iniciarSeccionTiposAtencion();
     iniciarSeccionHorarios();
 
     // =============================================================
-    // 🎭 ROLES
+    // ROLES
     // =============================================================
-    const tablaRolesBody   = document.querySelector('#tablaRoles tbody');
+    const tablaRolesBody    = document.querySelector('#tablaRoles tbody');
     const formRolContenedor = document.getElementById('formRolContenedor');
-    const tituloFormRol    = document.getElementById('tituloFormRol');
-    const inputNombreRol   = document.getElementById('inputNombreRol');
-    const btnNuevoRol      = document.getElementById('btnNuevoRol');
-    const btnGuardarRol    = document.getElementById('btnGuardarRol');
-    const btnCancelarRol   = document.getElementById('btnCancelarRol');
+    const tituloFormRol     = document.getElementById('tituloFormRol');
+    const inputNombreRol    = document.getElementById('inputNombreRol');
+    const inputCodigoRol    = document.getElementById('inputCodigoRol');
+    const btnNuevoRol       = document.getElementById('btnNuevoRol');
+    const btnGuardarRol     = document.getElementById('btnGuardarRol');
+    const btnCancelarRol    = document.getElementById('btnCancelarRol');
 
     let editandoRolId = null;
 
@@ -80,19 +90,20 @@ function iniciarModuloConfiguracion() {
                     const esBase = r.id_rol <= 3;
                     tablaRolesBody.innerHTML += `
                         <tr>
-                            <td>${r.id_rol}</td>
+                            <td>${r.codigo || '—'}</td>
                             <td>${r.nombre_rol}</td>
                             <td>
-                                <button class="btn-editar-rol btn-accion" data-id="${r.id_rol}" data-nombre="${r.nombre_rol}">✏️ Editar</button>
-                                ${!esBase ? `<button class="btn-eliminar-rol btn-accion btn-danger" data-id="${r.id_rol}">🗑️ Eliminar</button>` : '<span class="etiqueta-base">Base</span>'}
+                                <button class="btn-editar-rol btn-accion" data-id="${r.id_rol}" data-nombre="${r.nombre_rol}" data-codigo="${r.codigo || ''}">Editar</button>
+                                ${!esBase ? `<button class="btn-eliminar-rol btn-accion btn-danger" data-id="${r.id_rol}">Eliminar</button>` : '<span class="etiqueta-base">Base</span>'}
                             </td>
                         </tr>`;
                 });
                 // Eventos de editar
                 document.querySelectorAll('.btn-editar-rol').forEach(btn => {
                     btn.addEventListener('click', () => {
-                        editandoRolId       = parseInt(btn.dataset.id);
+                        editandoRolId        = parseInt(btn.dataset.id);
                         inputNombreRol.value = btn.dataset.nombre;
+                        inputCodigoRol.value = btn.dataset.codigo;
                         tituloFormRol.textContent = 'Editar Rol';
                         formRolContenedor.style.display = 'block';
                     });
@@ -118,6 +129,8 @@ function iniciarModuloConfiguracion() {
     btnNuevoRol.addEventListener('click', () => {
         editandoRolId        = null;
         inputNombreRol.value = '';
+        inputCodigoRol.value = '';
+        sugerirCodigo('roles', inputCodigoRol);
         tituloFormRol.textContent = 'Nuevo Rol';
         formRolContenedor.style.display = 'block';
         inputNombreRol.focus();
@@ -126,15 +139,19 @@ function iniciarModuloConfiguracion() {
     btnCancelarRol.addEventListener('click', () => {
         formRolContenedor.style.display = 'none';
         inputNombreRol.value = '';
+        inputCodigoRol.value = '';
         editandoRolId = null;
     });
 
     btnGuardarRol.addEventListener('click', () => {
         const nombre = inputNombreRol.value.trim();
+        const codigo = inputCodigoRol.value.trim();
         if (!nombre) { mostrarMensaje('El nombre del rol es obligatorio', 'error'); return; }
+        if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
 
         const fd = new FormData();
         fd.append('nombre_rol', nombre);
+        fd.append('codigo', codigo);
 
         if (editandoRolId) {
             fd.append('accion', 'editar_rol');
@@ -150,6 +167,7 @@ function iniciarModuloConfiguracion() {
                 if (data.success) {
                     formRolContenedor.style.display = 'none';
                     inputNombreRol.value = '';
+                    inputCodigoRol.value = '';
                     editandoRolId = null;
                     cargarRoles();
                     cargarPermisos();
@@ -158,23 +176,24 @@ function iniciarModuloConfiguracion() {
     });
 
     // =============================================================
-    // 🔐 PERMISOS
+    // PERMISOS
     // =============================================================
-    const tablaPermisos    = document.getElementById('tablaPermisos');
+    const tablaPermisos      = document.getElementById('tablaPermisos');
     const btnGuardarPermisos = document.getElementById('btnGuardarPermisos');
 
     function cargarPermisos() {
         fetch('../CONTROLADORES/controlador_configuracion.php?accion=listar_permisos')
             .then(r => r.json())
             .then(data => {
+                if (!data || !data.roles || !tablaPermisos) return;   // sin permiso (no es administrador)
                 const { roles, modulos, mapa } = data;
 
                 let html = '<table id="matrizPermisos"><thead><tr><th>Módulo</th>';
-                roles.forEach(r => { html += `<th>${r.nombre_rol}</th>`; });
+                roles.forEach(r => { html += `<th>${escCfg(r.nombre_rol)}</th>`; });
                 html += '</tr></thead><tbody>';
 
                 Object.entries(modulos).forEach(([clave, etiqueta]) => {
-                    html += `<tr><td>${etiqueta}</td>`;
+                    html += `<tr><td>${escCfg(etiqueta)}</td>`;
                     roles.forEach(r => {
                         const tiene = mapa[r.id_rol] && mapa[r.id_rol].includes(clave);
                         html += `<td style="text-align:center;">
@@ -193,7 +212,7 @@ function iniciarModuloConfiguracion() {
             });
     }
 
-    btnGuardarPermisos.addEventListener('click', () => {
+    if (btnGuardarPermisos) btnGuardarPermisos.addEventListener('click', () => {
         const checkboxes = document.querySelectorAll('.chk-permiso');
         const permisos   = [];
 
@@ -215,12 +234,136 @@ function iniciarModuloConfiguracion() {
     });
 
     // =============================================================
-    // 🏥 SEDES
+    // PERMISOS POR ACCION Y PARAMETROS DEL SISTEMA (solo administrador)
+    // =============================================================
+    const ETIQUETAS_ALCANCE = { ninguno: 'No', asignados: 'Solo sus pacientes', todos: 'Todos' };
+    let permisosAccionOriginales = {};
+
+    function valorOriginalAccion(rol, accion) {
+        return (permisosAccionOriginales[rol] && permisosAccionOriginales[rol][accion]) || 'ninguno';
+    }
+
+    function cargarPermisosAccion() {
+        fetch('../CONTROLADORES/controlador_configuracion.php?accion=listar_permisos_accion')
+            .then(r => r.json())
+            .then(data => {
+                const cont = document.getElementById('contenedorAcciones');
+                if (!cont) return;
+                if (!data || !data.success) {
+                    cont.innerHTML = '<p class="cargando">' + escCfg((data && data.mensaje) || 'No disponible') + '</p>';
+                    return;
+                }
+                permisosAccionOriginales = JSON.parse(JSON.stringify(data.valores));
+                let html = '<table id="matrizAcciones"><thead><tr><th>Acción</th>';
+                data.roles.forEach(r => { html += '<th>' + escCfg(r.nombre_rol) + '</th>'; });
+                html += '</tr></thead><tbody>';
+                Object.values(data.catalogo).forEach(modulo => {
+                    html += '<tr class="fila-modulo"><td colspan="' + (data.roles.length + 1) + '">' + escCfg(modulo.titulo) + '</td></tr>';
+                    Object.entries(modulo.acciones).forEach(([accion, def]) => {
+                        html += '<tr><td>' + escCfg(def.titulo) + '</td>';
+                        const opciones = def.por_paciente ? ['ninguno', 'asignados', 'todos'] : ['ninguno', 'todos'];
+                        data.roles.forEach(r => {
+                            const actual = valorOriginalAccion(r.id_rol, accion);
+                            html += '<td><select class="sel-permiso-accion" data-rol="' + Number(r.id_rol) + '" data-accion="' + escCfg(accion) + '">' +
+                                opciones.map(o => '<option value="' + o + '"' + (o === actual ? ' selected' : '') + '>' + ETIQUETAS_ALCANCE[o] + '</option>').join('') +
+                                '</select></td>';
+                        });
+                        html += '</tr>';
+                    });
+                });
+                html += '</tbody></table>';
+                cont.innerHTML = html;
+                cont.querySelectorAll('.sel-permiso-accion').forEach(sel => {
+                    sel.addEventListener('change', () => {
+                        sel.classList.toggle('cambiado', sel.value !== valorOriginalAccion(sel.dataset.rol, sel.dataset.accion));
+                    });
+                });
+            })
+            .catch(() => {
+                const cont = document.getElementById('contenedorAcciones');
+                if (cont) cont.innerHTML = '<p class="cargando">No se pudieron cargar los permisos</p>';
+            });
+    }
+
+    const btnGuardarAcciones = document.getElementById('btnGuardarPermisosAccion');
+    if (btnGuardarAcciones) btnGuardarAcciones.addEventListener('click', () => {
+        const cambios = {};
+        document.querySelectorAll('.sel-permiso-accion').forEach(sel => {
+            if (sel.value !== valorOriginalAccion(sel.dataset.rol, sel.dataset.accion)) {
+                (cambios[sel.dataset.rol] = cambios[sel.dataset.rol] || {})[sel.dataset.accion] = sel.value;
+            }
+        });
+        if (!Object.keys(cambios).length) { mostrarMensaje('No hay cambios que guardar', 'exito'); return; }
+        btnGuardarAcciones.disabled = true;
+        fetch('../CONTROLADORES/controlador_configuracion.php?accion=guardar_permisos_accion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permisos: cambios })
+        })
+            .then(r => r.json())
+            .then(data => {
+                mostrarMensaje(data.mensaje || 'No se pudo guardar', data.success ? 'exito' : 'error');
+                if (data.success) cargarPermisosAccion();
+            })
+            .catch(() => mostrarMensaje('Error de conexión', 'error'))
+            .finally(() => { btnGuardarAcciones.disabled = false; });
+    });
+
+    function cargarParametros() {
+        fetch('../CONTROLADORES/controlador_configuracion.php?accion=listar_parametros')
+            .then(r => r.json())
+            .then(data => {
+                const cont = document.getElementById('listaParametros');
+                if (!cont) return;
+                if (!data || !data.success) { cont.innerHTML = '<p class="cargando">No disponible</p>'; return; }
+                cont.innerHTML = data.parametros.map(p => {
+                    let ayuda = p.descripcion;
+                    if (p.clave === 'documentos_max_mb' && p.limite_servidor) ayuda += ' El servidor permite como máximo ' + p.limite_servidor + ' MB.';
+                    if (p.tipo === 'lista') ayuda += ' Permitidas: ' + p.permitidas.join(', ') + '.';
+                    const entrada = p.tipo === 'entero'
+                        ? '<input type="number" min="' + Number(p.min) + '" max="' + Number(p.max) + '" value="' + escCfg(p.valor) + '" data-clave="' + escCfg(p.clave) + '">' +
+                          (p.unidad ? '<span class="unidad">' + escCfg(p.unidad) + '</span>' : '')
+                        : '<input type="text" class="largo" value="' + escCfg(p.valor) + '" data-clave="' + escCfg(p.clave) + '">';
+                    return '<div class="tarjeta-parametro"><div class="info-parametro"><h4>' + escCfg(p.titulo) + '</h4><p>' + escCfg(ayuda) + '</p></div>' +
+                           '<div class="control-parametro">' + entrada + '<button class="btn-guardar-parametro" data-clave="' + escCfg(p.clave) + '">Guardar</button></div></div>';
+                }).join('');
+            })
+            .catch(() => {
+                const cont = document.getElementById('listaParametros');
+                if (cont) cont.innerHTML = '<p class="cargando">No se pudieron cargar los parámetros</p>';
+            });
+    }
+
+    const contenedorParametros = document.getElementById('listaParametros');
+    if (contenedorParametros) contenedorParametros.addEventListener('click', e => {
+        const boton = e.target.closest('.btn-guardar-parametro');
+        if (!boton) return;
+        const clave = boton.dataset.clave;
+        const entrada = [...contenedorParametros.querySelectorAll('input[data-clave]')].find(i => i.dataset.clave === clave);
+        if (!entrada) return;
+        boton.disabled = true;
+        fetch('../CONTROLADORES/controlador_configuracion.php?accion=guardar_parametro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clave: clave, valor: entrada.value })
+        })
+            .then(r => r.json())
+            .then(data => {
+                mostrarMensaje(data.mensaje || 'No se pudo guardar', data.success ? 'exito' : 'error');
+                if (data.success) cargarParametros();
+            })
+            .catch(() => mostrarMensaje('Error de conexión', 'error'))
+            .finally(() => { boton.disabled = false; });
+    });
+
+    // =============================================================
+    // SEDES
     // =============================================================
     const tablaSedesBody     = document.querySelector('#tablaSedes tbody');
     const formSedeContenedor = document.getElementById('formSedeContenedor');
     const tituloFormSede     = document.getElementById('tituloFormSede');
     const inputNombreSede    = document.getElementById('inputNombreSede');
+    const inputCodigoSede    = document.getElementById('inputCodigoSede');
     const inputDireccionSede = document.getElementById('inputDireccionSede');
     const inputTelefonoSede  = document.getElementById('inputTelefonoSede');
     const selectActivoSede   = document.getElementById('selectActivoSede');
@@ -238,7 +381,7 @@ function iniciarModuloConfiguracion() {
                 sedes.forEach(s => {
                     tablaSedesBody.innerHTML += `
                         <tr>
-                            <td>${s.id_sede_atencion}</td>
+                            <td>${s.codigo || '—'}</td>
                             <td>${s.nombre_sede}</td>
                             <td>${s.direccion_sede}</td>
                             <td>${s.telefono_sede || '—'}</td>
@@ -246,16 +389,18 @@ function iniciarModuloConfiguracion() {
                             <td>
                                 <button class="btn-editar-sede btn-accion" 
                                     data-id="${s.id_sede_atencion}"
+                                    data-codigo="${s.codigo || ''}"
                                     data-nombre="${s.nombre_sede}"
                                     data-dir="${s.direccion_sede}"
                                     data-tel="${s.telefono_sede || ''}"
-                                    data-activo="${s.activo}">✏️ Editar</button>
+                                    data-activo="${s.activo}">Editar</button>
                             </td>
                         </tr>`;
                 });
                 document.querySelectorAll('.btn-editar-sede').forEach(btn => {
                     btn.addEventListener('click', () => {
                         editandoSedeId             = parseInt(btn.dataset.id);
+                        inputCodigoSede.value      = btn.dataset.codigo;
                         inputNombreSede.value      = btn.dataset.nombre;
                         inputDireccionSede.value   = btn.dataset.dir;
                         inputTelefonoSede.value    = btn.dataset.tel;
@@ -269,6 +414,8 @@ function iniciarModuloConfiguracion() {
 
     btnNuevaSede.addEventListener('click', () => {
         editandoSedeId             = null;
+        inputCodigoSede.value      = '';
+        sugerirCodigo('sedes', inputCodigoSede);
         inputNombreSede.value      = '';
         inputDireccionSede.value   = '';
         inputTelefonoSede.value    = '';
@@ -284,11 +431,16 @@ function iniciarModuloConfiguracion() {
     });
 
     btnGuardarSede.addEventListener('click', () => {
+        const codigo    = inputCodigoSede.value.trim();
         const nombre    = inputNombreSede.value.trim();
         const direccion = inputDireccionSede.value.trim();
         const telefono  = inputTelefonoSede.value.trim();
         const activo    = selectActivoSede.value;
 
+        if (!codigo) {
+            mostrarMensaje('El código es obligatorio', 'error');
+            return;
+        }
         if (!nombre || !direccion) {
             mostrarMensaje('Nombre y dirección son obligatorios', 'error');
             return;
@@ -299,6 +451,7 @@ function iniciarModuloConfiguracion() {
         }
 
         const fd = new FormData();
+        fd.append('codigo',         codigo);
         fd.append('nombre_sede',    nombre);
         fd.append('direccion_sede', direccion);
         fd.append('telefono_sede',  telefono);
@@ -324,14 +477,14 @@ function iniciarModuloConfiguracion() {
     });
 
     // =============================================================
-    // 🪧 Notificación
+    // Notificación
     // =============================================================
     function mostrarMensaje(msg, tipo = 'exito') {
         const aviso = document.createElement('div');
         aviso.className = `mensaje-sistema ${tipo}`;
         aviso.innerHTML = `
             <span class="icono">${tipo === 'exito' ? '' : ''}</span>
-            <span class="texto">${msg}</span>`;
+            <span class="texto">${escCfg(msg)}</span>`;
         document.body.appendChild(aviso);
         setTimeout(() => aviso.classList.add('mostrar'), 100);
         setTimeout(() => {
@@ -339,12 +492,33 @@ function iniciarModuloConfiguracion() {
             setTimeout(() => aviso.remove(), 400);
         }, 3000);
     }
+
+    // =============================================================
+    // Códigos: mayúsculas, solo caracteres válidos y sugerencia editable
+    // =============================================================
+    if (!window._codigoInputListener) {
+        window._codigoInputListener = true;
+        document.addEventListener('input', e => {
+            const el = e.target;
+            if (el.matches && el.matches('.input-codigo, [id^="inputCodigo"], #planCodigo')) {
+                el.value = el.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            }
+        });
+    }
+
+    function sugerirCodigo(catalogo, input) {
+        fetch(`../CONTROLADORES/controlador_configuracion.php?accion=siguiente_codigo&catalogo=${catalogo}`)
+            .then(r => r.json())
+            .then(d => { input.value = d.codigo || ''; });
+    }
+
     // =============================================================
     // SERVICIOS — se inicializa solo cuando se activa la pestaña
     // =============================================================
     function iniciarSeccionServicios() {
         const tablaServiciosBody     = document.querySelector('#tablaServicios tbody');
         const formServicioContenedor = document.getElementById('formServicioContenedor');
+        const inputCodigoServicio    = document.getElementById('inputCodigoServicio');
         const inputNombreServicio    = document.getElementById('inputNombreServicio');
         const inputPrecioServicio    = document.getElementById('inputPrecioServicio');
         const selectActivoServicio   = document.getElementById('selectActivoServicio');
@@ -362,6 +536,7 @@ function iniciarModuloConfiguracion() {
                     servicios.forEach(s => {
                         tablaServiciosBody.innerHTML += `
                             <tr>
+                                <td>${s.codigo || '—'}</td>
                                 <td>${s.nombre_servicio}</td>
                                 <td>S/ ${parseFloat(s.precio_base || 0).toFixed(2)}</td>
                                 <td><span class="badge-estado ${s.activo == 1 ? 'activo' : 'inactivo'}">
@@ -370,6 +545,7 @@ function iniciarModuloConfiguracion() {
                                 <td>
                                     <button class="btn-editar-srv btn-accion"
                                         data-id="${s.id_tipo_servicio}"
+                                        data-codigo="${s.codigo || ''}"
                                         data-nombre="${s.nombre_servicio}"
                                         data-precio="${s.precio_base}"
                                         data-activo="${s.activo}">Editar</button>
@@ -379,6 +555,7 @@ function iniciarModuloConfiguracion() {
                     document.querySelectorAll('.btn-editar-srv').forEach(btn => {
                         btn.onclick = () => {
                             editandoServicioId         = btn.dataset.id;
+                            inputCodigoServicio.value  = btn.dataset.codigo;
                             inputNombreServicio.value  = btn.dataset.nombre;
                             inputPrecioServicio.value  = parseFloat(btn.dataset.precio).toFixed(2);
                             selectActivoServicio.value = btn.dataset.activo;
@@ -391,6 +568,8 @@ function iniciarModuloConfiguracion() {
 
         btnNuevoServicio.onclick = () => {
             editandoServicioId         = null;
+            inputCodigoServicio.value  = '';
+            sugerirCodigo('servicios', inputCodigoServicio);
             inputNombreServicio.value  = '';
             inputPrecioServicio.value  = '';
             selectActivoServicio.value = '1';
@@ -405,10 +584,13 @@ function iniciarModuloConfiguracion() {
         };
 
         btnGuardarServicio.onclick = () => {
+            const codigo = inputCodigoServicio.value.trim();
             const nombre = inputNombreServicio.value.trim();
+            if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
             if (!nombre) { mostrarMensaje('El nombre es obligatorio', 'error'); return; }
 
             const fd = new FormData();
+            fd.append('codigo',          codigo);
             fd.append('nombre_servicio', nombre);
             fd.append('precio_base',     inputPrecioServicio.value || 0);
             fd.append('activo',          selectActivoServicio.value);
@@ -459,7 +641,7 @@ function iniciarModuloConfiguracion() {
                     listaPlanesConfig.innerHTML = planes.map(p => `
                         <div class="plan-config-item ${p.activo == 0 ? 'inactivo' : ''}">
                             <div class="plan-config-info">
-                                <span class="plan-config-nombre">${p.nombre_plan}</span>
+                                <span class="plan-config-nombre">${p.codigo ? p.codigo + ' · ' : ''}${p.nombre_plan}</span>
                                 ${p.descripcion
                                     ? `<span class="plan-config-desc">${p.descripcion}</span>`
                                     : ''}
@@ -486,6 +668,7 @@ function iniciarModuloConfiguracion() {
                             if (!plan) return;
                             editandoPlanId = plan.id_plan;
                             document.getElementById('tituloModalPlan').textContent  = 'Editar Plan';
+                            document.getElementById('planCodigo').value             = plan.codigo || '';
                             document.getElementById('planNombre').value             = plan.nombre_plan;
                             document.getElementById('planDescripcion').value        = plan.descripcion || '';
                             document.getElementById('planCostoRef').value           = plan.costo_referencial || '';
@@ -515,6 +698,8 @@ function iniciarModuloConfiguracion() {
         btnNuevoPlan.onclick = () => {
             editandoPlanId = null;
             document.getElementById('tituloModalPlan').textContent = 'Nuevo Plan de Tratamiento';
+            document.getElementById('planCodigo').value            = '';
+            sugerirCodigo('planes', document.getElementById('planCodigo'));
             document.getElementById('planNombre').value            = '';
             document.getElementById('planDescripcion').value       = '';
             document.getElementById('planCostoRef').value          = '';
@@ -523,11 +708,14 @@ function iniciarModuloConfiguracion() {
         };
     
         btnGuardarPlan.onclick = () => {
+            const codigo = document.getElementById('planCodigo').value.trim();
             const nombre = document.getElementById('planNombre').value.trim();
+            if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
             if (!nombre) { mostrarMensaje('El nombre del plan es obligatorio', 'error'); return; }
     
             const datos = {
                 id_plan:          editandoPlanId,
+                codigo:           codigo,
                 nombre_plan:      nombre,
                 descripcion:      document.getElementById('planDescripcion').value.trim(),
                 costo_referencial: document.getElementById('planCostoRef').value || null,
@@ -556,9 +744,14 @@ function iniciarModuloConfiguracion() {
     
         cargarPlanesConfig();
     }
+
+    // =============================================================
+    // APARATOLOGÍA — se inicializa solo cuando se activa la pestaña
+    // =============================================================
     function iniciarSeccionAparatologia() {
         const tablaBody    = document.querySelector('#tablaAparatologia tbody');
         const formConten   = document.getElementById('formAparatologiaContenedor');
+        const inputCodigo  = document.getElementById('inputCodigoAparatologia');
         const inputNombre  = document.getElementById('inputNombreAparatologia');
         const inputPrecio  = document.getElementById('inputPrecioAparatologia');
         const selectActivo = document.getElementById('selectActivoAparatologia');
@@ -574,12 +767,13 @@ function iniciarModuloConfiguracion() {
                 .then(items => {
                     tablaBody.innerHTML = '';
                     if (!items.length) {
-                        tablaBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#95a5a6;">Sin registros</td></tr>';
+                        tablaBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#95a5a6;">Sin registros</td></tr>';
                         return;
                     }
                     items.forEach(a => {
                         tablaBody.innerHTML += `
                             <tr>
+                                <td>${a.codigo || '—'}</td>
                                 <td>${a.nombre}</td>
                                 <td>S/ ${parseFloat(a.precio_base || 0).toFixed(2)}</td>
                                 <td><span class="badge-estado ${a.activo == 1 ? 'activo' : 'inactivo'}">
@@ -588,6 +782,7 @@ function iniciarModuloConfiguracion() {
                                 <td>
                                     <button class="btn-editar-apat btn-accion"
                                         data-id="${a.id_aparatologia}"
+                                        data-codigo="${a.codigo || ''}"
                                         data-nombre="${a.nombre}"
                                         data-precio="${a.precio_base}"
                                         data-activo="${a.activo}">Editar</button>
@@ -597,6 +792,7 @@ function iniciarModuloConfiguracion() {
                     document.querySelectorAll('.btn-editar-apat').forEach(btn => {
                         btn.onclick = () => {
                             editandoId         = btn.dataset.id;
+                            inputCodigo.value  = btn.dataset.codigo;
                             inputNombre.value  = btn.dataset.nombre;
                             inputPrecio.value  = parseFloat(btn.dataset.precio).toFixed(2);
                             selectActivo.value = btn.dataset.activo;
@@ -609,6 +805,8 @@ function iniciarModuloConfiguracion() {
 
         btnNuevo.onclick = () => {
             editandoId         = null;
+            inputCodigo.value  = '';
+            sugerirCodigo('aparatologia', inputCodigo);
             inputNombre.value  = '';
             inputPrecio.value  = '';
             selectActivo.value = '1';
@@ -623,10 +821,13 @@ function iniciarModuloConfiguracion() {
         };
 
         btnGuardar.onclick = () => {
+            const codigo = inputCodigo.value.trim();
             const nombre = inputNombre.value.trim();
+            if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
             if (!nombre) { mostrarMensaje('El nombre es obligatorio', 'error'); return; }
 
             const fd = new FormData();
+            fd.append('codigo',              codigo);
             fd.append('nombre_aparatologia', nombre);
             fd.append('precio_base',         inputPrecio.value || 0);
             fd.append('activo',              selectActivo.value);
@@ -667,6 +868,7 @@ function iniciarModuloConfiguracion() {
                     if (!tbody) return;
                     tbody.innerHTML = lista.map(t => `
                         <tr>
+                            <td>${t.codigo || '—'}</td>
                             <td>${t.nombre}</td>
                             <td>${t.duracion_minutos} min</td>
                             <td><span style="display:inline-block;width:20px;height:20px;border-radius:4px;background:${t.color};border:1px solid #ddd;vertical-align:middle;"></span> ${t.color}</td>
@@ -674,6 +876,7 @@ function iniciarModuloConfiguracion() {
                             <td>
                                 <button class="btn-editar-tipo btn-accion"
                                     data-id="${t.id_tipo_atencion}"
+                                    data-codigo="${t.codigo || ''}"
                                     data-nombre="${t.nombre}"
                                     data-duracion="${t.duracion_minutos}"
                                     data-color="${t.color}"
@@ -684,6 +887,7 @@ function iniciarModuloConfiguracion() {
                     tbody.querySelectorAll('.btn-editar-tipo').forEach(btn => {
                         btn.addEventListener('click', () => {
                             document.getElementById('idTipoAtencionEditar').value    = btn.dataset.id;
+                            document.getElementById('inputCodigoTipoAtencion').value = btn.dataset.codigo;
                             document.getElementById('inputNombreTipoAtencion').value = btn.dataset.nombre;
                             document.getElementById('selectDuracionTipoAtencion').value = btn.dataset.duracion;
                             document.getElementById('inputColorTipoAtencion').value  = btn.dataset.color;
@@ -698,6 +902,8 @@ function iniciarModuloConfiguracion() {
 
         document.getElementById('btnNuevoTipoAtencion')?.addEventListener('click', () => {
             document.getElementById('idTipoAtencionEditar').value = '';
+            document.getElementById('inputCodigoTipoAtencion').value = '';
+            sugerirCodigo('tipos_atencion', document.getElementById('inputCodigoTipoAtencion'));
             document.getElementById('inputNombreTipoAtencion').value = '';
             document.getElementById('selectDuracionTipoAtencion').value = '60';
             document.getElementById('inputColorTipoAtencion').value = '#2a4d8f';
@@ -713,14 +919,17 @@ function iniciarModuloConfiguracion() {
 
         document.getElementById('btnGuardarTipoAtencion')?.addEventListener('click', () => {
             const id      = document.getElementById('idTipoAtencionEditar').value;
+            const codigo  = document.getElementById('inputCodigoTipoAtencion').value.trim();
             const nombre  = document.getElementById('inputNombreTipoAtencion').value.trim();
             const duracion = document.getElementById('selectDuracionTipoAtencion').value;
             const color   = document.getElementById('inputColorTipoAtencion').value;
             const activo  = document.getElementById('checkActivoTipoAtencion').checked ? 1 : 0;
 
+            if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
             if (!nombre) { mostrarMensaje('El nombre es obligatorio', 'error'); return; }
 
             const fd = new FormData();
+            fd.append('codigo', codigo);
             fd.append('nombre', nombre);
             fd.append('duracion_minutos', duracion);
             fd.append('color', color);

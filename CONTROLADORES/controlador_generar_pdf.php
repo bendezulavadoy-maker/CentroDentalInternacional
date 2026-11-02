@@ -5,6 +5,11 @@
  * Las secciones sin datos (Antecedentes, Exámenes) se omiten del PDF.
  */
 
+// Solo con sesion iniciada y acceso a Historia Clinica (antes cualquiera que conociera el numero
+// del paciente podia descargar su historia clinica completa, sin iniciar sesion).
+require_once '../CONFIG/permisos.php';
+requerirPermisoApi('historia_clinica');
+
 // Resguardo para hosting compartido con límites bajos (Dompdf puede ser pesado)
 // Si el hosting no permite cambiar estos valores, PHP simplemente ignora el ini_set sin error.
 ini_set('memory_limit', '256M');
@@ -23,7 +28,7 @@ if ($accion !== 'generar_historia_clinica') {
     exit;
 }
 
-$idPaciente = $_GET['id_paciente'] ?? 0;
+$idPaciente = (int)($_GET['id_paciente'] ?? 0);
 if (!$idPaciente) {
     http_response_code(400);
     echo 'ID de paciente no proporcionado';
@@ -83,7 +88,7 @@ function campo($valor) {
 // Marca [x] o [ ] para las opciones tipo checkbox del exámen extraoral
 function opcion($valorActual, $valorOpcion, $etiqueta) {
     $marcado = ($valorActual === $valorOpcion);
-    $caja = $marcado ? '&#9746;' : '&#9744;'; // ☒ / ☐
+    $caja = $marcado ? '&#9746;' : '&#9744;'; // casilla marcada / sin marcar
     $estilo = $marcado ? 'font-weight:bold;' : '';
     return "<span style=\"margin-right:14px;{$estilo}\">{$caja} {$etiqueta}</span>";
 }
@@ -160,7 +165,7 @@ ob_start();
             <span class="valor"><?= e($nombreCompleto) ?></span>
         </td>
         <td style="width:25%;">
-            <span class="etiqueta">DNI</span><br>
+            <span class="etiqueta"><?= e($paciente['tipo_documento_abrev'] ?? 'DNI') ?></span><br>
             <span class="valor"><?= e($paciente['dni'] ?? null) ?></span>
         </td>
         <td style="width:25%;">
@@ -365,4 +370,5 @@ $dompdf->render();
 $slugNombre = preg_replace('/[^A-Za-z0-9_]+/', '_', $nombreCompleto);
 $nombreArchivo = "Historia_Clinica_{$slugNombre}_" . date('Y-m-d') . '.pdf';
 
+registrarBitacora('historia.exportar_pdf', 'historia', null, $idPaciente);
 $dompdf->stream($nombreArchivo, ['Attachment' => true]);

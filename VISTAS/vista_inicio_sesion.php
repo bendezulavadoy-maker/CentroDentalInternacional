@@ -27,7 +27,7 @@
                         id="numeroUsuario"
                         placeholder="7323"
                         autocomplete="username"
-                        inputmode="numeric"
+                        inputmode="text"
                         required>
                 </div>
                 <input type="hidden" name="codigo_usuario" id="codigoUsuarioCompleto">

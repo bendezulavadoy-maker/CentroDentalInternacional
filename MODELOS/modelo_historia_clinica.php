@@ -9,47 +9,55 @@ class ModeloHistoriaClinica {
     }
 
     // =====================================================
-    // 🔹 Buscar pacientes
+    // Buscar pacientes
     // =====================================================
     public function buscarPacientes($termino) {
         try {
-            $sql = "SELECT id_paciente, nombre, apellido, dni, telefono, correo
-                    FROM pacientes
-                    WHERE nombre LIKE :termino 
-                       OR apellido LIKE :termino 
-                       OR dni LIKE :termino 
-                       OR CONCAT(nombre, ' ', apellido) LIKE :termino
-                    ORDER BY apellido ASC, nombre ASC
+            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.dni, p.telefono, p.correo,
+                           td.abreviatura AS tipo_documento_abrev
+                    FROM pacientes p
+                    LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
+                    WHERE p.nombre LIKE :termino 
+                       OR p.apellido LIKE :termino 
+                       OR p.dni LIKE :termino 
+                       OR CONCAT(p.nombre, ' ', p.apellido) LIKE :termino
+                    ORDER BY p.apellido ASC, p.nombre ASC
                     LIMIT 10";
             
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([':termino' => "%$termino%"]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("❌ Error al buscar pacientes: " . $e->getMessage());
+            error_log("Error al buscar pacientes: " . $e->getMessage());
             return [];
         }
     }
 
     // =====================================================
-    // 🔹 Obtener información completa del paciente
+    // Obtener información completa del paciente
     // =====================================================
     public function obtenerPacienteCompleto($idPaciente) {
         try {
             $sql = "SELECT p.*, 
+                           td.abreviatura AS tipo_documento_abrev,
                            s.nombre_sexo, 
                            ec.nombre_estado_civil, 
                            gi.nombre_grado_instruccion,
+                           CONCAT(ur.nombre, ' ', ur.apellidos) AS doctor_responsable_nombre,
                            a.nombre as apoderado_nombre,
                            a.apellido as apoderado_apellido,
                            a.dni as apoderado_dni,
+                           atd.abreviatura as apoderado_tipo_documento_abrev,
                            a.telefono as apoderado_telefono,
                            tf.descripcion as tipo_familiar
                     FROM pacientes p
+                    LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
+                    LEFT JOIN usuarios ur ON p.id_doctor_responsable = ur.id_usuario
                     LEFT JOIN sexo s ON p.id_sexo = s.id_sexo
                     LEFT JOIN estado_civil ec ON p.id_estado_civil = ec.id_estado_civil
                     LEFT JOIN grado_instruccion gi ON p.id_grado_instruccion = gi.id_grado_instruccion
                     LEFT JOIN apoderados a ON p.id_apoderado = a.id_apoderado
+                    LEFT JOIN tipo_documento atd ON a.id_tipo_documento = atd.id_tipo_documento
                     LEFT JOIN tipo_familiar tf ON a.id_tipo_familiar = tf.id_tipo_familiar
                     WHERE p.id_paciente = :id";
             
@@ -64,6 +72,7 @@ class ModeloHistoriaClinica {
                         'nombre' => $paciente['apoderado_nombre'],
                         'apellido' => $paciente['apoderado_apellido'],
                         'dni' => $paciente['apoderado_dni'],
+                        'tipo_documento_abrev' => $paciente['apoderado_tipo_documento_abrev'],
                         'telefono' => $paciente['apoderado_telefono'],
                         'tipo_familiar' => $paciente['tipo_familiar']
                     ];
@@ -73,19 +82,37 @@ class ModeloHistoriaClinica {
                 unset($paciente['apoderado_nombre']);
                 unset($paciente['apoderado_apellido']);
                 unset($paciente['apoderado_dni']);
+                unset($paciente['apoderado_tipo_documento_abrev']);
+                // El hash de la contrasena del portal nunca debe llegar al navegador ni a ningun PDF
+                unset($paciente['contrasena_portal']);
                 unset($paciente['apoderado_telefono']);
                 unset($paciente['tipo_familiar']);
             }
 
             return $paciente;
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener paciente: " . $e->getMessage());
+            error_log("Error al obtener paciente: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Verificar/crear historia clínica
+    // Paciente al que pertenece una historia clinica (los permisos se comprueban por paciente)
+    // =====================================================
+    public function idPacienteDeHistoria($idHistoria) {
+        try {
+            $stmt = $this->conexion->prepare("SELECT id_paciente FROM historia_clinica WHERE id_historia = :id");
+            $stmt->execute([':id' => (int)$idHistoria]);
+            $r = $stmt->fetchColumn();
+            return $r === false ? null : (int)$r;
+        } catch (PDOException $e) {
+            error_log("Error al buscar el paciente de la historia: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // =====================================================
+    // Verificar/crear historia clínica
     // =====================================================
     public function obtenerOCrearHistoriaClinica($idPaciente) {
         try {
@@ -111,13 +138,13 @@ class ModeloHistoriaClinica {
 
             return $historia;
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener/crear historia clínica: " . $e->getMessage());
+            error_log("Error al obtener/crear historia clínica: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Listar alergias del paciente
+    // Listar alergias del paciente
     // =====================================================
     public function listarAlergiasPaciente($idPaciente) {
         try {
@@ -133,13 +160,13 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_paciente' => $idPaciente]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("❌ Error al listar alergias: " . $e->getMessage());
+            error_log("Error al listar alergias: " . $e->getMessage());
             return [];
         }
     }
 
     // =====================================================
-    // 🔹 NUEVO: Buscar medicamentos en la base de datos
+    // NUEVO: Buscar medicamentos en la base de datos
     // =====================================================
     public function buscarMedicamentos($termino) {
         try {
@@ -153,13 +180,13 @@ class ModeloHistoriaClinica {
             $stmt->execute([':termino' => "%$termino%"]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("❌ Error al buscar medicamentos: " . $e->getMessage());
+            error_log("Error al buscar medicamentos: " . $e->getMessage());
             return [];
         }
     }
 
     // =====================================================
-    // 🔹 Guardar alergias del paciente
+    // Guardar alergias del paciente
     // =====================================================
     public function guardarAlergiasPaciente($idPaciente, $medicamentos) {
         try {
@@ -205,13 +232,13 @@ class ModeloHistoriaClinica {
             return true;
         } catch (PDOException $e) {
             $this->conexion->rollBack();
-            error_log("❌ Error al guardar alergias: " . $e->getMessage());
+            error_log("Error al guardar alergias: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Obtener estadísticas del paciente
+    // Obtener estadísticas del paciente
     // =====================================================
     public function obtenerEstadisticasPaciente($idPaciente) {
         try {
@@ -250,7 +277,7 @@ class ModeloHistoriaClinica {
 
             return $estadisticas;
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener estadísticas: " . $e->getMessage());
+            error_log("Error al obtener estadísticas: " . $e->getMessage());
             return [
                 'total_citas' => 0,
                 'total_atenciones' => 0,
@@ -261,7 +288,7 @@ class ModeloHistoriaClinica {
     }
 
     // =====================================================
-    // 🔹 Actualizar notas de historia clínica
+    // Actualizar notas de historia clínica
     // =====================================================
     public function actualizarNotasHistoria($idHistoria, $notas) {
         try {
@@ -272,13 +299,13 @@ class ModeloHistoriaClinica {
                 ':id_historia' => $idHistoria
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al actualizar notas: " . $e->getMessage());
+            error_log("Error al actualizar notas: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Actualizar motivo de consulta
+    // Actualizar motivo de consulta
     // =====================================================
     public function actualizarMotivoConsulta($idHistoria, $motivo) {
         try {
@@ -289,13 +316,13 @@ class ModeloHistoriaClinica {
                 ':id_historia' => $idHistoria
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al actualizar motivo de consulta: " . $e->getMessage());
+            error_log("Error al actualizar motivo de consulta: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 Obtener TODAS las secciones de historia clínica de una vez
+    // Obtener TODAS las secciones de historia clínica de una vez
     //    (usado para pintar el checklist y para armar el PDF)
     // =====================================================
     public function obtenerSeccionesHistoria($idHistoria) {
@@ -316,7 +343,7 @@ class ModeloHistoriaClinica {
             }
             return $secciones;
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener secciones de historia: " . $e->getMessage());
+            error_log("Error al obtener secciones de historia: " . $e->getMessage());
             return [];
         }
     }
@@ -332,7 +359,7 @@ class ModeloHistoriaClinica {
     }
 
     // =====================================================
-    // 🔹 ANTECEDENTES — obtener / guardar
+    // ANTECEDENTES — obtener / guardar
     // =====================================================
     public function obtenerAntecedentes($idHistoria) {
         try {
@@ -341,7 +368,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener antecedentes: " . $e->getMessage());
+            error_log("Error al obtener antecedentes: " . $e->getMessage());
             return [];
         }
     }
@@ -364,13 +391,13 @@ class ModeloHistoriaClinica {
                 ':modificado_por' => $idUsuario
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar antecedentes: " . $e->getMessage());
+            error_log("Error al guardar antecedentes: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 EXAMEN CLINICO GENERAL — obtener / guardar
+    // EXAMEN CLINICO GENERAL — obtener / guardar
     // =====================================================
     public function obtenerExamenGeneral($idHistoria) {
         try {
@@ -379,7 +406,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener examen general: " . $e->getMessage());
+            error_log("Error al obtener examen general: " . $e->getMessage());
             return [];
         }
     }
@@ -404,13 +431,13 @@ class ModeloHistoriaClinica {
                 ':modificado_por' => $idUsuario
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar examen general: " . $e->getMessage());
+            error_log("Error al guardar examen general: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 ANTECEDENTES PERSONALES — obtener / guardar
+    // ANTECEDENTES PERSONALES — obtener / guardar
     // =====================================================
     public function obtenerAntecedentesPersonales($idHistoria) {
         try {
@@ -419,7 +446,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener antecedentes personales: " . $e->getMessage());
+            error_log("Error al obtener antecedentes personales: " . $e->getMessage());
             return [];
         }
     }
@@ -464,13 +491,13 @@ class ModeloHistoriaClinica {
             $params[':modificado_por'] = $idUsuario;
             return $stmt->execute($params);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar antecedentes personales: " . $e->getMessage());
+            error_log("Error al guardar antecedentes personales: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 ANTECEDENTES FAMILIARES — obtener / guardar
+    // ANTECEDENTES FAMILIARES — obtener / guardar
     // =====================================================
     public function obtenerAntecedentesFamiliares($idHistoria) {
         try {
@@ -479,7 +506,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener antecedentes familiares: " . $e->getMessage());
+            error_log("Error al obtener antecedentes familiares: " . $e->getMessage());
             return [];
         }
     }
@@ -498,13 +525,13 @@ class ModeloHistoriaClinica {
             foreach ($camposBool as $c) $params[':' . $c] = !empty($datos[$c]) ? 1 : 0;
             return $stmt->execute($params);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar antecedentes familiares: " . $e->getMessage());
+            error_log("Error al guardar antecedentes familiares: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 EXAMEN EXTRAORAL — obtener / guardar
+    // EXAMEN EXTRAORAL — obtener / guardar
     // =====================================================
     public function obtenerExamenExtraoral($idHistoria) {
         try {
@@ -513,7 +540,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener examen extraoral: " . $e->getMessage());
+            error_log("Error al obtener examen extraoral: " . $e->getMessage());
             return [];
         }
     }
@@ -555,13 +582,13 @@ class ModeloHistoriaClinica {
                 ':modificado_por'           => $idUsuario
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar examen extraoral: " . $e->getMessage());
+            error_log("Error al guardar examen extraoral: " . $e->getMessage());
             return false;
         }
     }
 
     // =====================================================
-    // 🔹 EXAMEN INTRAORAL (tejidos blandos) — obtener / guardar
+    // EXAMEN INTRAORAL (tejidos blandos) — obtener / guardar
     // =====================================================
     public function obtenerExamenIntraoral($idHistoria) {
         try {
@@ -570,7 +597,7 @@ class ModeloHistoriaClinica {
             $stmt->execute([':id_historia' => $idHistoria]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("❌ Error al obtener examen intraoral: " . $e->getMessage());
+            error_log("Error al obtener examen intraoral: " . $e->getMessage());
             return [];
         }
     }
@@ -610,7 +637,7 @@ class ModeloHistoriaClinica {
                 ':modificado_por' => $idUsuario
             ]);
         } catch (PDOException $e) {
-            error_log("❌ Error al guardar examen intraoral: " . $e->getMessage());
+            error_log("Error al guardar examen intraoral: " . $e->getMessage());
             return false;
         }
     }

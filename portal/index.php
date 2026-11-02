@@ -11,27 +11,32 @@
 
 <div class="pantalla-acceso" id="pantalla">
 
-    <!-- ══ PASO 1: DNI ══ -->
+    <!-- ══ PASO 1: DOCUMENTO ══ -->
     <div class="caja-acceso" id="paso-dni">
         <div class="caja-acceso-header">
-            <h1>🦷 Dental Internacional</h1>
+            <h1>Dental Internacional</h1>
             <p>Portal de autogestión para pacientes</p>
         </div>
         <div class="caja-acceso-body">
             <div id="alerta-dni"></div>
+            <div class="campo" style="margin-bottom:12px;">
+                <label>Tipo de documento</label>
+                <select id="selectTipoDoc">
+                    <option value="1">DNI</option>
+                </select>
+            </div>
             <div class="campo" style="margin-bottom:16px;">
-                <label>Ingresa tu DNI <span class="req">*</span></label>
-                <input type="text" id="inputDni" maxlength="8" placeholder="12345678"
-                       style="font-size:18px;text-align:center;letter-spacing:4px;"
-                       oninput="this.value=this.value.replace(/\D/g,'')">
-                <span class="ayuda">8 dígitos — sin puntos ni espacios</span>
+                <label>Número de documento <span class="req">*</span></label>
+                <input type="text" id="inputDni" maxlength="8" placeholder="12345678" autocomplete="off"
+                       style="font-size:18px;text-align:center;letter-spacing:4px;">
+                <span class="ayuda" id="ayudaDoc">8 dígitos — sin puntos ni espacios</span>
             </div>
             <button class="btn btn-primario btn-full" onclick="verificarDni()">
                 <i class="ti ti-arrow-right"></i> Continuar
             </button>
             <div class="separador">o</div>
             <p style="text-align:center;font-size:12px;color:var(--texto-sec);">
-                ¿Eres nuevo paciente? Ingresa tu DNI y te guiaremos para registrarte.
+                ¿Eres nuevo paciente? Ingresa tu documento y te guiaremos para registrarte.
             </p>
         </div>
     </div>
@@ -39,13 +44,13 @@
     <!-- ══ PASO 2A: LOGIN (paciente existente con contraseña) ══ -->
     <div class="caja-acceso" id="paso-login" style="display:none;">
         <div class="caja-acceso-header">
-            <h1>👋 Bienvenido de vuelta</h1>
+            <h1>Bienvenido de vuelta</h1>
             <p id="login-nombre-paciente">Ingresa tu contraseña para continuar</p>
         </div>
         <div class="caja-acceso-body">
             <div id="alerta-login"></div>
             <div class="campo" style="margin-bottom:14px;">
-                <label>DNI</label>
+                <label>Documento</label>
                 <input type="text" id="login-dni-mostrado" disabled
                        style="background:#f4f6f9;color:var(--texto-sec);">
             </div>
@@ -65,7 +70,7 @@
             </button>
             <div style="text-align:center;margin-top:14px;">
                 <button class="btn btn-secundario" onclick="volverDni()" style="font-size:12px;">
-                    <i class="ti ti-arrow-left"></i> Cambiar DNI
+                    <i class="ti ti-arrow-left"></i> Cambiar documento
                 </button>
             </div>
         </div>
@@ -74,15 +79,20 @@
     <!-- ══ PASO 2B: CREAR CONTRASEÑA (paciente existente sin contraseña) ══ -->
     <div class="caja-acceso" id="paso-crear-pass" style="display:none;">
         <div class="caja-acceso-header">
-            <h1>🔑 Crea tu acceso</h1>
+            <h1>Crea tu acceso</h1>
             <p>Es tu primera vez en el portal. Crea una contraseña.</p>
         </div>
         <div class="caja-acceso-body">
             <div id="alerta-crear-pass"></div>
             <p style="font-size:13px;color:var(--texto-sec);margin-bottom:16px;
                       padding:10px 12px;background:#eef2fb;border-radius:6px;">
-                Encontramos tu historial como paciente. Solo necesitas crear una contraseña para acceder al portal.
+                Encontramos tu historial como paciente. Para confirmar que eres tú, ingresa el teléfono que dejaste en la clínica y crea una contraseña.
             </p>
+            <div class="campo" style="margin-bottom:12px;">
+                <label>Teléfono registrado en la clínica <span class="req">*</span></label>
+                <input type="tel" id="nuevaTelefono" maxlength="9" placeholder="987654321" autocomplete="off">
+                <span class="ayuda">9 dígitos — el mismo número que dejaste en la clínica</span>
+            </div>
             <div class="campo" style="margin-bottom:12px;">
                 <label>Nueva contraseña <span class="req">*</span></label>
                 <input type="password" id="nuevaPass1" placeholder="Mínimo 6 caracteres">
@@ -97,7 +107,7 @@
             </button>
             <div style="text-align:center;margin-top:12px;">
                 <button class="btn btn-secundario" onclick="volverDni()" style="font-size:12px;">
-                    <i class="ti ti-arrow-left"></i> Cambiar DNI
+                    <i class="ti ti-arrow-left"></i> Cambiar documento
                 </button>
             </div>
         </div>
@@ -107,7 +117,7 @@
     <div id="paso-registro" style="display:none;width:100%;max-width:720px;">
         <div class="tarjeta">
             <div class="caja-acceso-header" style="background:var(--azul);padding:20px 28px;">
-                <h1 style="color:white;font-size:18px;">🦷 Nuevo paciente — Registro</h1>
+                <h1 style="color:white;font-size:18px;">Nuevo paciente — Registro</h1>
                 <p style="color:rgba(255,255,255,0.8);font-size:13px;">
                     Completa tus datos para agendar citas en Dental Internacional
                 </p>
@@ -143,8 +153,8 @@
                             <input type="text" id="reg-apellido" placeholder="Ej: García López">
                         </div>
                         <div class="campo">
-                            <label>DNI <span class="req">*</span></label>
-                            <input type="text" id="reg-dni" maxlength="8" readonly
+                            <label id="reg-doc-label">Documento <span class="req">*</span></label>
+                            <input type="text" id="reg-dni" maxlength="20" readonly
                                    style="background:#f4f6f9;color:var(--texto-sec);">
                         </div>
                         <div class="campo">
@@ -197,7 +207,7 @@
                          padding:14px;background:#fff9f0;border:1px solid #fad7a0;border-radius:8px;">
                         <p style="font-size:12px;font-weight:600;color:var(--naranja);
                                   margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px;">
-                            ⚠️ Paciente menor de edad — datos del apoderado
+                            Paciente menor de edad — datos del apoderado
                         </p>
                         <div class="grid-2" style="gap:12px;">
                             <div class="campo">
@@ -209,8 +219,14 @@
                                 <input type="text" id="apo-apellido" placeholder="Apellido(s)">
                             </div>
                             <div class="campo">
-                                <label>DNI del apoderado <span class="req">*</span></label>
-                                <input type="text" id="apo-dni" maxlength="8" placeholder="12345678">
+                                <label>Tipo de documento del apoderado</label>
+                                <select id="apo-tipo-doc">
+                                    <option value="1">DNI</option>
+                                </select>
+                            </div>
+                            <div class="campo">
+                                <label>Número de documento del apoderado <span class="req">*</span></label>
+                                <input type="text" id="apo-dni" maxlength="8" placeholder="12345678" autocomplete="off">
                             </div>
                             <div class="campo">
                                 <label>Teléfono del apoderado <span class="req">*</span></label>
@@ -287,7 +303,7 @@
         <div style="text-align:center;margin-top:12px;">
             <button class="btn btn-secundario" onclick="volverDni()"
                     style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3);">
-                <i class="ti ti-arrow-left"></i> Cambiar DNI
+                <i class="ti ti-arrow-left"></i> Cambiar documento
             </button>
         </div>
     </div>
@@ -296,8 +312,14 @@
 
 <script>
 // ── Estado global ──────────────────────────────────────────────
+let tipoDocActual = '1';
 let dniActual = '';
 let pasoActual = 1;
+let tiposDocumento = [];
+let catalogosCargados = false;
+
+// Regla por defecto (DNI) mientras no cargue el catálogo
+const REGLA_DNI = { id_tipo_documento: 1, codigo: '1', abreviatura: 'DNI', longitud_min: 8, longitud_max: 8, solo_numeros: 1 };
 
 // ── Helpers ────────────────────────────────────────────────────
 function mostrarAlerta(id, msg, tipo = 'error') {
@@ -310,41 +332,145 @@ function limpiarAlerta(id) {
 function mostrar(id)  { document.getElementById(id).style.display = ''; }
 function ocultar(id)  { document.getElementById(id).style.display = 'none'; }
 
-// ── Paso 1: Verificar DNI ──────────────────────────────────────
-async function verificarDni() {
-    const dni = document.getElementById('inputDni').value.trim();
-    if (!/^\d{8}$/.test(dni)) {
-        mostrarAlerta('alerta-dni', 'Ingresa un DNI válido de 8 dígitos');
-        return;
+// ── Documento de identidad: reglas según el tipo (catálogo tipo_documento) ──
+function reglaDocumento(idTipo) {
+    return tiposDocumento.find(t => String(t.id_tipo_documento) === String(idTipo)) || REGLA_DNI;
+}
+
+// Deja solo los caracteres permitidos y respeta la longitud máxima
+function filtrarNumeroDocumento(valor, regla) {
+    const soloNum = Number(regla.solo_numeros) === 1;
+    const v = soloNum ? valor.replace(/[^0-9]/g, '') : valor.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    return v.substring(0, Number(regla.longitud_max));
+}
+
+// Devuelve el texto del error, o '' si el número es válido
+function evaluarDocumento(valor, regla) {
+    const abrev = regla.abreviatura;
+    const soloNum = Number(regla.solo_numeros) === 1;
+    const min = Number(regla.longitud_min);
+    const max = Number(regla.longitud_max);
+    if (valor === '') return `Ingresa tu número de ${abrev}`;
+    if (soloNum && !/^[0-9]+$/.test(valor)) return `El ${abrev} solo admite dígitos`;
+    if (!soloNum && !/^[A-Za-z0-9]+$/.test(valor)) return `El ${abrev} solo admite letras y números`;
+    if (valor.length < min || valor.length > max) {
+        const unidad = soloNum ? 'dígitos' : 'caracteres';
+        return min === max
+            ? `El ${abrev} debe tener exactamente ${min} ${unidad}`
+            : `El ${abrev} debe tener entre ${min} y ${max} ${unidad}`;
     }
+    if (regla.codigo === '1' && /^(\d)\1{7}$/.test(valor)) return 'El DNI ingresado no es válido';
+    return '';
+}
+
+// Ajusta longitud máxima, placeholder y ayuda según el tipo elegido
+function aplicarReglasDocumento(selectId, inputId, ayudaId) {
+    const sel = document.getElementById(selectId);
+    const inp = document.getElementById(inputId);
+    if (!sel || !inp) return;
+    const regla = reglaDocumento(sel.value);
+    const soloNum = Number(regla.solo_numeros) === 1;
+    const min = Number(regla.longitud_min);
+    const max = Number(regla.longitud_max);
+    inp.maxLength = max;
+    inp.placeholder = regla.codigo === '1' ? '12345678' : `Número de ${regla.abreviatura}`;
+    inp.value = filtrarNumeroDocumento(inp.value, regla);
+    const ayuda = ayudaId ? document.getElementById(ayudaId) : null;
+    if (ayuda) {
+        ayuda.textContent = soloNum
+            ? (min === max ? `${min} dígitos — sin puntos ni espacios` : `Entre ${min} y ${max} dígitos`)
+            : `Entre ${min} y ${max} caracteres (letras y números)`;
+    }
+}
+
+// Pasa el texto a mayúsculas sin mover el cursor
+function aMayusculas(input) {
+    const ini = input.selectionStart, fin = input.selectionEnd;
+    input.value = input.value.toUpperCase();
+    try { input.setSelectionRange(ini, fin); } catch (e) {}
+}
+
+// ── Catálogos (se cargan una sola vez al abrir la página) ─────
+async function cargarCatalogos() {
+    if (catalogosCargados) return;
+    try {
+        const res  = await fetch('controlador_portal.php?accion=catalogos');
+        const data = await res.json();
+
+        // Conserva la primera opción ("Selecciona...") y vuelve a llenar el resto
+        const poblar = (id, items, valKey, labelKey) => {
+            const sel = document.getElementById(id);
+            if (!sel || !Array.isArray(items)) return;
+            while (sel.options.length > 1) sel.remove(1);
+            items.forEach(i => sel.appendChild(new Option(i[labelKey], i[valKey])));
+        };
+        poblar('reg-sexo',        data.sexo,         'id_sexo',              'nombre_sexo');
+        poblar('reg-estado-civil',data.estado_civil, 'id_estado_civil',      'nombre_estado_civil');
+        poblar('reg-grado',       data.grado,        'id_grado_instruccion', 'nombre_grado_instruccion');
+        poblar('apo-parentesco',  data.parentesco,   'id_tipo_familiar',     'descripcion');
+
+        // Tipos de documento: selector del paso 1 y del apoderado
+        if (Array.isArray(data.tipos_documento) && data.tipos_documento.length) {
+            tiposDocumento = data.tipos_documento;
+            ['selectTipoDoc', 'apo-tipo-doc'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = '';
+                tiposDocumento.forEach(t => {
+                    const esDni = t.codigo === '1';
+                    sel.appendChild(new Option(t.abreviatura, t.id_tipo_documento, esDni, esDni));
+                });
+            });
+            aplicarReglasDocumento('selectTipoDoc', 'inputDni', 'ayudaDoc');
+            aplicarReglasDocumento('apo-tipo-doc', 'apo-dni', null);
+        }
+        catalogosCargados = true;
+    } catch {}
+}
+
+// ── Paso 1: Verificar documento ───────────────────────────────
+async function verificarDni() {
+    const sel    = document.getElementById('selectTipoDoc');
+    const regla  = reglaDocumento(sel.value);
+    const numero = document.getElementById('inputDni').value.trim().toUpperCase();
+
+    const mensaje = evaluarDocumento(numero, regla);
+    if (mensaje) { mostrarAlerta('alerta-dni', mensaje); return; }
     limpiarAlerta('alerta-dni');
-    dniActual = dni;
+    tipoDocActual = sel.value;
+    dniActual = numero;
 
     const fd = new FormData();
     fd.append('accion', 'verificar_dni');
-    fd.append('dni', dni);
+    fd.append('id_tipo_documento', tipoDocActual);
+    fd.append('dni', numero);
 
     try {
         const res  = await fetch('controlador_portal.php', { method:'POST', body:fd });
         const data = await res.json();
 
+        if (data.success === false) {
+            mostrarAlerta('alerta-dni', data.mensaje || 'No se pudo verificar el documento');
+            return;
+        }
+
         ocultar('paso-dni');
 
         if (data.existe && data.tiene_password) {
             // Paciente existente con contraseña → login
-            document.getElementById('login-dni-mostrado').value = dni;
-            document.getElementById('login-nombre-paciente').textContent =
-                `Hola, ${data.nombre} — ingresa tu contraseña`;
+            document.getElementById('login-dni-mostrado').value = `${regla.abreviatura} ${numero}`;
+            document.getElementById('login-nombre-paciente').textContent = 'Ingresa tu contraseña para continuar';
             mostrar('paso-login');
             setTimeout(() => document.getElementById('inputPassword').focus(), 100);
 
         } else if (data.existe && !data.tiene_password) {
             // Paciente existente sin contraseña → crear contraseña
             mostrar('paso-crear-pass');
+            setTimeout(() => document.getElementById('nuevaTelefono').focus(), 100);
 
         } else {
             // Paciente nuevo → registro completo
-            document.getElementById('reg-dni').value = dni;
+            document.getElementById('reg-dni').value = numero;
+            document.getElementById('reg-doc-label').innerHTML = `${regla.abreviatura} <span class="req">*</span>`;
             await cargarCatalogos();
             mostrar('paso-registro');
         }
@@ -362,6 +488,7 @@ async function iniciarSesion() {
 
     const fd = new FormData();
     fd.append('accion', 'login');
+    fd.append('id_tipo_documento', tipoDocActual);
     fd.append('dni', dniActual);
     fd.append('password', pass);
 
@@ -392,15 +519,19 @@ function togglePassword() {
 
 // ── Paso 2B: Crear contraseña (paciente existente) ─────────────
 async function crearContraseña() {
-    const p1 = document.getElementById('nuevaPass1').value;
-    const p2 = document.getElementById('nuevaPass2').value;
+    const tel = document.getElementById('nuevaTelefono').value.trim();
+    const p1  = document.getElementById('nuevaPass1').value;
+    const p2  = document.getElementById('nuevaPass2').value;
+    if (!/^\d{9}$/.test(tel)) { mostrarAlerta('alerta-crear-pass', 'Ingresa el teléfono de 9 dígitos que registraste en la clínica'); return; }
     if (p1.length < 6) { mostrarAlerta('alerta-crear-pass', 'La contraseña debe tener al menos 6 caracteres'); return; }
     if (p1 !== p2)     { mostrarAlerta('alerta-crear-pass', 'Las contraseñas no coinciden'); return; }
     limpiarAlerta('alerta-crear-pass');
 
     const fd = new FormData();
     fd.append('accion', 'crear_password');
+    fd.append('id_tipo_documento', tipoDocActual);
     fd.append('dni', dniActual);
+    fd.append('telefono', tel);
     fd.append('password', p1);
 
     try {
@@ -416,29 +547,40 @@ async function crearContraseña() {
     }
 }
 
-// ── Cargar catálogos para registro ────────────────────────────
-async function cargarCatalogos() {
-    try {
-        const res  = await fetch('controlador_portal.php?accion=catalogos');
-        const data = await res.json();
-
-        const poblar = (id, items, valKey, labelKey) => {
-            const sel = document.getElementById(id);
-            items.forEach(i => {
-                const o = document.createElement('option');
-                o.value = i[valKey]; o.textContent = i[labelKey];
-                sel.appendChild(o);
-            });
-        };
-        poblar('reg-sexo',        data.sexo,        'id_sexo',              'nombre_sexo');
-        poblar('reg-estado-civil',data.estado_civil, 'id_estado_civil',      'nombre_estado_civil');
-        poblar('reg-grado',       data.grado,        'id_grado_instruccion', 'nombre_grado_instruccion');
-        poblar('apo-parentesco',  data.parentesco,   'id_tipo_familiar',     'descripcion');
-    } catch {}
-}
-
-// ── Detectar menor de edad ─────────────────────────────────────
+// ── Eventos al cargar la página ────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    cargarCatalogos();
+
+    // Documento del paso 1
+    const selTipo = document.getElementById('selectTipoDoc');
+    const inpDni  = document.getElementById('inputDni');
+    selTipo.addEventListener('change', () => aplicarReglasDocumento('selectTipoDoc', 'inputDni', 'ayudaDoc'));
+    inpDni.addEventListener('input', () => {
+        inpDni.value = filtrarNumeroDocumento(inpDni.value, reglaDocumento(selTipo.value));
+    });
+    inpDni.addEventListener('keydown', e => { if (e.key === 'Enter') verificarDni(); });
+
+    // Documento del apoderado
+    const selApo = document.getElementById('apo-tipo-doc');
+    const inpApo = document.getElementById('apo-dni');
+    selApo.addEventListener('change', () => aplicarReglasDocumento('apo-tipo-doc', 'apo-dni', null));
+    inpApo.addEventListener('input', () => {
+        inpApo.value = filtrarNumeroDocumento(inpApo.value, reglaDocumento(selApo.value));
+    });
+
+    // Teléfonos: solo dígitos
+    ['nuevaTelefono', 'reg-telefono', 'apo-telefono'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => { el.value = el.value.replace(/\D/g, '').substring(0, 9); });
+    });
+
+    // Nombres siempre en mayúsculas
+    ['reg-nombre', 'reg-apellido', 'apo-nombre', 'apo-apellido'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => aMayusculas(el));
+    });
+
+    // Detectar menor de edad
     const fechaInput = document.getElementById('reg-fecha-nac');
     if (fechaInput) {
         fechaInput.addEventListener('change', () => {
@@ -504,6 +646,13 @@ function validarPasoActual() {
                     return false;
                 }
             }
+            const reglaApo = reglaDocumento(document.getElementById('apo-tipo-doc').value);
+            const msgApo = evaluarDocumento(document.getElementById('apo-dni').value.trim().toUpperCase(), reglaApo);
+            if (msgApo) {
+                mostrarAlerta('alerta-registro', 'Apoderado: ' + msgApo);
+                document.getElementById('apo-dni').focus();
+                return false;
+            }
         }
     }
     if (pasoActual === 2) {
@@ -540,6 +689,7 @@ async function registrarPaciente() {
 
     const fd = new FormData();
     fd.append('accion',        'registrar_paciente');
+    fd.append('id_tipo_documento', tipoDocActual);
     fd.append('dni',           document.getElementById('reg-dni').value);
     fd.append('nombre',        document.getElementById('reg-nombre').value.trim());
     fd.append('apellido',      document.getElementById('reg-apellido').value.trim());
@@ -560,11 +710,12 @@ async function registrarPaciente() {
     // Apoderado (si menor)
     const secApo = document.getElementById('seccion-apoderado');
     if (secApo.style.display !== 'none') {
-        fd.append('apo_nombre',     document.getElementById('apo-nombre').value.trim());
-        fd.append('apo_apellido',   document.getElementById('apo-apellido').value.trim());
-        fd.append('apo_dni',        document.getElementById('apo-dni').value.trim());
-        fd.append('apo_telefono',   document.getElementById('apo-telefono').value.trim());
-        fd.append('apo_parentesco', document.getElementById('apo-parentesco').value);
+        fd.append('apo_nombre',            document.getElementById('apo-nombre').value.trim());
+        fd.append('apo_apellido',          document.getElementById('apo-apellido').value.trim());
+        fd.append('apo_id_tipo_documento', document.getElementById('apo-tipo-doc').value);
+        fd.append('apo_dni',               document.getElementById('apo-dni').value.trim());
+        fd.append('apo_telefono',          document.getElementById('apo-telefono').value.trim());
+        fd.append('apo_parentesco',        document.getElementById('apo-parentesco').value);
     }
 
     try {
@@ -584,22 +735,20 @@ async function registrarPaciente() {
     }
 }
 
-// ── Volver a DNI ───────────────────────────────────────────────
+// ── Volver al paso del documento ───────────────────────────────
 function volverDni() {
     ['paso-login','paso-crear-pass','paso-registro'].forEach(ocultar);
     limpiarAlerta('alerta-dni');
     mostrar('paso-dni');
     document.getElementById('inputDni').value = '';
+    document.getElementById('nuevaTelefono').value = '';
+    document.getElementById('nuevaPass1').value = '';
+    document.getElementById('nuevaPass2').value = '';
+    document.getElementById('inputPassword').value = '';
     dniActual = '';
     pasoActual = 1;
+    aplicarReglasDocumento('selectTipoDoc', 'inputDni', 'ayudaDoc');
 }
-
-// Enter en DNI
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('inputDni')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') verificarDni();
-    });
-});
 </script>
 </body>
 </html>

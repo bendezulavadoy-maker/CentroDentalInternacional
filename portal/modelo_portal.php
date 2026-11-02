@@ -10,34 +10,95 @@ class ModeloPortal {
 
     // ══ AUTENTICACIÓN ════════════════════════════════════════════
 
-    public function verificarDni($dni) {
+    // ══ LIMITE DE INTENTOS (protege contra fuerza bruta) ═════════
+    // Si la tabla portal_intentos aun no existe, no bloquea (queda aviso en el log).
+
+    private function intentosRecientes($clave, $minutos) {
+        try {
+            $minutos = (int)$minutos;
+            $stmt = $this->db->prepare(
+                "SELECT COUNT(*) FROM portal_intentos
+                 WHERE clave = :c AND fecha_hora > (NOW() - INTERVAL $minutos MINUTE)"
+            );
+            $stmt->execute([':c' => $clave]);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("portal_intentos (consulta): " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function estaBloqueado($clave, $maximo, $minutos = 15) {
+        return $this->intentosRecientes($clave, $minutos) >= $maximo;
+    }
+
+    public function registrarIntento($clave) {
+        try {
+            $this->db->prepare("INSERT INTO portal_intentos (clave, fecha_hora) VALUES (:c, NOW())")
+                     ->execute([':c' => $clave]);
+            if (mt_rand(1, 50) === 1) { // limpieza ocasional de registros viejos
+                $this->db->exec("DELETE FROM portal_intentos WHERE fecha_hora < (NOW() - INTERVAL 1 DAY)");
+            }
+        } catch (PDOException $e) {
+            error_log("portal_intentos (registro): " . $e->getMessage());
+        }
+    }
+
+    public function limpiarIntentos($clave) {
+        try {
+            $this->db->prepare("DELETE FROM portal_intentos WHERE clave = :c")->execute([':c' => $clave]);
+        } catch (PDOException $e) {
+            error_log("portal_intentos (limpieza): " . $e->getMessage());
+        }
+    }
+
+    // ══ TIPOS DE DOCUMENTO ═══════════════════════════════════════
+
+    public function obtenerTipoDocumento($idTipo) {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT * FROM tipo_documento WHERE id_tipo_documento = :id AND activo = 1"
+            );
+            $stmt->execute([':id' => $idTipo]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (PDOException $e) {
+            error_log("obtenerTipoDocumento: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // ══ AUTENTICACION ════════════════════════════════════════════
+
+    // Solo informa si el documento existe y si ya tiene contrasena.
+    // NO devuelve datos personales (nombre, id) antes de iniciar sesion.
+    public function verificarDocumento($idTipo, $numero) {
         $stmt = $this->db->prepare(
-            "SELECT id_paciente, nombre, apellido, contrasena_portal
-             FROM pacientes WHERE dni = :dni LIMIT 1"
+            "SELECT id_paciente, contrasena_portal
+             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
         );
-        $stmt->execute([':dni' => $dni]);
+        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row) return ['existe' => false];
+        if (!$row) return ['success' => true, 'existe' => false];
         return [
-            'existe'        => true,
-            'nombre'        => $row['nombre'],
-            'id_paciente'   => $row['id_paciente'],
-            'tiene_password'=> !empty($row['contrasena_portal']),
+            'success'        => true,
+            'existe'         => true,
+            'tiene_password' => !empty($row['contrasena_portal']),
         ];
     }
 
-    public function login($dni, $password) {
+    public function login($idTipo, $numero, $password) {
         $stmt = $this->db->prepare(
             "SELECT id_paciente, nombre, apellido, contrasena_portal
-             FROM pacientes WHERE dni = :dni LIMIT 1"
+             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
         );
-        $stmt->execute([':dni' => $dni]);
+        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row || !password_verify($password, $row['contrasena_portal'])) {
-            return ['success' => false, 'mensaje' => 'DNI o contraseña incorrectos'];
+        if (!$row || empty($row['contrasena_portal']) || !password_verify($password, $row['contrasena_portal'])) {
+            return ['success' => false, 'mensaje' => 'Documento o contraseña incorrectos'];
         }
         // Iniciar sesión del portal
         if (session_status() === PHP_SESSION_NONE) session_start();
+        session_regenerate_id(true); // evita fijacion de sesion
         $_SESSION['portal'] = [
             'id_paciente' => $row['id_paciente'],
             'nombre'      => $row['nombre'],
@@ -46,18 +107,45 @@ class ModeloPortal {
         return ['success' => true];
     }
 
-    public function crearPassword($dni, $password) {
-        $hash = password_hash($password, PASSWORD_BCRYPT);
+    // Primera vez en el portal: crea la contrasena de un paciente que ya existe.
+    // Reglas de seguridad:
+    //  - solo si el paciente AUN no tiene contrasena (nunca sobreescribe una existente);
+    //  - exige un segundo dato que solo el paciente conoce: el telefono registrado en la clinica.
+    public function crearPassword($idTipo, $numero, $telefono, $password) {
+        $generico = [
+            'success' => false,
+            'mensaje' => 'No pudimos verificar tus datos. Si cambió tu número de teléfono, comunícate con la clínica.'
+        ];
+
         $stmt = $this->db->prepare(
-            "UPDATE pacientes SET contrasena_portal = :hash WHERE dni = :dni"
+            "SELECT id_paciente, nombre, apellido, telefono, contrasena_portal
+             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
         );
-        $stmt->execute([':hash' => $hash, ':dni' => $dni]);
-        if ($stmt->rowCount() === 0) return ['success' => false, 'mensaje' => 'DNI no encontrado'];
-        // Loguear automáticamente
-        $p = $this->db->prepare("SELECT id_paciente, nombre, apellido FROM pacientes WHERE dni=:d");
-        $p->execute([':d' => $dni]);
-        $row = $p->fetch(PDO::FETCH_ASSOC);
+        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return $generico;
+
+        if (!empty($row['contrasena_portal'])) {
+            return ['success' => false, 'mensaje' => 'Este documento ya tiene acceso al portal. Ingresa con tu contraseña.'];
+        }
+
+        $telBD = preg_replace('/\D/', '', (string)($row['telefono'] ?? ''));
+        $telIn = preg_replace('/\D/', '', (string)$telefono);
+        if ($telBD === '' || !hash_equals($telBD, $telIn)) return $generico;
+
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        // La condicion en el UPDATE evita pisar una contrasena creada en el mismo instante
+        $upd = $this->db->prepare(
+            "UPDATE pacientes SET contrasena_portal = :hash
+             WHERE id_paciente = :id AND (contrasena_portal IS NULL OR contrasena_portal = '')"
+        );
+        $upd->execute([':hash' => $hash, ':id' => $row['id_paciente']]);
+        if ($upd->rowCount() === 0) {
+            return ['success' => false, 'mensaje' => 'Este documento ya tiene acceso al portal. Ingresa con tu contraseña.'];
+        }
+
         if (session_status() === PHP_SESSION_NONE) session_start();
+        session_regenerate_id(true);
         $_SESSION['portal'] = [
             'id_paciente' => $row['id_paciente'],
             'nombre'      => $row['nombre'],
@@ -78,58 +166,79 @@ class ModeloPortal {
         try {
             $this->db->beginTransaction();
 
-            // Verificar DNI no duplicado
-            $chk = $this->db->prepare("SELECT id_paciente FROM pacientes WHERE dni=:d");
-            $chk->execute([':d' => $datos['dni']]);
+            // Verificar documento no duplicado (tipo + numero)
+            $chk = $this->db->prepare("SELECT id_paciente FROM pacientes WHERE id_tipo_documento=:t AND dni=:d");
+            $chk->execute([':t' => $datos['id_tipo_documento'], ':d' => $datos['dni']]);
             if ($chk->fetch()) {
                 $this->db->rollBack();
-                return ['success' => false, 'mensaje' => 'Este DNI ya está registrado'];
+                return ['success' => false, 'mensaje' => 'Este documento ya está registrado'];
             }
 
-            // Insertar apoderado si viene
+            // Verificar correo no duplicado (la tabla lo exige unico)
+            $chkMail = $this->db->prepare("SELECT id_paciente FROM pacientes WHERE correo=:c");
+            $chkMail->execute([':c' => $datos['correo']]);
+            if ($chkMail->fetch()) {
+                $this->db->rollBack();
+                return ['success' => false, 'mensaje' => 'Este correo ya está registrado'];
+            }
+
+            // Apoderado (si viene): se reutiliza el que ya exista con el mismo documento,
+            // sin modificar sus datos (el formulario es publico).
             $id_apoderado = null;
             if (!empty($datos['apo_nombre'])) {
-                $apo = $this->db->prepare(
-                    "INSERT INTO apoderados (nombre, apellido, dni, telefono, id_tipo_familiar)
-                     VALUES (:n, :a, :d, :t, :p)"
+                $apoExiste = $this->db->prepare(
+                    "SELECT id_apoderado FROM apoderados WHERE id_tipo_documento=:t AND dni=:d LIMIT 1"
                 );
-                $apo->execute([
-                    ':n' => $datos['apo_nombre'],
-                    ':a' => $datos['apo_apellido'],
-                    ':d' => $datos['apo_dni'],
-                    ':t' => $datos['apo_telefono'],
-                    ':p' => $datos['apo_parentesco'],
-                ]);
-                $id_apoderado = $this->db->lastInsertId();
+                $apoExiste->execute([':t' => $datos['apo_id_tipo_documento'], ':d' => $datos['apo_dni']]);
+                $apoFila = $apoExiste->fetch(PDO::FETCH_ASSOC);
+
+                if ($apoFila) {
+                    $id_apoderado = $apoFila['id_apoderado'];
+                } else {
+                    $apo = $this->db->prepare(
+                        "INSERT INTO apoderados (nombre, apellido, id_tipo_documento, dni, telefono, id_tipo_familiar)
+                         VALUES (:n, :a, :td, :d, :t, :p)"
+                    );
+                    $apo->execute([
+                        ':n'  => $datos['apo_nombre'],
+                        ':a'  => $datos['apo_apellido'],
+                        ':td' => $datos['apo_id_tipo_documento'],
+                        ':d'  => $datos['apo_dni'],
+                        ':t'  => $datos['apo_telefono'],
+                        ':p'  => $datos['apo_parentesco'],
+                    ]);
+                    $id_apoderado = $this->db->lastInsertId();
+                }
             }
 
             $hash = password_hash($datos['password'], PASSWORD_BCRYPT);
 
             $sql = "INSERT INTO pacientes
-                    (nombre, apellido, dni, fecha_nacimiento, telefono, correo,
+                    (nombre, apellido, id_tipo_documento, dni, fecha_nacimiento, telefono, correo,
                      direccion, ocupacion, id_sexo, id_estado_civil, id_grado_instruccion,
                      id_apoderado, foto, contrasena_portal, fecha_registro)
                     VALUES
-                    (:nombre, :apellido, :dni, :fecha_nac, :telefono, :correo,
+                    (:nombre, :apellido, :id_tipo_documento, :dni, :fecha_nac, :telefono, :correo,
                      :direccion, :ocupacion, :id_sexo, :id_estado_civil, :id_grado,
                      :id_apoderado, :foto, :hash, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':nombre'           => $datos['nombre'],
-                ':apellido'         => $datos['apellido'],
-                ':dni'              => $datos['dni'],
-                ':fecha_nac'        => $datos['fecha_nac'],
-                ':telefono'         => $datos['telefono'],
-                ':correo'           => $datos['correo'],
-                ':direccion'        => $datos['direccion'],
-                ':ocupacion'        => $datos['ocupacion'],
-                ':id_sexo'          => $datos['id_sexo'] ?: null,
-                ':id_estado_civil'  => $datos['id_estado_civil'] ?: null,
-                ':id_grado'         => $datos['id_grado'] ?: null,
-                ':id_apoderado'     => $id_apoderado,
-                ':foto'             => $fotoPath,
-                ':hash'             => $hash,
+                ':nombre'            => $datos['nombre'],
+                ':apellido'          => $datos['apellido'],
+                ':id_tipo_documento' => $datos['id_tipo_documento'],
+                ':dni'               => $datos['dni'],
+                ':fecha_nac'         => $datos['fecha_nac'],
+                ':telefono'          => $datos['telefono'],
+                ':correo'            => $datos['correo'],
+                ':direccion'         => $datos['direccion'],
+                ':ocupacion'         => $datos['ocupacion'],
+                ':id_sexo'           => $datos['id_sexo'] ?: null,
+                ':id_estado_civil'   => $datos['id_estado_civil'] ?: null,
+                ':id_grado'          => $datos['id_grado'] ?: null,
+                ':id_apoderado'      => $id_apoderado,
+                ':foto'              => $fotoPath,
+                ':hash'              => $hash,
             ]);
             $id_paciente = $this->db->lastInsertId();
 
@@ -137,6 +246,7 @@ class ModeloPortal {
 
             // Iniciar sesión del portal
             if (session_status() === PHP_SESSION_NONE) session_start();
+            session_regenerate_id(true);
             $_SESSION['portal'] = [
                 'id_paciente' => $id_paciente,
                 'nombre'      => $datos['nombre'],
@@ -145,7 +255,7 @@ class ModeloPortal {
             return ['success' => true, 'id_paciente' => $id_paciente];
 
         } catch (PDOException $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) $this->db->rollBack();
             error_log("registrarPaciente: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error al registrar. Intenta nuevamente.'];
         }
@@ -155,6 +265,8 @@ class ModeloPortal {
 
     public function catalogos() {
         $tablas = [
+            'tipos_documento' => ['SELECT id_tipo_documento, codigo, nombre, abreviatura, longitud_min, longitud_max, solo_numeros
+                                   FROM tipo_documento WHERE activo = 1 ORDER BY id_tipo_documento', []],
             'sexo'         => ['SELECT id_sexo, nombre_sexo FROM sexo', []],
             'estado_civil' => ['SELECT id_estado_civil, nombre_estado_civil FROM estado_civil', []],
             'grado'        => ['SELECT id_grado_instruccion, nombre_grado_instruccion FROM grado_instruccion', []],
@@ -186,7 +298,9 @@ class ModeloPortal {
              WHERE p.id_paciente = :id"
         );
         $stmt->execute([':id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($fila) unset($fila['contrasena_portal']); // el hash nunca debe llegar al navegador
+        return $fila;
     }
 
     // ══ CITAS DEL PACIENTE ═══════════════════════════════════════

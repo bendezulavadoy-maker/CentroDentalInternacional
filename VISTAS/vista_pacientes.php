@@ -16,7 +16,7 @@
         <div class="barra-busqueda">
             <input type="text"
                    id="inputBusqueda"
-                   placeholder="Buscar por nombre, DNI, teléfono o correo..."
+                   placeholder="Buscar por nombre, documento, teléfono o correo..."
                    class="input-busqueda">
         </div>
         <table id="tablaPacientes">
@@ -25,7 +25,7 @@
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Apellido</th>
-                    <th>DNI</th>
+                    <th>Documento</th>
                     <th>Teléfono</th>
                     <th>Acciones</th>
                 </tr>
@@ -87,9 +87,14 @@
                     </div>
 
                     <div class="grupo-campo">
-                        <label>DNI <span class="campo-obligatorio">*</span></label>
-                        <input type="text" name="dni" maxlength="8" required placeholder="12345678">
-                        <small class="ayuda-campo">8 dígitos sin puntos</small>
+                        <label>Documento de identidad <span class="campo-obligatorio">*</span></label>
+                        <div class="grupo-documento">
+                            <select name="id_tipo_documento" id="selectTipoDocumento">
+                                <option value="1">DNI</option>
+                            </select>
+                            <input type="text" name="dni" id="inputNroDocumento" maxlength="8" required placeholder="12345678">
+                        </div>
+                        <small class="ayuda-campo" id="ayudaDocumento">8 dígitos sin puntos</small>
                     </div>
 
                     <div class="grupo-campo">
@@ -125,6 +130,14 @@
                     </div>
 
                     <div class="grupo-campo">
+                        <label>Odontólogo responsable</label>
+                        <select name="id_doctor_responsable" id="selectResponsable">
+                            <option value="">Sin asignar</option>
+                        </select>
+                        <small class="ayuda-campo" id="ayudaResponsable">Puede modificar los documentos del paciente</small>
+                    </div>
+
+                    <div class="grupo-campo">
                         <label>Teléfono <span class="campo-obligatorio">*</span></label>
                         <input type="text" name="telefono" maxlength="9" required placeholder="987654321">
                         <small class="ayuda-campo">9 dígitos</small>
@@ -142,7 +155,7 @@
 
                     <div class="grupo-campo campo-ancho" id="grupoApoderado">
                         <label>Apoderado
-                            <span style="font-weight:400;color:#9aa3b0;font-size:11px;">(se activa si es menor de edad)</span>
+                            <span style="font-weight:400;color:#9aa3b0;font-size:11px;">(obligatorio si es menor de edad; opcional en adultos)</span>
                         </label>
                         <div id="contenedor-apoderado-info"></div>
                     </div>
@@ -187,9 +200,14 @@
                            required placeholder="Apellidos">
                 </div>
                 <div class="grupo-campo">
-                    <label>DNI <span class="campo-obligatorio">*</span></label>
-                    <input type="text" name="dni_apoderado" id="dniApoderado"
-                           maxlength="8" required placeholder="12345678">
+                    <label>Documento de identidad <span class="campo-obligatorio">*</span></label>
+                    <div class="grupo-documento">
+                        <select name="tipo_doc_apoderado" id="tipoDocApoderado">
+                            <option value="1">DNI</option>
+                        </select>
+                        <input type="text" name="dni_apoderado" id="dniApoderado"
+                               maxlength="8" required placeholder="12345678">
+                    </div>
                 </div>
                 <div class="grupo-campo">
                     <label>Parentesco <span class="campo-obligatorio">*</span></label>
@@ -207,6 +225,34 @@
                 <button type="button" class="btn-secundario" id="btnCancelarApoderado">Cancelar</button>
                 <button type="submit" form="formApoderado" class="btn-guardar" style="margin-top:0;">
                     <i class="ti ti-check"></i> Guardar Apoderado
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RESTABLECER ACCESO AL PORTAL -->
+    <div id="modalRestablecerPortal" class="modal-overlay">
+        <div class="modal-contenido" style="max-width:420px;">
+            <div class="modal-encabezado">
+                <h3>Restablecer acceso al portal</h3>
+                <button type="button" class="btn-cerrar-modal" id="btnCerrarRestablecer">✕</button>
+            </div>
+            <div style="padding:20px;">
+                <p style="margin:0 0 8px;font-size:13.5px;color:#45505c;">
+                    Se eliminará la contraseña del portal de <strong id="restablecerNombrePaciente"></strong>.
+                </p>
+                <p style="margin:0 0 8px;font-size:13.5px;color:#45505c;">
+                    Para volver a entrar, el paciente deberá crear una nueva con su documento y el teléfono
+                    registrado en la clínica (<strong id="restablecerTelefonoPaciente"></strong>).
+                </p>
+                <p style="margin:0;font-size:12px;color:#7f8c8d;">
+                    Confirma la identidad del paciente antes de continuar.
+                </p>
+            </div>
+            <div class="modal-botones">
+                <button type="button" class="btn-secundario" id="btnCancelarRestablecer">Cancelar</button>
+                <button type="button" class="btn-guardar" id="btnConfirmarRestablecer" style="margin-top:0;">
+                    Sí, restablecer
                 </button>
             </div>
         </div>

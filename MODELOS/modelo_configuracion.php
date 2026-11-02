@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../CONFIG/conexion.php';
+require_once __DIR__ . '/../CONFIG/bitacora.php';
 
 class ModeloConfiguracion {
 
@@ -20,12 +21,44 @@ class ModeloConfiguracion {
         $db = new Conexion();
         $this->conexion = $db->getConexion();
     }
+    // ── CÓDIGOS (los define la clínica) ───────────────────────────
+    private $catalogosCodigo = [
+        'roles'          => ['roles',              'id_rol'],
+        'sedes'          => ['sedes',              'id_sede_atencion'],
+        'servicios'      => ['tipo_servicio',      'id_tipo_servicio'],
+        'planes'         => ['planes_tratamiento', 'id_plan'],
+        'aparatologia'   => ['aparatologia',       'id_aparatologia'],
+        'tipos_atencion' => ['tipos_atencion',     'id_tipo_atencion'],
+    ];
 
+    // Normaliza y valida: obligatorio, formato y único dentro de su tabla
+    public function validarCodigo($catalogo, $codigo, $idExcluir = 0) {
+        if (!isset($this->catalogosCodigo[$catalogo])) return ['valido' => false, 'mensaje' => 'Catálogo no válido'];
+        $codigo = strtoupper(trim($codigo));
+        if ($codigo === '') return ['valido' => false, 'mensaje' => 'El código es obligatorio'];
+        if (!preg_match('/^[A-Z0-9-]{1,10}$/', $codigo))
+            return ['valido' => false, 'mensaje' => 'El código solo admite letras, números y guion (máx. 10)'];
+        [$tabla, $pk] = $this->catalogosCodigo[$catalogo];
+        $s = $this->conexion->prepare("SELECT COUNT(*) FROM $tabla WHERE codigo = :c AND $pk != :id");
+        $s->execute([':c' => $codigo, ':id' => $idExcluir]);
+        if ($s->fetchColumn() > 0) return ['valido' => false, 'mensaje' => 'Ya existe un registro con ese código'];
+        return ['valido' => true, 'codigo' => $codigo];
+    }
+
+    // Sugerencia (editable): siguiente número, con el ancho del código numérico más largo
+    public function siguienteCodigo($catalogo) {
+        if (!isset($this->catalogosCodigo[$catalogo])) return '';
+        [$tabla] = $this->catalogosCodigo[$catalogo];
+        $filas = $this->conexion->query("SELECT codigo FROM $tabla WHERE codigo REGEXP '^[0-9]+$'")->fetchAll(PDO::FETCH_COLUMN);
+        $max = 0; $ancho = 2;
+        foreach ($filas as $c) { $max = max($max, (int)$c); $ancho = max($ancho, strlen($c)); }
+        return str_pad($max + 1, $ancho, '0', STR_PAD_LEFT);
+    }
     // ── ROLES ──────────────────────────────────────────────────────
 
     public function listarRoles() {
         try {
-            $stmt = $this->conexion->query("SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol ASC");
+            $stmt = $this->conexion->query("SELECT id_rol, codigo, nombre_rol FROM roles ORDER BY id_rol ASC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("listarRoles: " . $e->getMessage());
@@ -33,8 +66,10 @@ class ModeloConfiguracion {
         }
     }
 
-    public function crearRol($nombre) {
+    public function crearRol($nombre, $codigo) {
         try {
+            $v = $this->validarCodigo('roles', $codigo);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             // Verificar que no exista
             $check = $this->conexion->prepare("SELECT id_rol FROM roles WHERE nombre_rol = :nombre");
             $check->execute([':nombre' => $nombre]);
@@ -42,8 +77,8 @@ class ModeloConfiguracion {
                 return ['success' => false, 'mensaje' => 'Ya existe un rol con ese nombre'];
             }
 
-            $stmt = $this->conexion->prepare("INSERT INTO roles (nombre_rol) VALUES (:nombre)");
-            $stmt->execute([':nombre' => $nombre]);
+            $stmt = $this->conexion->prepare("INSERT INTO roles (codigo, nombre_rol) VALUES (:codigo, :nombre)");
+            $stmt->execute([':codigo' => $v['codigo'], ':nombre' => $nombre]);
             $id = $this->conexion->lastInsertId();
             return ['success' => true, 'id_rol' => $id, 'mensaje' => 'Rol creado correctamente'];
         } catch (PDOException $e) {
@@ -52,8 +87,10 @@ class ModeloConfiguracion {
         }
     }
 
-    public function editarRol($id, $nombre) {
+    public function editarRol($id, $nombre, $codigo) {
         try {
+            $v = $this->validarCodigo('roles', $codigo, $id);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             // Verificar duplicado excluyendo el actual
             $check = $this->conexion->prepare("SELECT id_rol FROM roles WHERE nombre_rol = :nombre AND id_rol != :id");
             $check->execute([':nombre' => $nombre, ':id' => $id]);
@@ -61,8 +98,8 @@ class ModeloConfiguracion {
                 return ['success' => false, 'mensaje' => 'Ya existe un rol con ese nombre'];
             }
 
-            $stmt = $this->conexion->prepare("UPDATE roles SET nombre_rol = :nombre WHERE id_rol = :id");
-            $stmt->execute([':nombre' => $nombre, ':id' => $id]);
+            $stmt = $this->conexion->prepare("UPDATE roles SET codigo = :codigo, nombre_rol = :nombre WHERE id_rol = :id");
+            $stmt->execute([':codigo' => $v['codigo'], ':nombre' => $nombre, ':id' => $id]);
             return ['success' => true, 'mensaje' => 'Rol actualizado correctamente'];
         } catch (PDOException $e) {
             error_log("editarRol: " . $e->getMessage());
@@ -116,28 +153,48 @@ class ModeloConfiguracion {
     }
 
     public function guardarPermisos($permisos) {
-        // $permisos = [ ['id_rol' => 1, 'modulo' => 'pacientes'], ... ]
+        // $permisos = [ ['id_rol' => 1, 'modulo' => 'pacientes'], ... ]  (la lista COMPLETA de lo que queda activo)
         try {
-            $this->conexion->beginTransaction();
-
-            // Borrar todos los permisos actuales y reinsertar
-            $this->conexion->exec("DELETE FROM permisos_rol");
-
-            if (!empty($permisos)) {
-                $stmt = $this->conexion->prepare(
-                    "INSERT INTO permisos_rol (id_rol, modulo) VALUES (:id_rol, :modulo)"
-                );
-                foreach ($permisos as $p) {
-                    if (!empty($p['id_rol']) && !empty($p['modulo'])) {
-                        $stmt->execute([':id_rol' => $p['id_rol'], ':modulo' => $p['modulo']]);
-                    }
-                }
+            if (!is_array($permisos) || empty($permisos)) {
+                return ['success' => false, 'mensaje' => 'No se recibieron permisos: no se guardó nada'];
             }
 
+            // Solo roles que existen y modulos conocidos (antes se guardaba lo que mandara el navegador)
+            $rolesValidos   = array_map('intval', $this->conexion->query("SELECT id_rol FROM roles")->fetchAll(PDO::FETCH_COLUMN));
+            $modulosValidos = array_keys($this->modulosDisponibles);
+            $nuevo = [];
+            foreach ($permisos as $p) {
+                $rol = (int)($p['id_rol'] ?? 0);
+                $mod = (string)($p['modulo'] ?? '');
+                if (!in_array($rol, $rolesValidos, true) || !in_array($mod, $modulosValidos, true)) {
+                    return ['success' => false, 'mensaje' => 'Los permisos enviados no son válidos: no se guardó nada'];
+                }
+                $nuevo["$rol|$mod"] = [$rol, $mod];
+            }
+            // El Administrador siempre conserva el acceso a Configuracion: asi nadie se queda sin poder volver a esta pantalla
+            $nuevo['1|configuracion'] = [1, 'configuracion'];
+
+            $actual = [];
+            foreach ($this->conexion->query("SELECT id_rol, modulo FROM permisos_rol")->fetchAll(PDO::FETCH_ASSOC) as $f) {
+                $actual[$f['id_rol'] . '|' . $f['modulo']] = true;
+            }
+            $agregados = array_keys(array_diff_key($nuevo, $actual));
+            $quitados  = array_keys(array_diff_key($actual, $nuevo));
+
+            $this->conexion->beginTransaction();
+            $this->conexion->exec("DELETE FROM permisos_rol");
+            $stmt = $this->conexion->prepare("INSERT INTO permisos_rol (id_rol, modulo) VALUES (:id_rol, :modulo)");
+            foreach ($nuevo as $par) {
+                $stmt->execute([':id_rol' => $par[0], ':modulo' => $par[1]]);
+            }
             $this->conexion->commit();
+
+            if (!empty($agregados) || !empty($quitados)) {
+                registrarBitacora('permisos.modulos', 'rol', null, null, ['agregados' => $agregados, 'quitados' => $quitados]);
+            }
             return ['success' => true, 'mensaje' => 'Permisos guardados correctamente'];
         } catch (PDOException $e) {
-            $this->conexion->rollBack();
+            if ($this->conexion->inTransaction()) $this->conexion->rollBack();
             error_log("guardarPermisos: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error al guardar permisos'];
         }
@@ -148,7 +205,7 @@ class ModeloConfiguracion {
     public function listarSedes() {
         try {
             $stmt = $this->conexion->query(
-                "SELECT id_sede_atencion, nombre_sede, direccion_sede, telefono_sede, activo FROM sedes ORDER BY id_sede_atencion ASC"
+                "SELECT id_sede_atencion, codigo, nombre_sede, direccion_sede, telefono_sede, activo FROM sedes ORDER BY id_sede_atencion ASC"
             );
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -157,12 +214,14 @@ class ModeloConfiguracion {
         }
     }
 
-    public function crearSede($nombre, $direccion, $telefono, $activo) {
+    public function crearSede($nombre, $direccion, $telefono, $activo, $codigo) {
         try {
-            $stmt = $this->conexion->prepare(
-                "INSERT INTO sedes (nombre_sede, direccion_sede, telefono_sede, activo) VALUES (:nombre, :dir, :tel, :activo)"
-            );
-            $stmt->execute([':nombre' => $nombre, ':dir' => $direccion, ':tel' => $telefono, ':activo' => $activo]);
+            $v = $this->validarCodigo('sedes', $codigo);
+        if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+        $stmt = $this->conexion->prepare(
+            "INSERT INTO sedes (codigo, nombre_sede, direccion_sede, telefono_sede, activo) VALUES (:codigo, :nombre, :dir, :tel, :activo)"
+        );
+        $stmt->execute([':codigo' => $v['codigo'], ':nombre' => $nombre, ':dir' => $direccion, ':tel' => $telefono, ':activo' => $activo]);
             return ['success' => true, 'mensaje' => 'Sede creada correctamente'];
         } catch (PDOException $e) {
             error_log("crearSede: " . $e->getMessage());
@@ -170,12 +229,14 @@ class ModeloConfiguracion {
         }
     }
 
-    public function editarSede($id, $nombre, $direccion, $telefono, $activo) {
+    public function editarSede($id, $nombre, $direccion, $telefono, $activo, $codigo) {
         try {
+            $v = $this->validarCodigo('sedes', $codigo, $id);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             $stmt = $this->conexion->prepare(
-                "UPDATE sedes SET nombre_sede=:nombre, direccion_sede=:dir, telefono_sede=:tel, activo=:activo WHERE id_sede_atencion=:id"
+                "UPDATE sedes SET codigo=:codigo, nombre_sede=:nombre, direccion_sede=:dir, telefono_sede=:tel, activo=:activo WHERE id_sede_atencion=:id"
             );
-            $stmt->execute([':nombre' => $nombre, ':dir' => $direccion, ':tel' => $telefono, ':activo' => $activo, ':id' => $id]);
+            $stmt->execute([':codigo' => $v['codigo'], ':nombre' => $nombre, ':dir' => $direccion, ':tel' => $telefono, ':activo' => $activo, ':id' => $id]);
             return ['success' => true, 'mensaje' => 'Sede actualizada correctamente'];
         } catch (PDOException $e) {
             error_log("editarSede: " . $e->getMessage());
@@ -187,8 +248,7 @@ class ModeloConfiguracion {
     public function listarServicios() {
         try {
             $s = $this->conexion->query(
-                "SELECT id_tipo_servicio, nombre_servicio, precio_base, activo
-                 FROM tipo_servicio ORDER BY nombre_servicio ASC"
+                "SELECT id_tipo_servicio, codigo, nombre_servicio, precio_base, activo FROM tipo_servicio ORDER BY nombre_servicio ASC"
             );
             return $s->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -197,8 +257,10 @@ class ModeloConfiguracion {
         }
     }
 
-    public function crearServicio($nombre, $precio, $activo) {
+    public function crearServicio($nombre, $precio, $activo, $codigo) {
         try {
+            $v = $this->validarCodigo('servicios', $codigo);
+           if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             $chk = $this->conexion->prepare(
                 "SELECT id_tipo_servicio FROM tipo_servicio WHERE nombre_servicio = :n"
             );
@@ -206,11 +268,9 @@ class ModeloConfiguracion {
             if ($chk->fetch()) {
                 return ['success' => false, 'mensaje' => 'Ya existe un servicio con ese nombre'];
             }
-            $s = $this->conexion->prepare(
-                "INSERT INTO tipo_servicio (nombre_servicio, precio_base, activo)
-                 VALUES (:n, :p, :a)"
-            );
-            $s->execute([':n' => $nombre, ':p' => $precio, ':a' => $activo]);
+            $s = $this->conexion->prepare("INSERT INTO tipo_servicio (codigo, nombre_servicio, precio_base, activo) VALUES (:co, :n, :p, :a)");
+        $s->execute([':co' => $v['codigo'], ':n' => $nombre, ':p' => $precio, ':a' => $activo]);
+        
             return ['success' => true, 'mensaje' => 'Servicio creado correctamente'];
         } catch (PDOException $e) {
             error_log("crearServicio: " . $e->getMessage());
@@ -218,13 +278,12 @@ class ModeloConfiguracion {
         }
     }
 
-    public function editarServicio($id, $nombre, $precio, $activo) {
+    public function editarServicio($id, $nombre, $precio, $activo, $codigo) {
         try {
-            $s = $this->conexion->prepare(
-                "UPDATE tipo_servicio SET nombre_servicio = :n, precio_base = :p, activo = :a
-                 WHERE id_tipo_servicio = :id"
-            );
-            $s->execute([':n' => $nombre, ':p' => $precio, ':a' => $activo, ':id' => $id]);
+            $v = $this->validarCodigo('servicios', $codigo, $id);
+        if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+        $s = $this->conexion->prepare("UPDATE tipo_servicio SET codigo = :co, nombre_servicio = :n, precio_base = :p, activo = :a WHERE id_tipo_servicio = :id");
+        $s->execute([':co' => $v['codigo'], ':n' => $nombre, ':p' => $precio, ':a' => $activo, ':id' => $id]);
             return ['success' => true, 'mensaje' => 'Servicio actualizado correctamente'];
         } catch (PDOException $e) {
             error_log("editarServicio: " . $e->getMessage());
@@ -258,15 +317,19 @@ class ModeloConfiguracion {
         try {
             $id     = intval($datos['id_plan'] ?? 0);
             $activo = intval($datos['activo'] ?? 1);
-    
+
+            $v = $this->validarCodigo('planes', $datos['codigo'] ?? '', $id);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+
             if ($id > 0) {
                 $s = $this->conexion->prepare(
                     "UPDATE planes_tratamiento SET
-                        nombre_plan = :nombre, descripcion = :desc,
+                        codigo = :codigo, nombre_plan = :nombre, descripcion = :desc,
                         costo_referencial = :cref, activo = :activo
                      WHERE id_plan = :id"
                 );
                 $s->execute([
+                    ':codigo' => $v['codigo'],
                     ':nombre' => $datos['nombre_plan'],
                     ':desc'   => $datos['descripcion'] ?: null,
                     ':cref'   => $datos['costo_referencial'] ?: null,
@@ -276,19 +339,20 @@ class ModeloConfiguracion {
             } else {
                 $s = $this->conexion->prepare(
                     "INSERT INTO planes_tratamiento
-                        (nombre_plan, descripcion, costo_referencial, activo)
-                     VALUES (:nombre, :desc, :cref, :activo)"
+                        (codigo, nombre_plan, descripcion, costo_referencial, activo)
+                     VALUES (:codigo, :nombre, :desc, :cref, :activo)"
                 );
                 $s->execute([
+                    ':codigo' => $v['codigo'],
                     ':nombre' => $datos['nombre_plan'],
                     ':desc'   => $datos['descripcion'] ?: null,
                     ':cref'   => $datos['costo_referencial'] ?: null,
                     ':activo' => $activo,
                 ]);
             }
-    
+
             return ['success' => true, 'mensaje' => 'Plan guardado correctamente'];
-    
+
         } catch (PDOException $e) {
             error_log("guardarPlan: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error al guardar plan'];
@@ -317,8 +381,8 @@ class ModeloConfiguracion {
     public function listarAparatologia() {
         try {
             $s = $this->conexion->query(
-                "SELECT id_aparatologia, nombre, precio_base, activo
-                 FROM aparatologia ORDER BY nombre ASC"
+               "SELECT id_aparatologia, codigo, nombre, precio_base, activo FROM aparatologia ORDER BY nombre ASC"
+
             );
             return $s->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -327,8 +391,10 @@ class ModeloConfiguracion {
         }
     }
 
-    public function crearAparatologia($nombre, $precio, $activo) {
+    public function crearAparatologia($nombre, $precio, $activo, $codigo) {
         try {
+            $v = $this->validarCodigo('aparatologia', $codigo);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             $chk = $this->conexion->prepare(
                 "SELECT id_aparatologia FROM aparatologia WHERE nombre = :n"
             );
@@ -336,11 +402,8 @@ class ModeloConfiguracion {
             if ($chk->fetch()) {
                 return ['success' => false, 'mensaje' => 'Ya existe un elemento con ese nombre'];
             }
-            $s = $this->conexion->prepare(
-                "INSERT INTO aparatologia (nombre, precio_base, activo)
-                 VALUES (:n, :p, :a)"
-            );
-            $s->execute([':n' => $nombre, ':p' => $precio, ':a' => $activo]);
+            $s = $this->conexion->prepare("INSERT INTO aparatologia (codigo, nombre, precio_base, activo) VALUES (:co, :n, :p, :a)");
+        $s->execute([':co' => $v['codigo'], ':n' => $nombre, ':p' => $precio, ':a' => $activo]);
             return ['success' => true, 'mensaje' => 'Aparatología creada correctamente'];
         } catch (PDOException $e) {
             error_log("crearAparatologia: " . $e->getMessage());
@@ -348,13 +411,12 @@ class ModeloConfiguracion {
         }
     }
 
-    public function editarAparatologia($id, $nombre, $precio, $activo) {
+    public function editarAparatologia($id, $nombre, $precio, $activo, $codigo) {
         try {
-            $s = $this->conexion->prepare(
-                "UPDATE aparatologia SET nombre = :n, precio_base = :p, activo = :a
-                 WHERE id_aparatologia = :id"
-            );
-            $s->execute([':n' => $nombre, ':p' => $precio, ':a' => $activo, ':id' => $id]);
+            $v = $this->validarCodigo('aparatologia', $codigo, $id);
+        if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+        $s = $this->conexion->prepare("UPDATE aparatologia SET codigo = :co, nombre = :n, precio_base = :p, activo = :a WHERE id_aparatologia = :id");
+        $s->execute([':co' => $v['codigo'], ':n' => $nombre, ':p' => $precio, ':a' => $activo, ':id' => $id]);
             return ['success' => true, 'mensaje' => 'Aparatología actualizada correctamente'];
         } catch (PDOException $e) {
             error_log("editarAparatologia: " . $e->getMessage());
@@ -372,20 +434,24 @@ class ModeloConfiguracion {
         } catch (PDOException $e) { error_log($e->getMessage()); return []; }
     }
 
-    public function crearTipoAtencion($nombre, $duracion, $color) {
+    public function crearTipoAtencion($nombre, $duracion, $color, $codigo) {
         try {
-            $this->conexion->prepare(
-                "INSERT INTO tipos_atencion (nombre, duracion_minutos, color) VALUES (:n,:d,:c)"
-            )->execute([':n'=>$nombre, ':d'=>$duracion, ':c'=>$color]);
+            $v = $this->validarCodigo('tipos_atencion', $codigo);
+           if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+           $this->conexion->prepare(
+            "INSERT INTO tipos_atencion (codigo, nombre, duracion_minutos, color) VALUES (:co,:n,:d,:c)"
+        )->execute([':co' => $v['codigo'], ':n' => $nombre, ':d' => $duracion, ':c' => $color]);
             return ['success'=>true];
         } catch (PDOException $e) { error_log($e->getMessage()); return ['success'=>false,'mensaje'=>'Error al crear']; }
     }
 
-    public function editarTipoAtencion($id, $nombre, $duracion, $color, $activo) {
+    public function editarTipoAtencion($id, $nombre, $duracion, $color, $activo, $codigo) {
         try {
+            $v = $this->validarCodigo('tipos_atencion', $codigo, $id);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
             $this->conexion->prepare(
-                "UPDATE tipos_atencion SET nombre=:n, duracion_minutos=:d, color=:c, activo=:a WHERE id_tipo_atencion=:id"
-            )->execute([':n'=>$nombre, ':d'=>$duracion, ':c'=>$color, ':a'=>$activo, ':id'=>$id]);
+                "UPDATE tipos_atencion SET codigo=:co, nombre=:n, duracion_minutos=:d, color=:c, activo=:a WHERE id_tipo_atencion=:id"
+            )->execute([':co' => $v['codigo'], ':n' => $nombre, ':d' => $duracion, ':c' => $color, ':a' => $activo, ':id' => $id]);
             return ['success'=>true];
         } catch (PDOException $e) { error_log($e->getMessage()); return ['success'=>false,'mensaje'=>'Error al editar']; }
     }

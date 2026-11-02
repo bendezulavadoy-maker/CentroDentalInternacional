@@ -1,12 +1,38 @@
-let pacienteActual = null; // 👈 MOVER ESTA DECLARACIÓN AQUÍ (FUERA DE LA FUNCIÓN)
+let pacienteActual = null; // MOVER ESTA DECLARACIÓN AQUÍ (FUERA DE LA FUNCIÓN)
 let historiaActual = null;
 let seccionesActuales = {};
 
 function iniciarModuloHistoriaClinica() {
-    console.log('🏥 Iniciando módulo de Historia Clínica');
+
+    // Escapa texto antes de insertarlo como HTML (los nombres y medicamentos los escribe el personal y los pacientes)
+    function esc(valor) {
+        return String(valor == null ? '' : valor)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Modo solo lectura: si el usuario no tiene permiso para editar la historia de este paciente,
+    // se ocultan los botones de guardar y se bloquean los campos (el servidor lo vuelve a comprobar al guardar).
+    const MODALES_HISTORIA = ['modalAlergias', 'modalMotivoConsulta', 'modalExamenGeneral', 'modalAntecedentesPersonales',
+                              'modalAntecedentesFamiliares', 'modalExamenExtraoral', 'modalExamenIntraoral'];
+    function aplicarModoLectura(soloLectura, responsable) {
+        MODALES_HISTORIA.forEach(id => {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.toggle('hc-solo-lectura', soloLectura);
+            modal.querySelectorAll('input, select, textarea').forEach(el => { el.disabled = soloLectura; });
+        });
+        const aviso = document.getElementById('avisoSoloLectura');
+        if (aviso) {
+            aviso.style.display = soloLectura ? 'block' : 'none';
+            aviso.textContent = soloLectura
+                ? 'Solo lectura: no tienes permiso para editar la historia clínica de este paciente.' + (responsable ? ' Odontólogo responsable: ' + responsable + '.' : '')
+                : '';
+        }
+    }
 
     // =====================================================
-    // 🔹 ELEMENTOS DEL DOM
+    // ELEMENTOS DEL DOM
     // =====================================================
     const inputBuscar = document.getElementById('inputBuscarPaciente');
     const resultadosBusqueda = document.getElementById('resultadosBusqueda');
@@ -25,13 +51,12 @@ function iniciarModuloHistoriaClinica() {
     // En la sección de elementos del DOM, agregar:
 const btnGenerarPDF = document.getElementById('btnGenerarPDF');
 
-
     let alergiasTemporales = [];
     let timeoutBusqueda = null;
     let timeoutMedicamentos = null;
 
     // =====================================================
-    // 🔹 INICIALIZACIÓN
+    // INICIALIZACIÓN
     // =====================================================
     
     // Verificar si hay un paciente en sessionStorage
@@ -58,7 +83,7 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
      }
 
     // =====================================================
-    // 🔍 BUSCADOR DE PACIENTES
+    // BUSCADOR DE PACIENTES
     // =====================================================
     
     inputBuscar.addEventListener('input', function() {
@@ -83,7 +108,7 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
             })
             .catch(err => {
                 console.error('Error al buscar pacientes:', err);
-                resultadosBusqueda.innerHTML = '<div class="resultado-item">❌ Error al buscar</div>';
+                resultadosBusqueda.innerHTML = '<div class="resultado-item">Error al buscar</div>';
                 resultadosBusqueda.style.display = 'block';
             });
     }
@@ -98,9 +123,9 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         let html = '';
         pacientes.forEach(p => {
             html += `
-                <div class="resultado-item" data-id="${p.id_paciente}">
-                    <strong>${p.nombre} ${p.apellido}</strong>
-                    <small>DNI: ${p.dni} | Tel: ${p.telefono || 'N/A'}</small>
+                <div class="resultado-item" data-id="${esc(p.id_paciente)}">
+                    <strong>${esc(p.nombre)} ${esc(p.apellido)}</strong>
+                    <small>${esc(p.tipo_documento_abrev || 'DNI')}: ${esc(p.dni)} | Tel: ${esc(p.telefono || 'N/A')}</small>
                 </div>
             `;
         });
@@ -127,21 +152,19 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
     });
 
     // =====================================================
-    // 📋 CARGAR HISTORIA CLÍNICA
+    // CARGAR HISTORIA CLÍNICA
     // =====================================================
     
     function cargarHistoriaClinica(idPaciente, pestanaInicial = 'citas')  {
-        console.log('📋 Cargando historia clínica del paciente:', idPaciente);
 
         fetch(`../CONTROLADORES/controlador_historia_clinica.php?accion=cargar_historia&id_paciente=${idPaciente}`)
             .then(res => res.json())
             .then(data => {
-                console.log('✅ Datos recibidos:', data);
                 if (data.success) {
                     pacienteActual = data.paciente;
                     historiaActual = data.historia;
-                    console.log('👤 Paciente actual guardado:', pacienteActual);
                     mostrarInformacionPaciente(data.paciente);
+                    aplicarModoLectura(!(data.permisos && data.permisos.editar), data.paciente.doctor_responsable_nombre);
                     cargarAlergias(idPaciente);
                     renderizarChecklistHistoria(data.secciones, data.historia);
                     mensajeSinPaciente.style.display = 'none';
@@ -160,13 +183,13 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
                     }
                     cargarModulo(pestanaInicial);
                 } else {
-                    console.error('❌ Error en respuesta:', data.mensaje);
-                    mostrarMensajeSistema('❌ ' + data.mensaje, 'error');
+                    console.error('Error en respuesta:', data.mensaje);
+                    mostrarMensajeSistema('' + data.mensaje, 'error');
                 }
             })
             .catch(err => {
-                console.error('❌ Error al cargar historia clínica:', err);
-                mostrarMensajeSistema('❌ Error al cargar la historia clínica', 'error');
+                console.error('Error al cargar historia clínica:', err);
+                mostrarMensajeSistema('Error al cargar la historia clínica', 'error');
             });
     }
     function mostrarInfoModificacion(idModal, datos) {
@@ -183,7 +206,6 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
             : '';
     }
     function mostrarInformacionPaciente(paciente) {
-        console.log('📝 Mostrando información del paciente:', paciente);
 
         // Foto
         const rutaFoto = paciente.foto ? `../${paciente.foto}` : '../IMAGENES/perfiles_pacientes/default.png';
@@ -191,7 +213,13 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
 
         // Datos básicos
         document.getElementById('nombrePaciente').textContent = `${paciente.nombre} ${paciente.apellido}`;
+        document.getElementById('tipoDocPaciente').textContent = paciente.tipo_documento_abrev || 'DNI';
         document.getElementById('dniPaciente').textContent = paciente.dni || 'N/A';
+        const lineaResp = document.getElementById('lineaResponsable');
+        if (lineaResp) {
+            lineaResp.style.display = paciente.doctor_responsable_nombre ? 'block' : 'none';
+            document.getElementById('doctorResponsable').textContent = paciente.doctor_responsable_nombre || '';
+        }
         const edad = paciente.fecha_nacimiento ? calcularEdad(paciente.fecha_nacimiento) : 'N/A';
         const sexo = paciente.nombre_sexo || '';
         document.getElementById('sexoEdadPaciente').textContent = sexo ? `${sexo}, ${edad}` : edad;
@@ -202,11 +230,10 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         const contenedorCumple = document.getElementById('contenedorMensajeCumpleanos');
         if (paciente.fecha_nacimiento && contenedorCumple) {
             const mensajeCumple = calcularDiasParaCumpleanos(paciente.fecha_nacimiento);
-            console.log('🎂 Mensaje de cumpleaños:', mensajeCumple);
             contenedorCumple.innerHTML = mensajeCumple;
             contenedorCumple.style.display = mensajeCumple ? 'block' : 'none';
         } else {
-            console.warn('⚠️ No se encontró el contenedor de cumpleaños o fecha de nacimiento');
+            console.warn('No se encontró el contenedor de cumpleaños o fecha de nacimiento');
         }
 
         // Información del apoderado
@@ -222,10 +249,9 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
     }
     // Función para generar el PDF
 function generarPDFHistoriaClinica() {
-    console.log('📄 Generando PDF de Historia Clínica');
     
     if (!pacienteActual) {
-        mostrarMensajeSistema('❌ No hay paciente seleccionado', 'error');
+        mostrarMensajeSistema('No hay paciente seleccionado', 'error');
         return;
     }
 
@@ -255,34 +281,32 @@ function generarPDFHistoriaClinica() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
-        mostrarMensajeSistema('✅ PDF generado correctamente', 'exito');
+        mostrarMensajeSistema('PDF generado correctamente', 'exito');
     })
     .catch(err => {
-        console.error('❌ Error al generar PDF:', err);
-        mostrarMensajeSistema('❌ Error al generar el PDF. Por favor, intente nuevamente.', 'error');
+        console.error('Error al generar PDF:', err);
+        mostrarMensajeSistema('Error al generar el PDF. Por favor, intente nuevamente.', 'error');
     })
     .finally(() => {
         // Restaurar botón
         btnGenerarPDF.disabled = false;
         btnGenerarPDF.classList.remove('cargando');
-        btnGenerarPDF.textContent = '📄 Generar PDF';
+        btnGenerarPDF.textContent = 'Generar PDF';
     });
 }
 
     // =====================================================
-    // ⚠️ GESTIÓN DE ALERGIAS
+    // GESTIÓN DE ALERGIAS
     // =====================================================
     
     function cargarAlergias(idPaciente) {
-        console.log('💊 Cargando alergias del paciente:', idPaciente);
         fetch(`../CONTROLADORES/controlador_historia_clinica.php?accion=listar_alergias&id_paciente=${idPaciente}`)
             .then(res => res.json())
             .then(alergias => {
-                console.log('✅ Alergias recibidas:', alergias);
                 mostrarAlergias(alergias);
             })
             .catch(err => {
-                console.error('❌ Error al cargar alergias:', err);
+                console.error('Error al cargar alergias:', err);
             });
     }
 
@@ -298,7 +322,7 @@ function generarPDFHistoriaClinica() {
         }
 
         const nombres = alergias.map(a => a.medicamento).join(', ');
-        btnAlergias.textContent = `⚠️ Ver alergias (${alergias.length})`;
+        btnAlergias.textContent = `Ver alergias (${alergias.length})`;
         btnAlergias.classList.add('con-alergias');
         btnAlergias.title = nombres;
     }
@@ -310,7 +334,7 @@ function generarPDFHistoriaClinica() {
     btnGuardarAlergias.addEventListener('click', guardarAlergias);
     btnAgregarMedicamento.addEventListener('click', agregarMedicamentoTemporal);
 
-    // 🔹 BÚSQUEDA DE MEDICAMENTOS EN TIEMPO REAL
+    // BÚSQUEDA DE MEDICAMENTOS EN TIEMPO REAL
     inputBuscarMedicamento.addEventListener('input', function() {
         clearTimeout(timeoutMedicamentos);
         const termino = this.value.trim();
@@ -326,31 +350,29 @@ function generarPDFHistoriaClinica() {
     });
 
     function buscarMedicamentos(termino) {
-        console.log('🔍 Buscando medicamentos con término:', termino);
         fetch(`../CONTROLADORES/controlador_historia_clinica.php?accion=buscar_medicamentos&termino=${encodeURIComponent(termino)}`)
             .then(res => res.json())
             .then(medicamentos => {
-                console.log('✅ Medicamentos encontrados:', medicamentos);
                 mostrarResultadosMedicamentos(medicamentos, termino);
             })
             .catch(err => {
-                console.error('❌ Error al buscar medicamentos:', err);
+                console.error('Error al buscar medicamentos:', err);
             });
     }
 
     function mostrarResultadosMedicamentos(medicamentos, termino) {
         if (medicamentos.length === 0) {
             resultadosMedicamentos.innerHTML = `
-                <div class="resultado-medicamento nuevo" data-medicamento="${termino}">
-                    <span>➕ Agregar "${termino}" (nuevo)</span>
+                <div class="resultado-medicamento nuevo" data-medicamento="${esc(termino)}">
+                    <span>Agregar "${esc(termino)}" (nuevo)</span>
                 </div>
             `;
         } else {
             let html = '';
             medicamentos.forEach(med => {
                 html += `
-                    <div class="resultado-medicamento" data-medicamento="${med.medicamento}">
-                        <span>${med.medicamento}</span>
+                    <div class="resultado-medicamento" data-medicamento="${esc(med.medicamento)}">
+                        <span>${esc(med.medicamento)}</span>
                     </div>
                 `;
             });
@@ -359,8 +381,8 @@ function generarPDFHistoriaClinica() {
             const existeExacto = medicamentos.some(m => m.medicamento.toLowerCase() === termino.toLowerCase());
             if (!existeExacto) {
                 html += `
-                    <div class="resultado-medicamento nuevo" data-medicamento="${termino}">
-                        <span>➕ Agregar "${termino}" (nuevo)</span>
+                    <div class="resultado-medicamento nuevo" data-medicamento="${esc(termino)}">
+                        <span>Agregar "${esc(termino)}" (nuevo)</span>
                     </div>
                 `;
             }
@@ -382,7 +404,6 @@ function generarPDFHistoriaClinica() {
     }
 
     function agregarMedicamentoDesdeBusqueda(medicamento) {
-        console.log('➕ Agregando medicamento:', medicamento);
         
         // Verificar si ya existe
         const existe = alergiasTemporales.some(a => 
@@ -390,8 +411,8 @@ function generarPDFHistoriaClinica() {
         );
 
         if (existe) {
-            console.warn('⚠️ Medicamento ya existe en la lista');
-            mostrarMensajeSistema('⚠️ Este medicamento ya está en la lista', 'error');
+            console.warn('Medicamento ya existe en la lista');
+            mostrarMensajeSistema('Este medicamento ya está en la lista', 'error');
             return;
         }
 
@@ -401,9 +422,8 @@ function generarPDFHistoriaClinica() {
             nuevo: true
         });
 
-        console.log('✅ Medicamento agregado. Lista actual:', alergiasTemporales);
         renderizarAlergiasModal();
-        mostrarMensajeSistema('✅ Medicamento agregado', 'exito');
+        mostrarMensajeSistema('Medicamento agregado', 'exito');
     }
 
     // Cerrar resultados de medicamentos al hacer click fuera
@@ -414,22 +434,17 @@ function generarPDFHistoriaClinica() {
     });
 
     function abrirModalAlergias() {
-        console.log('🔓 Intentando abrir modal de alergias');
-        console.log('👤 Paciente actual:', pacienteActual);
         
         if (!pacienteActual) {
-            console.error('❌ No hay paciente seleccionado');
-            mostrarMensajeSistema('❌ No hay paciente seleccionado', 'error');
+            console.error('No hay paciente seleccionado');
+            mostrarMensajeSistema('No hay paciente seleccionado', 'error');
             return;
         }
-
-        console.log('✅ Paciente encontrado, ID:', pacienteActual.id_paciente);
 
         // Cargar alergias actuales
         fetch(`../CONTROLADORES/controlador_historia_clinica.php?accion=listar_alergias&id_paciente=${pacienteActual.id_paciente}`)
             .then(res => res.json())
             .then(alergias => {
-                console.log('✅ Alergias cargadas para modal:', alergias);
                 alergiasTemporales = [...alergias];
                 renderizarAlergiasModal();
                 modalAlergias.style.display = 'flex';
@@ -437,15 +452,13 @@ function generarPDFHistoriaClinica() {
                 modalAlergias.style.alignItems = 'center';
                 setTimeout(() => modalAlergias.classList.add('mostrar'), 10);
                 document.body.style.overflow = 'hidden';
-                console.log('✅ Modal abierto correctamente');
             })
             .catch(err => {
-                console.error('❌ Error al cargar alergias para modal:', err);
+                console.error('Error al cargar alergias para modal:', err);
             });
     }
 
     function cerrarModalAlergias() {
-        console.log('🔒 Cerrando modal de alergias');
         modalAlergias.classList.remove('mostrar');
         document.body.style.overflow = '';
         setTimeout(() => {
@@ -457,11 +470,10 @@ function generarPDFHistoriaClinica() {
 
     function agregarMedicamentoTemporal() {
         const medicamento = inputBuscarMedicamento.value.trim();
-        console.log('➕ Intentando agregar medicamento manualmente:', medicamento);
         
         if (!medicamento) {
-            console.warn('⚠️ Campo vacío');
-            mostrarMensajeSistema('❌ Ingrese el nombre del medicamento', 'error');
+            console.warn('Campo vacío');
+            mostrarMensajeSistema('Ingrese el nombre del medicamento', 'error');
             return;
         }
 
@@ -471,8 +483,8 @@ function generarPDFHistoriaClinica() {
         );
 
         if (existe) {
-            console.warn('⚠️ Medicamento duplicado');
-            mostrarMensajeSistema('⚠️ Este medicamento ya está en la lista', 'error');
+            console.warn('Medicamento duplicado');
+            mostrarMensajeSistema('Este medicamento ya está en la lista', 'error');
             return;
         }
 
@@ -482,22 +494,18 @@ function generarPDFHistoriaClinica() {
             nuevo: true
         });
 
-        console.log('✅ Medicamento agregado manualmente. Lista:', alergiasTemporales);
         inputBuscarMedicamento.value = '';
         resultadosMedicamentos.style.display = 'none';
         renderizarAlergiasModal();
-        mostrarMensajeSistema('✅ Medicamento agregado', 'exito');
+        mostrarMensajeSistema('Medicamento agregado', 'exito');
     }
 
     function eliminarAlergiaTemporal(index) {
-        console.log('🗑️ Eliminando medicamento en índice:', index);
         alergiasTemporales.splice(index, 1);
-        console.log('✅ Lista actualizada:', alergiasTemporales);
         renderizarAlergiasModal();
     }
 
     function renderizarAlergiasModal() {
-        console.log('🎨 Renderizando lista de alergias en modal:', alergiasTemporales);
         
         if (alergiasTemporales.length === 0) {
             listaAlergiasModal.innerHTML = '<p class="sin-datos">No hay alergias registradas</p>';
@@ -508,9 +516,9 @@ function generarPDFHistoriaClinica() {
         alergiasTemporales.forEach((alergia, index) => {
             html += `
                 <div class="alergia-item-modal">
-                    <span>⚠️ ${alergia.medicamento}</span>
+                    <span>${esc(alergia.medicamento)}</span>
                     <button class="btn-eliminar-alergia" data-index="${index}">
-                        🗑️ Eliminar
+                        <i class="ti ti-trash"></i> Eliminar
                     </button>
                 </div>
             `;
@@ -528,10 +536,9 @@ function generarPDFHistoriaClinica() {
     }
 
     function guardarAlergias() {
-        console.log('💾 Guardando alergias');
         
         if (!pacienteActual) {
-            console.error('❌ No hay paciente al guardar');
+            console.error('No hay paciente al guardar');
             return;
         }
 
@@ -539,8 +546,6 @@ function generarPDFHistoriaClinica() {
             id_paciente: pacienteActual.id_paciente,
             alergias: alergiasTemporales.map(a => a.medicamento)
         };
-
-        console.log('📤 Datos a enviar:', datos);
 
         fetch('../CONTROLADORES/controlador_historia_clinica.php', {
             method: 'POST',
@@ -554,30 +559,29 @@ function generarPDFHistoriaClinica() {
         })
         .then(res => res.json())
         .then(data => {
-            console.log('✅ Respuesta del servidor:', data);
             if (data.success) {
-                mostrarMensajeSistema('✅ Alergias actualizadas correctamente', 'exito');
+                mostrarMensajeSistema('Alergias actualizadas correctamente', 'exito');
                 cargarAlergias(pacienteActual.id_paciente);
                 cerrarModalAlergias();
             } else {
-                console.error('❌ Error del servidor:', data.mensaje);
-                mostrarMensajeSistema('❌ ' + data.mensaje, 'error');
+                console.error('Error del servidor:', data.mensaje);
+                mostrarMensajeSistema('' + data.mensaje, 'error');
             }
         })
         .catch(err => {
-            console.error('❌ Error al guardar alergias:', err);
-            mostrarMensajeSistema('❌ Error al guardar las alergias', 'error');
+            console.error('Error al guardar alergias:', err);
+            mostrarMensajeSistema('Error al guardar las alergias', 'error');
         });
     }
 
     // =====================================================
-    // 📑 GESTIÓN DE PESTAÑAS
+    // GESTIÓN DE PESTAÑAS
     // =====================================================
     
     document.querySelectorAll('.pestana').forEach(pestana => {
         pestana.addEventListener('click', function() {
             if (!pacienteActual) {
-                mostrarMensajeSistema('❌ No hay paciente seleccionado', 'error');
+                mostrarMensajeSistema('No hay paciente seleccionado', 'error');
                 return;
             }
 
@@ -658,10 +662,9 @@ function generarPDFHistoriaClinica() {
         }
     }
     // =====================================================
-// 💊 CARGAR MÓDULO DE ATENCIONES
+// CARGAR MÓDULO DE ATENCIONES
 // =====================================================
 function cargarModuloAtenciones() {
-    console.log('💊 Cargando módulo de atenciones para paciente:', pacienteActual.id_paciente);
     
     const contenedor = document.getElementById('contenedorModulo');
     
@@ -683,23 +686,21 @@ function cargarModuloAtenciones() {
                 document.body.appendChild(newScript);
             });
             
-            console.log('✅ Módulo de atenciones cargado correctamente');
         })
         .catch(err => {
-            console.error('❌ Error al cargar módulo de atenciones:', err);
+            console.error('Error al cargar módulo de atenciones:', err);
             contenedor.innerHTML = `
                 <div style="padding: 20px; text-align: center; color: #f44336;">
-                    <h3>❌ Error al cargar el módulo</h3>
+                    <h3>Error al cargar el módulo</h3>
                     <p>No se pudo cargar el módulo de atenciones. Por favor, intente nuevamente.</p>
                 </div>
             `;
         });
 }
     // =====================================================
-// 📅 CARGAR MÓDULO DE CITAS
+// CARGAR MÓDULO DE CITAS
 // =====================================================
 function cargarModuloCitas() {
-    console.log('📅 Cargando módulo de citas para paciente:', pacienteActual.id_paciente);
     
     const contenedor = document.getElementById('contenedorModulo');
     
@@ -721,31 +722,29 @@ function cargarModuloCitas() {
                 document.body.appendChild(newScript);
             });
             
-            console.log('✅ Módulo de citas cargado correctamente');
         })
         .catch(err => {
-            console.error('❌ Error al cargar módulo de citas:', err);
+            console.error('Error al cargar módulo de citas:', err);
             contenedor.innerHTML = `
                 <div style="padding: 20px; text-align: center; color: #f44336;">
-                    <h3>❌ Error al cargar el módulo</h3>
+                    <h3>Error al cargar el módulo</h3>
                     <p>No se pudo cargar el módulo de citas. Por favor, intente nuevamente.</p>
                 </div>
             `;
         });
 }
 // =====================================================
-    // 📄 CARGAR MÓDULO DE DOCUMENTOS - 👈 NUEVA FUNCIÓN
+    // CARGAR MÓDULO DE DOCUMENTOS - NUEVA FUNCIÓN
     // =====================================================
     function cargarModuloDocumentos() {
-        console.log('📄 Cargando módulo de documentos para paciente:', pacienteActual?.id_paciente);
         
         const contenedor = document.getElementById('contenedorModulo');
         
         if (!pacienteActual) {
-            console.error('❌ No hay paciente seleccionado');
+            console.error('No hay paciente seleccionado');
             contenedor.innerHTML = `
                 <div style="padding: 20px; text-align: center; color: #f44336;">
-                    <h3>❌ Error</h3>
+                    <h3>Error</h3>
                     <p>No hay paciente seleccionado. Por favor, seleccione un paciente primero.</p>
                 </div>
             `;
@@ -775,24 +774,23 @@ function cargarModuloCitas() {
                     document.body.appendChild(newScript);
                 });
                 
-                console.log('✅ Módulo de documentos cargado correctamente');
             })
             .catch(err => {
-                console.error('❌ Error al cargar módulo de documentos:', err);
+                console.error('Error al cargar módulo de documentos:', err);
                 contenedor.innerHTML = `
                     <div style="padding: 20px; text-align: center; color: #f44336;">
-                        <h3>❌ Error al cargar el módulo</h3>
+                        <h3>Error al cargar el módulo</h3>
                         <p>No se pudo cargar el módulo de documentos. Por favor, intente nuevamente.</p>
                         <p style="font-size: 12px; color: #95a5a6;">Error: ${err.message}</p>
                         <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                            🔄 Recargar página
+                            Recargar página
                         </button>
                     </div>
                 `;
             });
     }
     // =====================================================
-    // 🩺 CHECKLIST DE HISTORIA CLÍNICA (sidebar) — abre modales
+    // CHECKLIST DE HISTORIA CLÍNICA (sidebar) — abre modales
     // =====================================================
 
     const definicionSecciones = {
@@ -939,7 +937,7 @@ function cargarModuloCitas() {
     document.querySelectorAll('.check-item-sidebar:not(.no-clic)').forEach(item => {
         item.addEventListener('click', function() {
             if (!pacienteActual || !historiaActual) {
-                mostrarMensajeSistema('❌ Seleccione un paciente primero', 'error');
+                mostrarMensajeSistema('Seleccione un paciente primero', 'error');
                 return;
             }
             const seccion = this.dataset.seccion;
@@ -959,17 +957,17 @@ function cargarModuloCitas() {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                mostrarMensajeSistema('✅ ' + data.mensaje, 'exito');
+                mostrarMensajeSistema('' + data.mensaje, 'exito');
                 const def = definicionSecciones[claveSeccion];
                 if (def) cerrarModalPorId(def.modal);
                 refrescarChecklistHistoria();
             } else {
-                mostrarMensajeSistema('❌ ' + data.mensaje, 'error');
+                mostrarMensajeSistema('' + data.mensaje, 'error');
             }
         })
         .catch(err => {
-            console.error('❌ Error al guardar sección:', err);
-            mostrarMensajeSistema('❌ Error al guardar. Intente nuevamente', 'error');
+            console.error('Error al guardar sección:', err);
+            mostrarMensajeSistema('Error al guardar. Intente nuevamente', 'error');
         });
     }
 
@@ -980,7 +978,7 @@ function cargarModuloCitas() {
             .then(data => {
                 if (data.success) renderizarChecklistHistoria(data.secciones, historiaActual);
             })
-            .catch(err => console.error('❌ Error al refrescar checklist:', err));
+            .catch(err => console.error('Error al refrescar checklist:', err));
     }
 
     document.getElementById('btnGuardarMotivoConsulta').addEventListener('click', function() {
@@ -1079,7 +1077,7 @@ function cargarModuloCitas() {
     });
 
     // =====================================================
-    // ↔️ COLAPSAR/EXPANDIR EL SIDEBAR DEL PACIENTE (más espacio)
+    // ↔COLAPSAR/EXPANDIR EL SIDEBAR DEL PACIENTE (más espacio)
     // =====================================================
     const btnToggleSidebarPaciente = document.getElementById('btnToggleSidebarPaciente');
     const sidebarPaciente = document.getElementById('sidebarPaciente');
@@ -1091,7 +1089,7 @@ function cargarModuloCitas() {
     }
 
     // =====================================================
-    // 🔙 VOLVER A MÓDULO DE PACIENTES
+    // VOLVER A MÓDULO DE PACIENTES
     // =====================================================
     
     btnVolverPacientes.addEventListener('click', function() {
@@ -1103,7 +1101,7 @@ function cargarModuloCitas() {
     });
 
     // =====================================================
-    // 🛠️ FUNCIONES AUXILIARES
+    // FUNCIONES AUXILIARES
     // =====================================================
     
     function formatearFecha(fecha) {
@@ -1130,57 +1128,44 @@ function cargarModuloCitas() {
 
     function calcularDiasParaCumpleanos(fechaNacimiento) {
         if (!fechaNacimiento) {
-            console.log('⚠️ No hay fecha de nacimiento');
             return '';
         }
         
-        console.log('📅 Calculando días para cumpleaños. Fecha nacimiento:', fechaNacimiento);
         
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
-        console.log('📅 Fecha de hoy:', hoy.toISOString().split('T')[0]);
         
         const nacimiento = new Date(fechaNacimiento + 'T00:00:00');
-        console.log('📅 Fecha de nacimiento parseada:', nacimiento.toISOString().split('T')[0]);
-        console.log('📅 Mes de nacimiento:', nacimiento.getMonth() + 1, 'Día:', nacimiento.getDate());
         
         // Obtener el cumpleaños de este año
         let cumpleañosEsteAño = new Date(hoy.getFullYear(), nacimiento.getMonth(), nacimiento.getDate());
         cumpleañosEsteAño.setHours(0, 0, 0, 0);
-        console.log('📅 Cumpleaños este año:', cumpleañosEsteAño.toISOString().split('T')[0]);
         
         // Si ya pasó el cumpleaños este año, calcular para el próximo año
         if (cumpleañosEsteAño < hoy) {
-            console.log('⏭️ El cumpleaños ya pasó este año, calculando para el próximo');
             cumpleañosEsteAño = new Date(hoy.getFullYear() + 1, nacimiento.getMonth(), nacimiento.getDate());
             cumpleañosEsteAño.setHours(0, 0, 0, 0);
-            console.log('📅 Cumpleaños próximo año:', cumpleañosEsteAño.toISOString().split('T')[0]);
         }
         
         // Calcular diferencia en días
         const diferenciaTiempo = cumpleañosEsteAño - hoy;
         const diferenciaDias = Math.floor(diferenciaTiempo / (1000 * 60 * 60 * 24));
-        console.log('🔢 Diferencia en días:', diferenciaDias);
         
         let mensaje = '';
-        let icono = '🎂';
+        let icono = '';
         
         if (diferenciaDias === 0) {
             mensaje = '¡Hoy es su cumpleaños!';
-            icono = '🎉';
-            console.log('🎉 HOY ES SU CUMPLEAÑOS!');
+            icono = '';
         } else if (diferenciaDias === 1) {
             mensaje = 'Mañana es su cumpleaños';
-            icono = '🎁';
-            console.log('🎁 Mañana es su cumpleaños');
+            icono = '';
         } else if (diferenciaDias > 1 && diferenciaDias <= 7) {
             mensaje = `Su cumpleaños es en ${diferenciaDias} días`;
-            icono = '🎈';
-            console.log(`🎈 Cumpleaños en ${diferenciaDias} días`);
+            icono = '';
         } else if (diferenciaDias > 7 && diferenciaDias <= 30) {
             mensaje = `Cumpleaños en ${diferenciaDias} días`;
-            icono = '🎂';
-            console.log(`🎂 Cumpleaños en ${diferenciaDias} días`);
+            icono = '';
         } else {
             // MOSTRAR SIEMPRE, sin importar cuántos días falten
             const meses = Math.floor(diferenciaDias / 30);
@@ -1189,23 +1174,17 @@ function cargarModuloCitas() {
             } else {
                 mensaje = `Cumpleaños en ${diferenciaDias} días`;
             }
-            icono = '📅';
-            console.log(`📅 Cumpleaños en ${diferenciaDias} días (${meses} meses)`);
+            icono = '';
         }
         
         const resultado = `<span class="mensaje-cumpleanos">${icono} ${mensaje}</span>`;
-        console.log('✅ Mensaje generado:', resultado);
         return resultado;
     }
 
     function mostrarMensajeSistema(mensaje, tipo = 'exito') {
         const aviso = document.createElement('div');
         aviso.className = `mensaje-sistema ${tipo}`;
-        const icono = tipo === 'exito' ? '✅' : '❌';
-        aviso.innerHTML = `
-            <span class="icono">${icono}</span>
-            <span class="texto">${mensaje}</span>
-        `;
+        aviso.innerHTML = `<span class="texto">${esc(mensaje)}</span>`;
         aviso.style.cssText = `
             position: fixed;
             top: 20px;

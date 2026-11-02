@@ -883,3 +883,21 @@
     .encabezado-historia { flex-direction: column; gap: 12px; }
     .buscador-paciente { max-width: 100%; margin: 0; }
 }
+
+/* =====================================================
+   MODO SOLO LECTURA Y RESPONSABLE
+   ===================================================== */
+.aviso-solo-lectura {
+    margin: 10px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fff8e6;
+    border: 0.5px solid #f0dca5;
+    color: #8a6a12;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.responsable-paciente-sidebar { margin: 2px 0 8px; font-size: 12px; color: #6c7a89; }
+.hc-solo-lectura .btn-guardar,
+.hc-solo-lectura .buscar-medicamento,
+.hc-solo-lectura .btn-eliminar-alergia { display: none !important; }

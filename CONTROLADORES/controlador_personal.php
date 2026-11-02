@@ -1,145 +1,157 @@
 <?php
+// Solo usuarios con sesion iniciada y permiso sobre el modulo Personal
+require_once '../CONFIG/requerir_sesion_api.php';
+requerirPermisoApi('personal');
+
 require_once '../MODELOS/modelo_personal.php';
 $modelo = new ModeloPersonal();
 
 $accion = $_POST['accion'] ?? $_GET['accion'] ?? '';
 
 // =====================================================
-// 🔍 FUNCIONES DE VALIDACIÓN
+// FUNCIONES DE VALIDACION
 // =====================================================
-function validarDNI($dni) {
-    // Debe tener exactamente 8 dígitos
-    if (!preg_match('/^[0-9]{8}$/', $dni)) {
-        return ['valido' => false, 'mensaje' => 'El DNI debe tener exactamente 8 dígitos numéricos'];
+
+/**
+ * Valida un numero de documento segun las reglas de su tipo
+ * (longitud y si admite solo digitos), tomadas de la tabla tipo_documento.
+ * $tipo es la fila del catalogo (o null si el tipo no existe / esta inactivo).
+ */
+function validarDocumento($tipo, $numero) {
+    if (!$tipo) return ['valido' => false, 'mensaje' => 'El tipo de documento no es válido'];
+
+    $abrev       = $tipo['abreviatura'];
+    $min         = (int)$tipo['longitud_min'];
+    $max         = (int)$tipo['longitud_max'];
+    $soloNumeros = (int)$tipo['solo_numeros'] === 1;
+    $numero      = trim($numero);
+
+    if ($numero === '') return ['valido' => false, 'mensaje' => "El número de $abrev es obligatorio"];
+
+    if ($soloNumeros && !preg_match('/^[0-9]+$/', $numero))
+        return ['valido' => false, 'mensaje' => "El $abrev solo admite dígitos"];
+    if (!$soloNumeros && !preg_match('/^[A-Za-z0-9]+$/', $numero))
+        return ['valido' => false, 'mensaje' => "El $abrev solo admite letras y números"];
+
+    $largo  = strlen($numero);
+    $unidad = $soloNumeros ? 'dígitos' : 'caracteres';
+    if ($largo < $min || $largo > $max) {
+        $texto = ($min === $max) ? "exactamente $min $unidad" : "entre $min y $max $unidad";
+        return ['valido' => false, 'mensaje' => "El $abrev debe tener $texto"];
     }
-    
-    // No permitir valores inválidos como 00000000
-    $dniInvalidos = ['00000000', '11111111', '22222222', '33333333', '44444444', 
-                     '55555555', '66666666', '77777777', '88888888', '99999999'];
-    if (in_array($dni, $dniInvalidos)) {
-        return ['valido' => false, 'mensaje' => 'El DNI ingresado no es válido'];
+
+    // Regla adicional solo para DNI (codigo 1): rechazar numeros repetidos
+    if ($tipo['codigo'] === '1') {
+        $dniInvalidos = ['00000000','11111111','22222222','33333333','44444444',
+                         '55555555','66666666','77777777','88888888','99999999'];
+        if (in_array($numero, $dniInvalidos)) {
+            return ['valido' => false, 'mensaje' => 'El DNI ingresado no es válido'];
+        }
     }
-    
     return ['valido' => true];
 }
 
 function validarNombre($nombre, $campo = 'Nombre') {
-    // Verificar que no esté vacío
     $nombre = trim($nombre);
     if (empty($nombre)) {
         return ['valido' => false, 'mensaje' => "$campo es obligatorio"];
     }
-    
-    // Solo letras, espacios, acentos y ñ
     if (!preg_match('/^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/', $nombre)) {
         return ['valido' => false, 'mensaje' => "$campo solo puede contener letras, espacios y acentos"];
     }
-    
-    // Mínimo 2 caracteres
     if (strlen($nombre) < 2) {
         return ['valido' => false, 'mensaje' => "$campo debe tener al menos 2 caracteres"];
     }
-    
     return ['valido' => true];
 }
 
 function validarCorreo($correo) {
-    // Verificar que no esté vacío
     $correo = trim($correo);
     if (empty($correo)) {
         return ['valido' => false, 'mensaje' => 'El correo es obligatorio'];
     }
-    
-    // Validar formato con regex
     if (!preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/', $correo)) {
         return ['valido' => false, 'mensaje' => 'El formato del correo no es válido'];
     }
-    
-    // Validación adicional con filter_var
     if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
         return ['valido' => false, 'mensaje' => 'El correo electrónico no es válido'];
     }
-    
     return ['valido' => true];
 }
 
 function validarCamposObligatorios($datos) {
     $camposRequeridos = ['nombre', 'apellidos', 'dni', 'correo', 'id_rol', 'id_estado'];
-    
+    $etiquetas = [
+        'nombre'    => 'Nombre',
+        'apellidos' => 'Apellidos',
+        'dni'       => 'Número de documento',
+        'correo'    => 'Correo',
+        'id_rol'    => 'Rol',
+        'id_estado' => 'Estado'
+    ];
+
     foreach ($camposRequeridos as $campo) {
         if (!isset($datos[$campo]) || trim($datos[$campo]) === '') {
-            $nombreCampo = [
-                'nombre' => 'Nombre',
-                'apellidos' => 'Apellidos',
-                'dni' => 'DNI',
-                'correo' => 'Correo',
-                'id_rol' => 'Rol',
-                'id_estado' => 'Estado'
-            ][$campo];
-            return ['valido' => false, 'mensaje' => "$nombreCampo es obligatorio"];
+            return ['valido' => false, 'mensaje' => $etiquetas[$campo] . ' es obligatorio'];
         }
     }
-    
     return ['valido' => true];
 }
 
 // =====================================================
-// 📋 PROCESAMIENTO DE ACCIONES
+// PROCESAMIENTO DE ACCIONES
 // =====================================================
 switch ($accion) {
 
-    // 🔹 Registrar nuevo personal
+    // Registrar nuevo personal
     case 'registrar':
-        // Validar campos obligatorios
         $validacionObligatorios = validarCamposObligatorios($_POST);
         if (!$validacionObligatorios['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionObligatorios['mensaje']]);
             exit;
         }
 
-        $nombre = trim($_POST['nombre']);
-        $apellidos = trim($_POST['apellidos']);
-        $dni = trim($_POST['dni']);
-        $correo = trim($_POST['correo']);
-        $id_rol = $_POST['id_rol'];
+        // Nombres siempre en mayusculas (con tildes y n correctas)
+        $nombre    = mb_strtoupper(trim($_POST['nombre']), 'UTF-8');
+        $apellidos = mb_strtoupper(trim($_POST['apellidos']), 'UTF-8');
+        $correo    = trim($_POST['correo']);
+        $id_rol    = $_POST['id_rol'];
         $id_estado = $_POST['id_estado'];
         $fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null;
 
-        // Validar DNI
-        $validacionDNI = validarDNI($dni);
-        if (!$validacionDNI['valido']) {
-            echo json_encode(['success' => false, 'mensaje' => $validacionDNI['mensaje']]);
+        // Documento: tipo + numero
+        $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
+        $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
+        $dni       = strtoupper(trim($_POST['dni']));
+
+        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        if (!$validacionDoc['valido']) {
+            echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]);
+            exit;
+        }
+        if ($modelo->existeDocumento($idTipoDoc, $dni)) {
+            echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado en el sistema"]);
             exit;
         }
 
-        // Validar que DNI sea único
-        if ($modelo->existeDNI($dni)) {
-            echo json_encode(['success' => false, 'mensaje' => 'El DNI ya está registrado en el sistema']);
-            exit;
-        }
-
-        // Validar nombre
         $validacionNombre = validarNombre($nombre, 'Nombre');
         if (!$validacionNombre['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionNombre['mensaje']]);
             exit;
         }
 
-        // Validar apellidos
         $validacionApellidos = validarNombre($apellidos, 'Apellidos');
         if (!$validacionApellidos['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionApellidos['mensaje']]);
             exit;
         }
 
-        // Validar correo
         $validacionCorreo = validarCorreo($correo);
         if (!$validacionCorreo['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionCorreo['mensaje']]);
             exit;
         }
 
-        // Validar que correo sea único
         if ($modelo->existeCorreo($correo)) {
             echo json_encode(['success' => false, 'mensaje' => 'El correo ya está registrado en el sistema']);
             exit;
@@ -158,9 +170,8 @@ switch ($accion) {
             }
         }
 
-        // Registrar personal
-        $resultado = $modelo->registrarPersonal($nombre, $apellidos, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta);
-        
+        $resultado = $modelo->registrarPersonal($nombre, $apellidos, $idTipoDoc, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta);
+
         if ($resultado) {
             echo json_encode([
                 'success' => true,
@@ -173,65 +184,73 @@ switch ($accion) {
         }
         break;
 
-    // 🔹 Listar personal
+    // Listar personal
     case 'listar':
         echo json_encode($modelo->listarPersonal());
         break;
 
-    // 🔹 Ver detalle
+    // Ver detalle
     case 'ver':
         $id = $_GET['id'] ?? 0;
         echo json_encode($modelo->verPersonal($id));
         break;
 
-    // 🔹 Editar personal
+    // Editar personal
     case 'editar':
-        // Validar campos obligatorios
         $validacionObligatorios = validarCamposObligatorios($_POST);
         if (!$validacionObligatorios['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionObligatorios['mensaje']]);
             exit;
         }
 
-        $id = $_POST['id_usuario'];
-        $nombre = trim($_POST['nombre']);
-        $apellidos = trim($_POST['apellidos']);
-        $dni = trim($_POST['dni'] ?? '');
-        $correo = trim($_POST['correo']);
-        $id_rol = $_POST['id_rol'];
+        $id        = intval($_POST['id_usuario'] ?? 0);
+        $nombre    = mb_strtoupper(trim($_POST['nombre']), 'UTF-8');
+        $apellidos = mb_strtoupper(trim($_POST['apellidos']), 'UTF-8');
+        $correo    = trim($_POST['correo']);
+        $id_rol    = $_POST['id_rol'];
         $id_estado = $_POST['id_estado'];
         $fecha_nacimiento = $_POST['fecha_nacimiento'] ?? null;
         $actualizarCodigo = ($_POST['actualizar_codigo'] ?? '0') === '1';
 
-        // Validar DNI
-        $validacionDNI = validarDNI($dni);
-        if (!$validacionDNI['valido']) {
-            echo json_encode(['success' => false, 'mensaje' => $validacionDNI['mensaje']]);
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'mensaje' => 'ID de usuario inválido']);
             exit;
         }
 
-        // Validar nombre
+        // Documento: tipo + numero
+        $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
+        $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
+        $dni       = strtoupper(trim($_POST['dni'] ?? ''));
+
+        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        if (!$validacionDoc['valido']) {
+            echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]);
+            exit;
+        }
+        // Antes no se comprobaba: un documento repetido terminaba en un error generico
+        if ($modelo->existeDocumentoExceptoUsuario($idTipoDoc, $dni, $id)) {
+            echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado por otro usuario"]);
+            exit;
+        }
+
         $validacionNombre = validarNombre($nombre, 'Nombre');
         if (!$validacionNombre['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionNombre['mensaje']]);
             exit;
         }
 
-        // Validar apellidos
         $validacionApellidos = validarNombre($apellidos, 'Apellidos');
         if (!$validacionApellidos['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionApellidos['mensaje']]);
             exit;
         }
 
-        // Validar correo
         $validacionCorreo = validarCorreo($correo);
         if (!$validacionCorreo['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionCorreo['mensaje']]);
             exit;
         }
 
-        // Validar que correo sea único (excepto para el mismo usuario)
         if ($modelo->existeCorreoExceptoUsuario($correo, $id)) {
             echo json_encode(['success' => false, 'mensaje' => 'El correo ya está registrado por otro usuario']);
             exit;
@@ -250,8 +269,7 @@ switch ($accion) {
             }
         }
 
-        // Actualizar personal
-        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta, $actualizarCodigo);
+        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $idTipoDoc, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta, $actualizarCodigo);
 
         if ($resultado) {
             echo json_encode([
@@ -263,7 +281,11 @@ switch ($accion) {
         }
         break;
 
-    // 🔹 Listar roles
+    case 'listar_tipos_documento':
+        echo json_encode($modelo->listarTiposDocumento());
+        break;
+
+    // Listar roles
     case 'listar_roles':
         echo json_encode($modelo->listarRoles());
         break;

@@ -17,14 +17,19 @@ function iniciarModuloPersonal() {
     const contrasenaSpan = document.getElementById('contrasenaAsignada');
     const btnCopiarTodo = document.getElementById('btnCopiarTodo');
     const selectRol = document.getElementById('selectRol');
+    const selectTipoDocumento = document.getElementById('selectTipoDocumento');
+    const ayudaDocumento = document.getElementById('ayudaDocumento');
     const tituloFormulario = document.getElementById('tituloFormPersonal');
     const inputBusqueda = document.getElementById('inputBusqueda');
 
     let modoEdicion = false;
     let idEdicion = null;
-    let dniOriginal = '';
+    let tipoDocOriginal = '1';
+    let numeroOriginal = '';
+    let codigoOriginal = '';
     let fotoActual = null;
     let personalCompleto = []; // Almacena todos los registros para búsqueda
+    let tiposDocumento = [];
 
     // =====================================================
     // Modal: confirmar actualización de código de usuario
@@ -34,14 +39,13 @@ function iniciarModuloPersonal() {
     const btnNoActualizarCodigo = document.getElementById('btnNoActualizarCodigo');
     const btnSiActualizarCodigo = document.getElementById('btnSiActualizarCodigo');
 
-    function confirmarActualizarCodigo(dniAnterior, dniNuevo) {
+    function confirmarActualizarCodigo(textoAnterior, textoNuevo, codigoNuevo) {
         return new Promise(resolve => {
             if (!modalConfirmarCodigo) { resolve(false); return; }
 
-            const primeros4 = dniNuevo.substring(0, 4);
-            document.getElementById('dniAnteriorTexto').textContent = dniAnterior;
-            document.getElementById('dniNuevoTexto').textContent = dniNuevo;
-            document.getElementById('codigoNuevoTexto').textContent = 'DENTINT' + primeros4;
+            document.getElementById('dniAnteriorTexto').textContent = textoAnterior;
+            document.getElementById('dniNuevoTexto').textContent = textoNuevo;
+            document.getElementById('codigoNuevoTexto').textContent = codigoNuevo;
 
             function cerrar(resultado) {
                 modalConfirmarCodigo.classList.remove('mostrar');
@@ -64,12 +68,96 @@ function iniciarModuloPersonal() {
     // =====================================================
     // EXPRESIONES REGULARES PARA VALIDACIÓN
     // =====================================================
-    const REGEX_DNI = /^[0-9]{8}$/;
     const REGEX_NOMBRES = /^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$/;
     const REGEX_CORREO = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
 
+    // Regla por defecto (DNI) mientras no cargue el catálogo
+    const REGLA_DNI = { id_tipo_documento: 1, codigo: '1', abreviatura: 'DNI', longitud_min: 8, longitud_max: 8, solo_numeros: 1 };
+
     cargarRoles();
+    cargarTiposDocumento();
     listarPersonal();
+
+    // =====================================================
+    // Documento de identidad: reglas según el tipo (catálogo tipo_documento)
+    // =====================================================
+    function reglaDocumento(idTipo) {
+        return tiposDocumento.find(t => String(t.id_tipo_documento) === String(idTipo)) || REGLA_DNI;
+    }
+
+    // Deja solo los caracteres permitidos y respeta la longitud máxima
+    function filtrarNumeroDocumento(valor, regla) {
+        const soloNum = Number(regla.solo_numeros) === 1;
+        const v = soloNum ? valor.replace(/[^0-9]/g, '') : valor.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        return v.substring(0, Number(regla.longitud_max));
+    }
+
+    // Devuelve el texto del error, o '' si el número es válido
+    function evaluarDocumento(valor, regla) {
+        const abrev = regla.abreviatura;
+        const soloNum = Number(regla.solo_numeros) === 1;
+        const min = Number(regla.longitud_min);
+        const max = Number(regla.longitud_max);
+        if (valor === '') return `El número de ${abrev} es obligatorio`;
+        if (soloNum && !/^[0-9]+$/.test(valor)) return `El ${abrev} solo admite dígitos`;
+        if (!soloNum && !/^[A-Za-z0-9]+$/.test(valor)) return `El ${abrev} solo admite letras y números`;
+        if (valor.length < min || valor.length > max) {
+            const unidad = soloNum ? 'dígitos' : 'caracteres';
+            return min === max
+                ? `El ${abrev} debe tener exactamente ${min} ${unidad}`
+                : `El ${abrev} debe tener entre ${min} y ${max} ${unidad}`;
+        }
+        if (regla.codigo === '1' && /^(\d)\1{7}$/.test(valor)) return 'DNI no válido';
+        return '';
+    }
+
+    // Ajusta longitud máxima, placeholder y texto de ayuda según el tipo elegido
+    function aplicarReglasDocumento() {
+        const input = form.querySelector('input[name="dni"]');
+        if (!selectTipoDocumento || !input) return;
+        const regla = reglaDocumento(selectTipoDocumento.value);
+        const soloNum = Number(regla.solo_numeros) === 1;
+        const min = Number(regla.longitud_min);
+        const max = Number(regla.longitud_max);
+        input.maxLength = max;
+        input.placeholder = regla.codigo === '1' ? '12345678' : `Número de ${regla.abreviatura}`;
+        input.value = filtrarNumeroDocumento(input.value, regla);
+        if (ayudaDocumento) {
+            const unidad = soloNum ? 'dígitos' : 'caracteres';
+            ayudaDocumento.textContent = min === max
+                ? `${min} ${unidad}${soloNum ? ' sin puntos' : ''}`
+                : `Entre ${min} y ${max} ${unidad}`;
+        }
+    }
+
+    // Pasa el texto a mayúsculas sin mover el cursor si se edita a mitad de palabra
+    function aMayusculas(input) {
+        const ini = input.selectionStart, fin = input.selectionEnd;
+        input.value = input.value.toUpperCase();
+        try { input.setSelectionRange(ini, fin); } catch (e) {}
+    }
+
+    // =====================================================
+    // Cargar tipos de documento
+    // =====================================================
+    function cargarTiposDocumento() {
+        fetch('../CONTROLADORES/controlador_personal.php?accion=listar_tipos_documento')
+            .then(res => res.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) return;
+                tiposDocumento = data;
+                const actual = selectTipoDocumento.value;
+                selectTipoDocumento.innerHTML = '';
+                data.forEach(t => {
+                    const esDni = t.codigo === '1';
+                    // defaultSelected: así form.reset() vuelve a DNI
+                    selectTipoDocumento.appendChild(new Option(t.abreviatura, t.id_tipo_documento, esDni, esDni));
+                });
+                if (actual) selectTipoDocumento.value = actual;
+                aplicarReglasDocumento();
+            })
+            .catch(err => console.error('Error al cargar tipos de documento:', err));
+    }
 
     // =====================================================
     // Cargar roles
@@ -98,6 +186,10 @@ function iniciarModuloPersonal() {
         fetch('../CONTROLADORES/controlador_personal.php?accion=listar')
             .then(res => res.json())
             .then(data => {
+                if (!Array.isArray(data)) {
+                    mostrarMensajeSistema(data.mensaje || 'No se pudo cargar el listado', 'error');
+                    return;
+                }
                 personalCompleto = data; // Guardar para búsqueda
                 renderizarTabla(data);
             });
@@ -146,7 +238,7 @@ function iniciarModuloPersonal() {
     if (inputBusqueda) {
         inputBusqueda.addEventListener('input', (e) => {
             const terminoBusqueda = e.target.value.toLowerCase().trim();
-            
+
             if (terminoBusqueda === '') {
                 renderizarTabla(personalCompleto);
                 return;
@@ -156,12 +248,13 @@ function iniciarModuloPersonal() {
                 const nombreCompleto = `${p.nombre} ${p.apellidos}`.toLowerCase();
                 const codigo = p.codigo_usuario.toLowerCase();
                 const correo = p.correo.toLowerCase();
-                
-                // Búsqueda por coincidencia parcial en nombre, código o correo
+                const documento = (p.dni || '').toLowerCase();
+
+                // Búsqueda por coincidencia parcial en nombre, código, correo o documento
                 return nombreCompleto.includes(terminoBusqueda) ||
                        codigo.includes(terminoBusqueda) ||
                        correo.includes(terminoBusqueda) ||
-                       nombreCompleto.startsWith(terminoBusqueda);
+                       documento.includes(terminoBusqueda);
             });
 
             renderizarTabla(resultadosFiltrados);
@@ -176,31 +269,38 @@ function iniciarModuloPersonal() {
     const inputApellidos = form.querySelector('input[name="apellidos"]');
     const inputCorreo = form.querySelector('input[name="correo"]');
 
-    // Validar DNI
+    // Validar documento (según el tipo elegido)
     if (inputDni) {
-        inputDni.addEventListener('input', function(e) {
-            // Solo permitir números y limitar a 8 caracteres
-            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 8);
-            validarCampoDNI(this);
+        inputDni.addEventListener('input', function() {
+            this.value = filtrarNumeroDocumento(this.value, reglaDocumento(selectTipoDocumento.value));
+            validarCampoDocumento(this);
         });
 
         inputDni.addEventListener('blur', function() {
-            validarCampoDNI(this);
+            validarCampoDocumento(this);
+        });
+    }
+
+    if (selectTipoDocumento) {
+        selectTipoDocumento.addEventListener('change', function() {
+            aplicarReglasDocumento();
+            if (inputDni.value.trim() !== '') validarCampoDocumento(inputDni);
+            else eliminarMensajeError(inputDni);
         });
     }
 
     // Validar nombre
     if (inputNombre) {
-        inputNombre.addEventListener('input', function(e) {
-            this.value = this.value.toUpperCase();  
+        inputNombre.addEventListener('input', function() {
+            aMayusculas(this);
             validarCampoTexto(this, 'nombre');
         });
     }
 
     // Validar apellidos
     if (inputApellidos) {
-        inputApellidos.addEventListener('input', function(e) {
-            this.value = this.value.toUpperCase();  
+        inputApellidos.addEventListener('input', function() {
+            aMayusculas(this);
             validarCampoTexto(this, 'apellidos');
         });
     }
@@ -215,25 +315,14 @@ function iniciarModuloPersonal() {
     // =====================================================
     // Funciones de validación individuales
     // =====================================================
-    function validarCampoDNI(input) {
+    function validarCampoDocumento(input) {
         eliminarMensajeError(input);
         const valor = input.value.trim();
-
-        if (valor === '') {
-            mostrarError(input, 'El DNI es obligatorio');
+        const mensaje = evaluarDocumento(valor, reglaDocumento(selectTipoDocumento.value));
+        if (mensaje) {
+            mostrarError(input, mensaje);
             return false;
         }
-
-        if (!REGEX_DNI.test(valor)) {
-            mostrarError(input, 'El DNI debe tener exactamente 8 dígitos');
-            return false;
-        }
-
-        if (valor === '00000000' || valor === '11111111' || valor === '99999999') {
-            mostrarError(input, 'DNI no válido');
-            return false;
-        }
-
         input.classList.add('campo-valido');
         return true;
     }
@@ -279,19 +368,25 @@ function iniciarModuloPersonal() {
         return true;
     }
 
+    // Los mensajes se agregan al contenedor del campo (no al padre inmediato),
+    // porque el documento comparte fila con el selector de tipo.
+    function contenedorCampo(input) {
+        return input.closest('.grupo-campo') || input.parentElement;
+    }
+
     function mostrarError(input, mensaje) {
         input.classList.remove('campo-valido');
         input.classList.add('campo-invalido');
-        
+
         const errorDiv = document.createElement('div');
         errorDiv.className = 'mensaje-error-campo';
         errorDiv.textContent = mensaje;
-        input.parentElement.appendChild(errorDiv);
+        contenedorCampo(input).appendChild(errorDiv);
     }
 
     function eliminarMensajeError(input) {
         input.classList.remove('campo-invalido', 'campo-valido');
-        const errorExistente = input.parentElement.querySelector('.mensaje-error-campo');
+        const errorExistente = contenedorCampo(input).querySelector('.mensaje-error-campo');
         if (errorExistente) {
             errorExistente.remove();
         }
@@ -303,33 +398,27 @@ function iniciarModuloPersonal() {
     function validarFormularioCompleto() {
         let esValido = true;
 
-        // Validar DNI
-        if (!validarCampoDNI(inputDni)) {
+        if (!validarCampoDocumento(inputDni)) {
             esValido = false;
         }
 
-        // Validar nombre
         if (!validarCampoTexto(inputNombre, 'nombre')) {
             esValido = false;
         }
 
-        // Validar apellidos
         if (!validarCampoTexto(inputApellidos, 'apellidos')) {
             esValido = false;
         }
 
-        // Validar correo
         if (!validarCampoCorreo(inputCorreo)) {
             esValido = false;
         }
 
-        // Validar rol
         if (!selectRol.value) {
             mostrarError(selectRol, 'Debe seleccionar un rol');
             esValido = false;
         }
 
-        // Validar estado
         const selectEstado = form.querySelector('select[name="id_estado"]');
         if (!selectEstado.value) {
             mostrarError(selectEstado, 'Debe seleccionar un estado');
@@ -344,11 +433,11 @@ function iniciarModuloPersonal() {
     // =====================================================
     function calcularDiasCumpleanos(fechaNacimiento) {
         if (!fechaNacimiento) return null;
-    
+
         let fecha;
-    
+
         if (typeof fechaNacimiento === "string" && /^\d{4}-\d{2}-\d{2}$/.test(fechaNacimiento)) {
-            fecha = new Date(fechaNacimiento + "T00:00:00"); 
+            fecha = new Date(fechaNacimiento + "T00:00:00");
         }
         else if (typeof fechaNacimiento === "string" && /^\d{2}\/\d{2}\/\d{4}$/.test(fechaNacimiento)) {
             const [dia, mes, año] = fechaNacimiento.split('/').map(Number);
@@ -363,23 +452,23 @@ function iniciarModuloPersonal() {
         } else {
             return "Formato de fecha inválido";
         }
-    
+
         if (isNaN(fecha.getTime())) {
             return "Fecha inválida";
         }
-    
+
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
-    
+
         let proximoCumple = new Date(hoy.getFullYear(), fecha.getMonth(), fecha.getDate());
         proximoCumple.setHours(0, 0, 0, 0);
-    
+
         if (proximoCumple < hoy) {
             proximoCumple.setFullYear(hoy.getFullYear() + 1);
         }
-    
+
         const diferenciaDias = Math.ceil((proximoCumple - hoy) / (1000 * 60 * 60 * 24));
-    
+
         if (diferenciaDias === 0) return "Hoy es su cumpleaños";
         if (diferenciaDias === 1) return "Mañana es su cumpleaños";
         return `Cumpleaños en ${diferenciaDias} días`;
@@ -393,20 +482,21 @@ function iniciarModuloPersonal() {
         idEdicion = null;
         fotoActual = null;
         form.reset();
+        aplicarReglasDocumento();
         infoDiv.style.display = 'none';
-        
+
         // Limpiar validaciones anteriores
         form.querySelectorAll('.campo-invalido, .campo-valido').forEach(el => {
             el.classList.remove('campo-invalido', 'campo-valido');
         });
         form.querySelectorAll('.mensaje-error-campo').forEach(el => el.remove());
-        
+
         if (inputFileWrapper) inputFileWrapper.style.display = 'block';
         if (labelFoto) {
             labelFoto.innerHTML = '<i class="ti ti-upload" style="font-size:13px;"></i> Subir foto';
             labelFoto.classList.remove('archivo-seleccionado');
         }
-        
+
         preview.innerHTML = `<i class="ti ti-camera"></i>`;
         removeExistingCredentialBlock();
         removeExistingEditButton();
@@ -416,7 +506,7 @@ function iniciarModuloPersonal() {
         form.querySelector('.btn-guardar').innerHTML = '<i class="ti ti-device-floppy"></i> Guardar personal';
         form.querySelector('.btn-guardar').style.display = '';
         form.querySelectorAll('input, select').forEach(el => el.removeAttribute('disabled'));
-        
+
         fotoInput.removeAttribute('disabled');
 
         btnNuevo.style.display = 'none';
@@ -511,7 +601,7 @@ function iniciarModuloPersonal() {
                     <div class="detalle-seccion">
                         <h4>Información personal</h4>
                         <div class="detalle-fila">
-                            <span class="etiqueta">DNI</span>
+                            <span class="etiqueta">${p.tipo_documento_abrev || 'DNI'}</span>
                             <span class="valor">${p.dni || '—'}</span>
                         </div>
                         <div class="detalle-fila">
@@ -575,17 +665,16 @@ function iniciarModuloPersonal() {
     // =====================================================
     function editarPersonal(p) {
         if (typeof p === 'number' || typeof p === 'string') {
-            console.log('[personal] editarPersonal recibido id, haciendo fetch:', p);
             fetch(`../CONTROLADORES/controlador_personal.php?accion=ver&id=${p}`)
-                .then(r => r.json()).then(per => { console.log('[personal] datos recibidos del fetch:', per); editarPersonal(per); }).catch(console.error);
+                .then(r => r.json()).then(per => editarPersonal(per)).catch(console.error);
             return;
         }
 
-        console.log('[personal] editarPersonal con objeto completo, p.dni =', p.dni);
-
         modoEdicion = true;
         idEdicion = p.id_usuario || idEdicion;
-        dniOriginal = p.dni || '';
+        tipoDocOriginal = String(p.id_tipo_documento || 1);
+        numeroOriginal = p.dni || '';
+        codigoOriginal = p.codigo_usuario || '';
         fotoActual = p.foto || fotoActual;
         if (tituloFormulario) tituloFormulario.textContent = 'Editar personal';
 
@@ -594,8 +683,10 @@ function iniciarModuloPersonal() {
         // Llenar el formulario con los datos del personal
         if (form.nombre)            form.nombre.value = p.nombre || '';
         if (form.apellidos)         form.apellidos.value = p.apellidos || '';
-        if (form.dni)                form.dni.value = p.dni || '';
-        console.log('[personal] form.dni.value después de asignar:', form.dni ? form.dni.value : 'form.dni no existe');
+        // Primero el tipo de documento (define longitud y caracteres permitidos), luego el número
+        if (selectTipoDocumento)    selectTipoDocumento.value = tipoDocOriginal;
+        aplicarReglasDocumento();
+        if (form.dni)               form.dni.value = p.dni || '';
         if (form.correo)            form.correo.value = p.correo || '';
         if (form.fecha_nacimiento)  form.fecha_nacimiento.value = p.fecha_nacimiento || '';
         if (form.id_rol)            form.id_rol.value = p.id_rol || '';
@@ -655,10 +746,18 @@ function iniciarModuloPersonal() {
             datos.append('accion', 'editar');
             datos.append('id_usuario', idEdicion);
 
-            // Si el DNI cambió, preguntar si también se actualiza el código de usuario
-            const dniActual = (form.dni ? form.dni.value : '').trim();
-            if (dniActual && dniActual !== dniOriginal) {
-                const actualizar = await confirmarActualizarCodigo(dniOriginal, dniActual);
+            // Si el número de documento cambió, preguntar si también se actualiza el código de usuario
+            // (el código se arma con los primeros 4 caracteres del número)
+            const numeroActual = (form.dni ? form.dni.value : '').trim().toUpperCase();
+            const codigoNuevo = 'DENTINT' + numeroActual.substring(0, 4);
+            if (numeroActual && numeroActual !== numeroOriginal && codigoNuevo !== codigoOriginal) {
+                const abrevAnterior = reglaDocumento(tipoDocOriginal).abreviatura;
+                const abrevNueva = reglaDocumento(selectTipoDocumento.value).abreviatura;
+                const actualizar = await confirmarActualizarCodigo(
+                    `${abrevAnterior} ${numeroOriginal}`,
+                    `${abrevNueva} ${numeroActual}`,
+                    codigoNuevo
+                );
                 datos.append('actualizar_codigo', actualizar ? '1' : '0');
             } else {
                 datos.append('actualizar_codigo', '0');
@@ -687,7 +786,8 @@ function iniciarModuloPersonal() {
                                 mostrarDetalle(p, false);
                                 modoEdicion = false;
                                 fotoActual = null;
-                                dniOriginal = '';
+                                numeroOriginal = '';
+                                codigoOriginal = '';
                             });
                     } else {
                         mostrarMensajeSistema('Personal registrado correctamente', 'exito');
@@ -721,7 +821,7 @@ function iniciarModuloPersonal() {
                 labelFoto.textContent = file.name;
                 labelFoto.classList.add('archivo-seleccionado');
             }
-            
+
             const reader = new FileReader();
             reader.onload = e2 => {
                 preview.innerHTML = `<img src="${e2.target.result}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
@@ -803,7 +903,7 @@ function iniciarModuloPersonal() {
         bloque.innerHTML = `
             <p class="cumple-texto">${mensaje}</p>
         `;
-        
+
         const grupoFoto = preview.parentElement;
         if (inputFileWrapper) {
             grupoFoto.insertBefore(bloque, inputFileWrapper);

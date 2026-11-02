@@ -16,7 +16,7 @@
         <div class="barra-busqueda">
             <input type="text"
                    id="inputBusqueda"
-                   placeholder="Buscar por nombre, código o correo..."
+                   placeholder="Buscar por nombre, código, correo o documento..."
                    class="input-busqueda">
         </div>
         <table id="tablaPersonal">
@@ -101,9 +101,14 @@
                         </div>
 
                         <div class="grupo-campo">
-                            <label>DNI <span class="campo-obligatorio">*</span></label>
-                            <input type="text" name="dni" maxlength="8" required placeholder="12345678">
-                            <small class="ayuda-campo">8 dígitos</small>
+                            <label>Documento de identidad <span class="campo-obligatorio">*</span></label>
+                            <div class="grupo-documento">
+                                <select name="id_tipo_documento" id="selectTipoDocumento">
+                                    <option value="1">DNI</option>
+                                </select>
+                                <input type="text" name="dni" maxlength="8" required placeholder="12345678">
+                            </div>
+                            <small class="ayuda-campo" id="ayudaDocumento">8 dígitos sin puntos</small>
                         </div>
 
                         <div class="grupo-campo">
@@ -148,18 +153,18 @@
 
 </div>
 
-<!-- Modal: confirmar actualizacion de codigo de usuario al cambiar el DNI -->
+<!-- Modal: confirmar actualizacion de codigo de usuario al cambiar el documento -->
 <div id="modalConfirmarCodigo" class="modal-overlay">
     <div class="modal-contenido" style="max-width: 400px;">
         <div class="modal-encabezado">
-            <h3>El DNI ha cambiado</h3>
+            <h3>El documento ha cambiado</h3>
             <button type="button" class="btn-cerrar-modal" id="btnCerrarModalCodigo">
                 <i class="ti ti-x"></i>
             </button>
         </div>
         <div style="padding: 20px;">
             <p style="margin: 0 0 8px; font-size: 13.5px; color: #45505c;">
-                El DNI cambió de <strong id="dniAnteriorTexto"></strong> a <strong id="dniNuevoTexto"></strong>.
+                El documento cambió de <strong id="dniAnteriorTexto"></strong> a <strong id="dniNuevoTexto"></strong>.
             </p>
             <p style="margin: 0; font-size: 13.5px; color: #45505c;">
                 ¿Deseas actualizar también el código de usuario (inicio de sesión) a <strong id="codigoNuevoTexto"></strong>?
