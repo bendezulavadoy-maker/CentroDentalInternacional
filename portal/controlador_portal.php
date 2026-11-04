@@ -91,7 +91,7 @@ $modelo = new ModeloPortal();
 $accion = $_POST['accion'] ?? $_GET['accion'] ?? '';
 
 // ── Acciones públicas (sin sesión) ────────────────────────────
-$accionesPublicas = ['verificar_dni','login','crear_password','registrar_paciente','catalogos','slots_portal'];
+$accionesPublicas = ['verificar_nro_documento','login','crear_password','registrar_paciente','catalogos','slots_portal'];
 
 if (!in_array($accion, $accionesPublicas)) {
     if (empty($_SESSION['portal']['id_paciente'])) {
@@ -104,14 +104,14 @@ $idPaciente = $_SESSION['portal']['id_paciente'] ?? 0;
 
 switch ($accion) {
 
-    case 'verificar_dni':
+    case 'verificar_nro_documento':
         // Limite de consultas por IP (evita recorrer documentos para ver quien es paciente)
         if ($modelo->estaBloqueado("verif|$ip", 40)) responderBloqueado();
         $modelo->registrarIntento("verif|$ip");
 
         $idTipo = intval($_POST['id_tipo_documento'] ?? 1);
         $tipo   = $modelo->obtenerTipoDocumento($idTipo);
-        $numero = strtoupper(trim($_POST['dni'] ?? ''));
+        $numero = strtoupper(trim($_POST['nro_documento'] ?? ''));
 
         $v = validarDocumento($tipo, $numero);
         if (!$v['valido']) {
@@ -123,7 +123,7 @@ switch ($accion) {
 
     case 'login':
         $idTipo = intval($_POST['id_tipo_documento'] ?? 1);
-        $numero = strtoupper(trim($_POST['dni'] ?? ''));
+        $numero = strtoupper(trim($_POST['nro_documento'] ?? ''));
         $pass   = $_POST['password'] ?? '';
         if (!$numero || !$pass) {
             echo json_encode(['success' => false, 'mensaje' => 'Datos incompletos']);
@@ -144,7 +144,7 @@ switch ($accion) {
 
     case 'crear_password':
         $idTipo   = intval($_POST['id_tipo_documento'] ?? 1);
-        $numero   = strtoupper(trim($_POST['dni'] ?? ''));
+        $numero   = strtoupper(trim($_POST['nro_documento'] ?? ''));
         $telefono = trim($_POST['telefono'] ?? '');
         $pass     = $_POST['password'] ?? '';
         if (!$numero || strlen($pass) < 6) {
@@ -175,7 +175,7 @@ switch ($accion) {
             exit;
         }
 
-        $campos = ['dni','nombre','apellido','fecha_nac','id_sexo','id_estado_civil',
+        $campos = ['nro_documento','nombre','apellido','fecha_nac','id_sexo','id_estado_civil',
                    'id_grado','ocupacion','telefono','correo','direccion','password'];
         foreach ($campos as $c) {
             if (empty($_POST[$c])) {
@@ -185,7 +185,7 @@ switch ($accion) {
         }
 
         $idTipo = intval($_POST['id_tipo_documento'] ?? 1);
-        $numero = strtoupper(trim($_POST['dni']));
+        $numero = strtoupper(trim($_POST['nro_documento']));
         $v = validarDocumento($modelo->obtenerTipoDocumento($idTipo), $numero);
         if (!$v['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $v['mensaje']]);
@@ -224,7 +224,7 @@ switch ($accion) {
 
         // Apoderado (si viene): validar su documento segun su tipo
         $apoIdTipo = intval($_POST['apo_id_tipo_documento'] ?? 1);
-        $apoNumero = strtoupper(trim($_POST['apo_dni'] ?? ''));
+        $apoNumero = strtoupper(trim($_POST['apo_nro_documento'] ?? ''));
         if (!empty($_POST['apo_nombre'])) {
             $errorApo = validarNombrePortal($_POST['apo_nombre'], 'El nombre del apoderado')
                      ?: validarNombrePortal($_POST['apo_apellido'] ?? '', 'El apellido del apoderado');
@@ -268,18 +268,18 @@ switch ($accion) {
             }
         }
 
-        $campos_datos = ['dni','nombre','apellido','fecha_nac','id_sexo','id_estado_civil',
+        $campos_datos = ['nro_documento','nombre','apellido','fecha_nac','id_sexo','id_estado_civil',
                          'id_grado','ocupacion','telefono','correo','direccion','password',
-                         'apo_nombre','apo_apellido','apo_dni','apo_telefono','apo_parentesco'];
+                         'apo_nombre','apo_apellido','apo_nro_documento','apo_telefono','apo_parentesco'];
         $datos = [];
         foreach ($campos_datos as $c) {
             $datos[$c] = isset($_POST[$c]) ? trim($_POST[$c]) : '';
         }
         // Documento normalizado y nombres siempre en mayusculas
         $datos['id_tipo_documento']     = $idTipo;
-        $datos['dni']                   = $numero;
+        $datos['nro_documento']                   = $numero;
         $datos['apo_id_tipo_documento'] = $apoIdTipo;
-        $datos['apo_dni']               = $apoNumero;
+        $datos['apo_nro_documento']               = $apoNumero;
         foreach (['nombre','apellido','apo_nombre','apo_apellido'] as $c) {
             $datos[$c] = mb_strtoupper($datos[$c], 'UTF-8');
         }

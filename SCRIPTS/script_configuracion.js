@@ -55,6 +55,10 @@ function iniciarModuloConfiguracion() {
                 btn.dataset.iniciado = '1';
                 iniciarSeccionAparatologia();
             }
+            if (btn.dataset.tab === 'metodos_pago' && !btn.dataset.iniciado) {
+                btn.dataset.iniciado = '1';
+                iniciarSeccionMetodosPago();
+            }
         });
     });
 
@@ -355,6 +359,90 @@ function iniciarModuloConfiguracion() {
             .catch(() => mostrarMensaje('Error de conexión', 'error'))
             .finally(() => { boton.disabled = false; });
     });
+
+    // =============================================================
+    // METODOS DE PAGO (solo administrador) — se inicializa al abrir la pestaña
+    // =============================================================
+    function iniciarSeccionMetodosPago() {
+        const CTRL = '../CONTROLADORES/controlador_configuracion.php';
+        const $ = id => document.getElementById(id);
+
+        function cargar() {
+            fetch(`${CTRL}?accion=listar_metodos_pago`)
+                .then(r => r.json())
+                .then(lista => {
+                    const tbody = document.querySelector('#tablaMetodosPago tbody');
+                    if (!tbody) return;
+                    if (!Array.isArray(lista)) { tbody.innerHTML = '<tr><td colspan="5">No se pudo cargar</td></tr>'; return; }
+                    tbody.innerHTML = lista.map(m => `
+                        <tr>
+                            <td>${escCfg(m.codigo)}</td>
+                            <td>${escCfg(m.nombre)}${Number(m.es_sistema) ? ' <small>(lo usa el sistema)</small>' : ''}</td>
+                            <td>${Number(m.requiere_referencia) ? 'Sí' : 'No'}</td>
+                            <td>${Number(m.activo) ? 'Activo' : 'Inactivo'}</td>
+                            <td>${Number(m.es_sistema) ? '' : `<button class="btn-editar-metodo btn-accion"
+                                    data-id="${Number(m.id_metodo_pago)}" data-codigo="${escCfg(m.codigo)}" data-nombre="${escCfg(m.nombre)}"
+                                    data-ref="${Number(m.requiere_referencia)}" data-activo="${Number(m.activo)}">Editar</button>`}</td>
+                        </tr>`).join('');
+                    tbody.querySelectorAll('.btn-editar-metodo').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            $('idMetodoPagoEditar').value = btn.dataset.id;
+                            $('inputCodigoMetodoPago').value = btn.dataset.codigo;
+                            $('inputNombreMetodoPago').value = btn.dataset.nombre;
+                            $('checkRequiereRefMetodoPago').checked = btn.dataset.ref === '1';
+                            $('checkActivoMetodoPago').checked = btn.dataset.activo === '1';
+                            $('grupoActivoMetodoPago').style.display = 'block';
+                            $('tituloFormMetodoPago').textContent = 'Editar método de pago';
+                            $('formMetodoPagoContenedor').style.display = 'block';
+                        });
+                    });
+                })
+                .catch(() => {
+                    const tbody = document.querySelector('#tablaMetodosPago tbody');
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="5">No se pudo cargar</td></tr>';
+                });
+        }
+
+        $('btnNuevoMetodoPago')?.addEventListener('click', () => {
+            $('idMetodoPagoEditar').value = '';
+            $('inputNombreMetodoPago').value = '';
+            $('inputCodigoMetodoPago').value = '';
+            sugerirCodigo('metodos_pago', $('inputCodigoMetodoPago'));
+            $('checkRequiereRefMetodoPago').checked = false;
+            $('checkActivoMetodoPago').checked = true;
+            $('grupoActivoMetodoPago').style.display = 'none';
+            $('tituloFormMetodoPago').textContent = 'Nuevo método de pago';
+            $('formMetodoPagoContenedor').style.display = 'block';
+        });
+        $('btnCancelarMetodoPago')?.addEventListener('click', () => { $('formMetodoPagoContenedor').style.display = 'none'; });
+        $('btnGuardarMetodoPago')?.addEventListener('click', () => {
+            const id = $('idMetodoPagoEditar').value;
+            const codigo = $('inputCodigoMetodoPago').value.trim();
+            const nombre = $('inputNombreMetodoPago').value.trim();
+            if (!codigo) { mostrarMensaje('El código es obligatorio', 'error'); return; }
+            if (!nombre) { mostrarMensaje('El nombre es obligatorio', 'error'); return; }
+            const fd = new FormData();
+            fd.append('accion', id ? 'editar_metodo_pago' : 'crear_metodo_pago');
+            if (id) fd.append('id_metodo_pago', id);
+            fd.append('codigo', codigo);
+            fd.append('nombre', nombre);
+            fd.append('requiere_referencia', $('checkRequiereRefMetodoPago').checked ? 1 : 0);
+            fd.append('activo', $('checkActivoMetodoPago').checked ? 1 : 0);
+            fetch(CTRL, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensaje('Guardado correctamente');
+                        $('formMetodoPagoContenedor').style.display = 'none';
+                        cargar();
+                    } else {
+                        mostrarMensaje(data.mensaje || 'Error al guardar', 'error');
+                    }
+                })
+                .catch(() => mostrarMensaje('Error de conexión', 'error'));
+        });
+        cargar();
+    }
 
     // =============================================================
     // SEDES
@@ -1009,7 +1097,7 @@ function iniciarModuloConfiguracion() {
                             if (!q) { dropdown.style.display = 'none'; selDoc.value = ''; doctorActual = null; return; }
                             const filtrados = lista.filter(d =>
                                 d.nombre_completo.toLowerCase().includes(q) ||
-                                (d.dni && d.dni.includes(q))
+                                (d.nro_documento && d.nro_documento.includes(q))
                             );
                             dropdown.innerHTML = filtrados.length
                                 ? filtrados.map(d => `<div class="doctor-opcion" data-id="${d.id_usuario}"

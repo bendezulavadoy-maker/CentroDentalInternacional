@@ -1,0 +1,11 @@
+# Esta carpeta solo guarda imagenes (fotos de perfil, logo, fondos).
+# Aunque alguien lograra subir un archivo de programa, no se podra ejecutar ni descargar.
+<FilesMatch "(?i)\.(php[0-9]*|phtml|pht|phps|phar|cgi|pl|py|sh|asp|aspx|jsp|exe)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

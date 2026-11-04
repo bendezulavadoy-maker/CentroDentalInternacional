@@ -80,11 +80,11 @@ function validarCorreo($correo) {
 }
 
 function validarCamposObligatorios($datos) {
-    $camposRequeridos = ['nombre', 'apellidos', 'dni', 'correo', 'id_rol', 'id_estado'];
+    $camposRequeridos = ['nombre', 'apellidos', 'nro_documento', 'correo', 'id_rol', 'id_estado'];
     $etiquetas = [
         'nombre'    => 'Nombre',
         'apellidos' => 'Apellidos',
-        'dni'       => 'Número de documento',
+        'nro_documento'       => 'Número de documento',
         'correo'    => 'Correo',
         'id_rol'    => 'Rol',
         'id_estado' => 'Estado'
@@ -122,14 +122,14 @@ switch ($accion) {
         // Documento: tipo + numero
         $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
         $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
-        $dni       = strtoupper(trim($_POST['dni']));
+        $nro_documento       = strtoupper(trim($_POST['nro_documento']));
 
-        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        $validacionDoc = validarDocumento($tipoDoc, $nro_documento);
         if (!$validacionDoc['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]);
             exit;
         }
-        if ($modelo->existeDocumento($idTipoDoc, $dni)) {
+        if ($modelo->existeDocumento($idTipoDoc, $nro_documento)) {
             echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado en el sistema"]);
             exit;
         }
@@ -170,7 +170,7 @@ switch ($accion) {
             }
         }
 
-        $resultado = $modelo->registrarPersonal($nombre, $apellidos, $idTipoDoc, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta);
+        $resultado = $modelo->registrarPersonal($nombre, $apellidos, $idTipoDoc, $nro_documento, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta);
 
         if ($resultado) {
             echo json_encode([
@@ -220,15 +220,15 @@ switch ($accion) {
         // Documento: tipo + numero
         $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
         $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
-        $dni       = strtoupper(trim($_POST['dni'] ?? ''));
+        $nro_documento       = strtoupper(trim($_POST['nro_documento'] ?? ''));
 
-        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        $validacionDoc = validarDocumento($tipoDoc, $nro_documento);
         if (!$validacionDoc['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]);
             exit;
         }
         // Antes no se comprobaba: un documento repetido terminaba en un error generico
-        if ($modelo->existeDocumentoExceptoUsuario($idTipoDoc, $dni, $id)) {
+        if ($modelo->existeDocumentoExceptoUsuario($idTipoDoc, $nro_documento, $id)) {
             echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado por otro usuario"]);
             exit;
         }
@@ -269,7 +269,7 @@ switch ($accion) {
             }
         }
 
-        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $idTipoDoc, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta, $actualizarCodigo);
+        $resultado = $modelo->editarPersonal($id, $nombre, $apellidos, $idTipoDoc, $nro_documento, $correo, $id_rol, $id_estado, $fecha_nacimiento, $fotoRuta, $actualizarCodigo);
 
         if ($resultado) {
             echo json_encode([

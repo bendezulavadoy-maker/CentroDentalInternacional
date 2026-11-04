@@ -74,9 +74,9 @@ class ModeloPortal {
     public function verificarDocumento($idTipo, $numero) {
         $stmt = $this->db->prepare(
             "SELECT id_paciente, contrasena_portal
-             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
+             FROM pacientes WHERE id_tipo_documento = :tipo AND nro_documento = :nro_documento LIMIT 1"
         );
-        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
+        $stmt->execute([':tipo' => $idTipo, ':nro_documento' => $numero]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) return ['success' => true, 'existe' => false];
         return [
@@ -89,9 +89,9 @@ class ModeloPortal {
     public function login($idTipo, $numero, $password) {
         $stmt = $this->db->prepare(
             "SELECT id_paciente, nombre, apellido, contrasena_portal
-             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
+             FROM pacientes WHERE id_tipo_documento = :tipo AND nro_documento = :nro_documento LIMIT 1"
         );
-        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
+        $stmt->execute([':tipo' => $idTipo, ':nro_documento' => $numero]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row || empty($row['contrasena_portal']) || !password_verify($password, $row['contrasena_portal'])) {
             return ['success' => false, 'mensaje' => 'Documento o contraseña incorrectos'];
@@ -119,9 +119,9 @@ class ModeloPortal {
 
         $stmt = $this->db->prepare(
             "SELECT id_paciente, nombre, apellido, telefono, contrasena_portal
-             FROM pacientes WHERE id_tipo_documento = :tipo AND dni = :dni LIMIT 1"
+             FROM pacientes WHERE id_tipo_documento = :tipo AND nro_documento = :nro_documento LIMIT 1"
         );
-        $stmt->execute([':tipo' => $idTipo, ':dni' => $numero]);
+        $stmt->execute([':tipo' => $idTipo, ':nro_documento' => $numero]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$row) return $generico;
 
@@ -167,8 +167,8 @@ class ModeloPortal {
             $this->db->beginTransaction();
 
             // Verificar documento no duplicado (tipo + numero)
-            $chk = $this->db->prepare("SELECT id_paciente FROM pacientes WHERE id_tipo_documento=:t AND dni=:d");
-            $chk->execute([':t' => $datos['id_tipo_documento'], ':d' => $datos['dni']]);
+            $chk = $this->db->prepare("SELECT id_paciente FROM pacientes WHERE id_tipo_documento=:t AND nro_documento=:d");
+            $chk->execute([':t' => $datos['id_tipo_documento'], ':d' => $datos['nro_documento']]);
             if ($chk->fetch()) {
                 $this->db->rollBack();
                 return ['success' => false, 'mensaje' => 'Este documento ya está registrado'];
@@ -187,23 +187,23 @@ class ModeloPortal {
             $id_apoderado = null;
             if (!empty($datos['apo_nombre'])) {
                 $apoExiste = $this->db->prepare(
-                    "SELECT id_apoderado FROM apoderados WHERE id_tipo_documento=:t AND dni=:d LIMIT 1"
+                    "SELECT id_apoderado FROM apoderados WHERE id_tipo_documento=:t AND nro_documento=:d LIMIT 1"
                 );
-                $apoExiste->execute([':t' => $datos['apo_id_tipo_documento'], ':d' => $datos['apo_dni']]);
+                $apoExiste->execute([':t' => $datos['apo_id_tipo_documento'], ':d' => $datos['apo_nro_documento']]);
                 $apoFila = $apoExiste->fetch(PDO::FETCH_ASSOC);
 
                 if ($apoFila) {
                     $id_apoderado = $apoFila['id_apoderado'];
                 } else {
                     $apo = $this->db->prepare(
-                        "INSERT INTO apoderados (nombre, apellido, id_tipo_documento, dni, telefono, id_tipo_familiar)
+                        "INSERT INTO apoderados (nombre, apellido, id_tipo_documento, nro_documento, telefono, id_tipo_familiar)
                          VALUES (:n, :a, :td, :d, :t, :p)"
                     );
                     $apo->execute([
                         ':n'  => $datos['apo_nombre'],
                         ':a'  => $datos['apo_apellido'],
                         ':td' => $datos['apo_id_tipo_documento'],
-                        ':d'  => $datos['apo_dni'],
+                        ':d'  => $datos['apo_nro_documento'],
                         ':t'  => $datos['apo_telefono'],
                         ':p'  => $datos['apo_parentesco'],
                     ]);
@@ -214,11 +214,11 @@ class ModeloPortal {
             $hash = password_hash($datos['password'], PASSWORD_BCRYPT);
 
             $sql = "INSERT INTO pacientes
-                    (nombre, apellido, id_tipo_documento, dni, fecha_nacimiento, telefono, correo,
+                    (nombre, apellido, id_tipo_documento, nro_documento, fecha_nacimiento, telefono, correo,
                      direccion, ocupacion, id_sexo, id_estado_civil, id_grado_instruccion,
                      id_apoderado, foto, contrasena_portal, fecha_registro)
                     VALUES
-                    (:nombre, :apellido, :id_tipo_documento, :dni, :fecha_nac, :telefono, :correo,
+                    (:nombre, :apellido, :id_tipo_documento, :nro_documento, :fecha_nac, :telefono, :correo,
                      :direccion, :ocupacion, :id_sexo, :id_estado_civil, :id_grado,
                      :id_apoderado, :foto, :hash, NOW())";
 
@@ -227,7 +227,7 @@ class ModeloPortal {
                 ':nombre'            => $datos['nombre'],
                 ':apellido'          => $datos['apellido'],
                 ':id_tipo_documento' => $datos['id_tipo_documento'],
-                ':dni'               => $datos['dni'],
+                ':nro_documento'               => $datos['nro_documento'],
                 ':fecha_nac'         => $datos['fecha_nac'],
                 ':telefono'          => $datos['telefono'],
                 ':correo'            => $datos['correo'],
@@ -287,7 +287,7 @@ class ModeloPortal {
         $stmt = $this->db->prepare(
             "SELECT p.*, s.nombre_sexo, ec.nombre_estado_civil,
                     gi.nombre_grado_instruccion, a.nombre AS apo_nombre,
-                    a.apellido AS apo_apellido, a.dni AS apo_dni,
+                    a.apellido AS apo_apellido, a.nro_documento AS apo_nro_documento,
                     a.telefono AS apo_telefono, tf.descripcion AS apo_parentesco
              FROM pacientes p
              LEFT JOIN sexo s               ON p.id_sexo = s.id_sexo

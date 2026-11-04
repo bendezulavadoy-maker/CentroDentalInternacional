@@ -65,6 +65,14 @@ $puede_pagar     = ($id_rol === 1 || $id_rol === 3);
                        placeholder="0.00" class="at-input">
             </div>
             <div class="at-grupo">
+                <label>Método de pago <span class="at-requerido">*</span></label>
+                <select id="pagoMetodo" class="at-input"><option value="">Cargando...</option></select>
+            </div>
+            <div class="at-grupo">
+                <label>N.º de operación o comprobante <span id="pagoComprobanteReq" class="at-requerido" style="display:none;">*</span></label>
+                <input type="text" id="pagoComprobante" maxlength="40" placeholder="Opcional" class="at-input">
+            </div>
+            <div class="at-grupo">
                 <label>Observación</label>
                 <input type="text" id="pagoObservacion" placeholder="Opcional..." class="at-input">
             </div>

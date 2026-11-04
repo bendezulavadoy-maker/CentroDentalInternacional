@@ -60,7 +60,7 @@ class ModeloCitas {
         try {
             $sql = "SELECT c.id_cita, c.fecha, c.hora, c.motivo,
                            CONCAT(p.nombre,' ',p.apellido) AS nombre_paciente,
-                           p.dni AS dni_paciente,
+                           p.nro_documento AS nro_documento_paciente,
                            CONCAT(u.nombre,' ',u.apellidos) AS nombre_doctor,
                            ec.estado, s.nombre_sede
                     FROM citas c
@@ -322,7 +322,7 @@ class ModeloCitas {
                         c.motivo,
                         p.nombre AS paciente_nombre,
                         p.apellido AS paciente_apellido,
-                        p.dni AS paciente_dni,
+                        p.nro_documento AS paciente_nro_documento,
                         td.abreviatura AS paciente_tipo_doc,
                         u.nombre AS doctor_nombre,
                         u.apellidos AS doctor_apellidos,
@@ -358,7 +358,7 @@ class ModeloCitas {
                         c.*,
                         p.nombre AS paciente_nombre,
                         p.apellido AS paciente_apellido,
-                        p.dni AS paciente_dni,
+                        p.nro_documento AS paciente_nro_documento,
                         td.abreviatura AS paciente_tipo_doc,
                         p.telefono AS telefono_paciente,
                         u.nombre AS doctor_nombre,
@@ -545,13 +545,13 @@ class ModeloCitas {
     // =====================================================
     public function buscarPacientes($termino) {
         try {
-            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.dni,
+            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.nro_documento,
                            td.abreviatura AS tipo_documento_abrev
                     FROM pacientes p
                     LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     WHERE p.nombre LIKE :termino 
                        OR p.apellido LIKE :termino 
-                       OR p.dni LIKE :termino
+                       OR p.nro_documento LIKE :termino
                     ORDER BY p.nombre, p.apellido
                     LIMIT 10";
             $stmt = $this->conexion->prepare($sql);
@@ -564,14 +564,14 @@ class ModeloCitas {
 
     public function buscarDoctores($termino) {
         try {
-            $sql = "SELECT u.id_usuario, u.nombre, u.apellidos, u.dni,
+            $sql = "SELECT u.id_usuario, u.nombre, u.apellidos, u.nro_documento,
                            td.abreviatura AS tipo_documento_abrev
                     FROM usuarios u
                     LEFT JOIN tipo_documento td ON u.id_tipo_documento = td.id_tipo_documento
                     WHERE u.id_rol = 2
                       AND (u.nombre LIKE :termino 
                            OR u.apellidos LIKE :termino 
-                           OR u.dni LIKE :termino)
+                           OR u.nro_documento LIKE :termino)
                     ORDER BY u.nombre, u.apellidos
                     LIMIT 10";
             $stmt = $this->conexion->prepare($sql);

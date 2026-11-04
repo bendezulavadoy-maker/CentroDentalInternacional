@@ -125,7 +125,7 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
             html += `
                 <div class="resultado-item" data-id="${esc(p.id_paciente)}">
                     <strong>${esc(p.nombre)} ${esc(p.apellido)}</strong>
-                    <small>${esc(p.tipo_documento_abrev || 'DNI')}: ${esc(p.dni)} | Tel: ${esc(p.telefono || 'N/A')}</small>
+                    <small>${esc(p.tipo_documento_abrev || 'DNI')}: ${esc(p.nro_documento)} | Tel: ${esc(p.telefono || 'N/A')}</small>
                 </div>
             `;
         });
@@ -214,7 +214,7 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         // Datos básicos
         document.getElementById('nombrePaciente').textContent = `${paciente.nombre} ${paciente.apellido}`;
         document.getElementById('tipoDocPaciente').textContent = paciente.tipo_documento_abrev || 'DNI';
-        document.getElementById('dniPaciente').textContent = paciente.dni || 'N/A';
+        document.getElementById('dniPaciente').textContent = paciente.nro_documento || 'N/A';
         const lineaResp = document.getElementById('lineaResponsable');
         if (lineaResp) {
             lineaResp.style.display = paciente.doctor_responsable_nombre ? 'block' : 'none';

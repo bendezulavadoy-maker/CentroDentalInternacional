@@ -191,18 +191,46 @@
         document.getElementById('pago_id_cita').value    = id_cita;
         document.getElementById('pagoMonto').value       = '';
         document.getElementById('pagoObservacion').value = '';
+        document.getElementById('pagoComprobante').value = '';
+        cargarMetodosPago();
         document.getElementById('resumenCobro').innerHTML = '<p style="font-size:13px;color:#636e72;">Registra el pago correspondiente a esta cita.</p>';
         document.getElementById('modalPago').style.display = 'flex';
     };
 
+    // ── Metodos de pago (catalogo editable en Configuracion) ──────
+    let metodosPago = [];
+    function cargarMetodosPago() {
+        const sel = document.getElementById('pagoMetodo');
+        fetch('../CONTROLADORES/controlador_atenciones.php?accion=metodos_pago')
+            .then(r => r.json())
+            .then(d => {
+                metodosPago = (d && d.success) ? d.metodos : [];
+                sel.innerHTML = '<option value="">Seleccione...</option>' + metodosPago.map(m =>
+                    `<option value="${Number(m.id_metodo_pago)}" data-ref="${Number(m.requiere_referencia)}">${String(m.nombre).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</option>`).join('');
+                actualizarReqComprobante();
+            })
+            .catch(() => { sel.innerHTML = '<option value="">No se pudieron cargar los métodos</option>'; });
+    }
+    function actualizarReqComprobante() {
+        const sel = document.getElementById('pagoMetodo');
+        const req = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.ref === '1';
+        document.getElementById('pagoComprobanteReq').style.display = req ? 'inline' : 'none';
+    }
+
     // ── Registrar listeners globales ──────────────────────────────
     function registrarListeners() {
+
+        document.getElementById('pagoMetodo').addEventListener('change', actualizarReqComprobante);
 
         // Confirmar pago
         document.getElementById('btnConfirmarPago').onclick = () => {
             const monto = parseFloat(document.getElementById('pagoMonto').value || 0);
             if (monto <= 0) { mostrarMensaje('El monto debe ser mayor a 0', 'error'); return; }
+            const metodo = document.getElementById('pagoMetodo').value;
+            if (!metodo) { mostrarMensaje('Seleccione el método de pago', 'error'); return; }
             const fd = new FormData();
+            fd.append('id_metodo_pago',  metodo);
+            fd.append('nro_comprobante', document.getElementById('pagoComprobante').value.trim());
             fd.append('accion',      'registrar_pago');
             fd.append('id_paciente', ID_PACIENTE);
             fd.append('id_cita',     document.getElementById('pago_id_cita').value);
@@ -212,7 +240,7 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        mostrarMensaje('Pago registrado', 'exito');
+                        mostrarMensaje(data.anticipo > 0 ? 'Pago registrado. S/ ' + Number(data.anticipo).toFixed(2) + ' quedaron como saldo a favor del paciente' : 'Pago registrado', 'exito');
                         document.getElementById('modalPago').style.display = 'none';
                         cargarCitas();
                     } else {

@@ -440,9 +440,9 @@ async function verificarDni() {
     dniActual = numero;
 
     const fd = new FormData();
-    fd.append('accion', 'verificar_dni');
+    fd.append('accion', 'verificar_nro_documento');
     fd.append('id_tipo_documento', tipoDocActual);
-    fd.append('dni', numero);
+    fd.append('nro_documento', numero);
 
     try {
         const res  = await fetch('controlador_portal.php', { method:'POST', body:fd });
@@ -489,7 +489,7 @@ async function iniciarSesion() {
     const fd = new FormData();
     fd.append('accion', 'login');
     fd.append('id_tipo_documento', tipoDocActual);
-    fd.append('dni', dniActual);
+    fd.append('nro_documento', dniActual);
     fd.append('password', pass);
 
     try {
@@ -530,7 +530,7 @@ async function crearContraseña() {
     const fd = new FormData();
     fd.append('accion', 'crear_password');
     fd.append('id_tipo_documento', tipoDocActual);
-    fd.append('dni', dniActual);
+    fd.append('nro_documento', dniActual);
     fd.append('telefono', tel);
     fd.append('password', p1);
 
@@ -690,7 +690,7 @@ async function registrarPaciente() {
     const fd = new FormData();
     fd.append('accion',        'registrar_paciente');
     fd.append('id_tipo_documento', tipoDocActual);
-    fd.append('dni',           document.getElementById('reg-dni').value);
+    fd.append('nro_documento',           document.getElementById('reg-dni').value);
     fd.append('nombre',        document.getElementById('reg-nombre').value.trim());
     fd.append('apellido',      document.getElementById('reg-apellido').value.trim());
     fd.append('fecha_nac',     document.getElementById('reg-fecha-nac').value);
@@ -713,7 +713,7 @@ async function registrarPaciente() {
         fd.append('apo_nombre',            document.getElementById('apo-nombre').value.trim());
         fd.append('apo_apellido',          document.getElementById('apo-apellido').value.trim());
         fd.append('apo_id_tipo_documento', document.getElementById('apo-tipo-doc').value);
-        fd.append('apo_dni',               document.getElementById('apo-dni').value.trim());
+        fd.append('apo_nro_documento',               document.getElementById('apo-dni').value.trim());
         fd.append('apo_telefono',          document.getElementById('apo-telefono').value.trim());
         fd.append('apo_parentesco',        document.getElementById('apo-parentesco').value);
     }

@@ -1,0 +1,76 @@
+/* =====================================================
+   IMPORTACION MASIVA DE PACIENTES
+   ===================================================== */
+   .imp-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(20, 25, 35, 0.5);
+    align-items: center; justify-content: center;
+    padding: 16px;
+}
+.imp-contenido {
+    background: #fff; border-radius: 12px; width: 100%; max-width: 860px; max-height: 92vh;
+    display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+    font-family: 'Inter', 'Segoe UI', sans-serif; color: #2c3e50;
+}
+.imp-encabezado {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; border-bottom: 1px solid #e0e4ea;
+}
+.imp-encabezado h3 { margin: 0; font-size: 17px; color: #1a2332; }
+.imp-cerrar { background: none; border: none; font-size: 26px; line-height: 1; color: #7f8c8d; cursor: pointer; padding: 0 4px; }
+.imp-cerrar:hover { color: #1a2332; }
+.imp-cuerpo { padding: 18px 22px 22px; overflow-y: auto; }
+
+.imp-pasos { margin: 0 0 14px 18px; padding: 0; font-size: 13.5px; line-height: 1.7; color: #45505c; }
+.imp-ayuda { font-size: 12px; color: #7f8c8d; line-height: 1.5; margin: 8px 0 0; }
+.imp-archivo { font-size: 13px; margin: 0 0 12px; color: #45505c; }
+.imp-subtitulo { margin: 4px 0 10px; font-size: 14px; color: #1a2332; }
+.imp-separador { border: none; border-top: 1px solid #e0e4ea; margin: 22px 0 14px; }
+
+.imp-subida {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-top: 14px; padding: 14px; border: 1.5px dashed #c3cad3; border-radius: 10px; background: #f8f9fb;
+}
+.imp-subida input[type="file"] { flex: 1; min-width: 220px; font-size: 13px; }
+
+.imp-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 7px;
+    font-size: 13px; font-weight: 500; cursor: pointer; text-decoration: none; border: 1px solid transparent;
+    transition: .15s;
+}
+.imp-btn-prim { background: #1a2332; color: #fff; }
+.imp-btn-prim:hover:not(:disabled) { background: #2a3548; }
+.imp-btn-sec { background: #fff; color: #45505c; border-color: #d7dce2; }
+.imp-btn-sec:hover:not(:disabled) { background: #f4f6f8; }
+.imp-btn-peligro { background: #fff; color: #b03a2e; border-color: #f0c4be; }
+.imp-btn-peligro:hover:not(:disabled) { background: #fdf2f0; }
+.imp-btn-chico { padding: 5px 10px; font-size: 12px; }
+.imp-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.imp-mensaje {
+    display: none; margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    background: #fdecea; color: #a93226; border: 0.5px solid #f0c4be;
+}
+
+.imp-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.imp-tarjeta { border-radius: 10px; padding: 12px 14px; border: 0.5px solid #e0e4ea; background: #f8f9fb; display: flex; flex-direction: column; gap: 2px; }
+.imp-numero { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.imp-texto { font-size: 12px; color: #5a6475; }
+.imp-ok    { background: #eaf7ee; border-color: #bfe3c9; } .imp-ok .imp-numero { color: #1e7e3a; }
+.imp-info  { background: #eef2fb; border-color: #c9d6ef; } .imp-info .imp-numero { color: #2a4d8f; }
+.imp-error { background: #fdecea; border-color: #f0c4be; } .imp-error .imp-numero { color: #b03a2e; }
+
+.imp-bloque-errores { margin: 4px 0 14px; }
+.imp-aviso-errores { font-size: 13px; color: #8a6a12; background: #fff8e6; border: 0.5px solid #f0dca5; padding: 9px 12px; border-radius: 8px; margin: 0 0 10px; }
+.imp-tabla-caja { max-height: 280px; overflow: auto; border: 0.5px solid #e0e4ea; border-radius: 8px; margin-bottom: 10px; }
+.imp-tabla { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.imp-tabla th { position: sticky; top: 0; background: #f7f8fa; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: #5a6475; padding: 8px 10px; border-bottom: 0.5px solid #e0e4ea; }
+.imp-tabla td { padding: 8px 10px; border-bottom: 0.5px solid #eef0f3; vertical-align: top; }
+.imp-tabla ul { margin: 0; padding-left: 16px; }
+.imp-tabla small { color: #7f8c8d; }
+
+.imp-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.imp-confirmacion { margin: 0 0 12px; padding: 12px 14px; border-radius: 8px; background: #fff8e6; border: 0.5px solid #f0dca5; font-size: 13px; color: #6b5410; }
+.imp-confirmacion p { margin: 0 0 6px; }
+
+@media (max-width: 600px) { .imp-cuerpo { padding: 14px; } .imp-numero { font-size: 20px; } }

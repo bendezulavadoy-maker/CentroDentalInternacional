@@ -20,7 +20,8 @@ class ModeloMiAgenda {
                         ta.nombre AS tipo_atencion,
                         s.nombre_sede,
                         CONCAT(p.nombre, ' ', p.apellido) AS nombre_paciente,
-                        p.dni AS dni_paciente,
+                        p.nro_documento AS nro_documento_paciente,
+                        td.abreviatura AS tipo_documento_abrev,
                         p.telefono AS telefono_paciente,
                         p.correo AS correo_paciente,
                         p.fecha_nacimiento,
@@ -29,6 +30,7 @@ class ModeloMiAgenda {
                         p.observaciones
                     FROM citas c
                     INNER JOIN pacientes p      ON c.id_paciente = p.id_paciente
+                    LEFT  JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     INNER JOIN estado_cita ec   ON c.id_estado_cita = ec.id_estado_cita
                     LEFT  JOIN tipo_servicio ts ON c.id_tipo_servicio = ts.id_tipo_servicio
                     LEFT  JOIN tipos_atencion ta ON c.id_tipo_atencion = ta.id_tipo_atencion
@@ -63,13 +65,15 @@ class ModeloMiAgenda {
                         ta.nombre AS tipo_atencion,
                         s.nombre_sede, s.direccion_sede,
                         CONCAT(p.nombre, ' ', p.apellido) AS nombre_paciente,
-                        p.dni AS dni_paciente,
+                        p.nro_documento AS nro_documento_paciente,
+                        td.abreviatura AS tipo_documento_abrev,
                         p.telefono AS telefono_paciente,
                         p.correo AS correo_paciente,
                         p.fecha_nacimiento, p.foto AS foto_paciente,
                         p.id_paciente, p.observaciones
                     FROM citas c
                     INNER JOIN pacientes p      ON c.id_paciente = p.id_paciente
+                    LEFT  JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     INNER JOIN estado_cita ec   ON c.id_estado_cita = ec.id_estado_cita
                     LEFT  JOIN tipo_servicio ts ON c.id_tipo_servicio = ts.id_tipo_servicio
                     LEFT  JOIN tipos_atencion ta ON c.id_tipo_atencion = ta.id_tipo_atencion

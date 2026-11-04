@@ -423,27 +423,7 @@ class ModeloAtenciones
         }
     }
 
-    // ── Registrar pago ────────────────────────────────────────────
-    public function registrarPago($id_paciente, $id_cita, $monto, $observacion, $registrado_por)
-    {
-        try {
-            $s = $this->con->prepare(
-                "INSERT INTO pagos (id_paciente, id_cita, monto, observacion, registrado_por)
-                 VALUES (:pac, :cita, :monto, :obs, :reg)"
-            );
-            $s->execute([
-                ':pac'   => $id_paciente,
-                ':cita'  => $id_cita ?: null,
-                ':monto' => $monto,
-                ':obs'   => $observacion ?: null,
-                ':reg'   => $registrado_por,
-            ]);
-            return ['success' => true];
-        } catch (PDOException $e) {
-            error_log("registrarPago: " . $e->getMessage());
-            return ['success' => false, 'mensaje' => 'Error al registrar pago'];
-        }
-    }
+    // (El registro de pagos vive ahora en ModeloCobros: metodo de pago, validacion y anticipos.)
 
     // ── Verificar pagos ───────────────────────────────────────────
     public function citaTienePagos($id_cita)

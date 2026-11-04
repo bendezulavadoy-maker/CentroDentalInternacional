@@ -60,6 +60,15 @@ class Permisos {
                 'acciones' => [
                     'pacientes.asignar_responsable' => ['titulo' => 'Asignar odontólogo responsable',   'por_paciente' => false],
                     'pacientes.restablecer_portal'  => ['titulo' => 'Restablecer acceso al portal',     'por_paciente' => true],
+                    'pacientes.importar'            => ['titulo' => 'Importar pacientes desde Excel',   'por_paciente' => false],
+                ],
+            ],
+            'cobros' => [
+                'titulo' => 'Cobros',
+                'acciones' => [
+                    'cobros.registrar'             => ['titulo' => 'Registrar pagos y usar el saldo a favor',        'por_paciente' => false],
+                    'cobros.anular'                => ['titulo' => 'Anular pagos',                                    'por_paciente' => false],
+                    'cobros.registrar_retroactivo' => ['titulo' => 'Registrar pagos con fecha pasada',                'por_paciente' => false],
                 ],
             ],
         ];

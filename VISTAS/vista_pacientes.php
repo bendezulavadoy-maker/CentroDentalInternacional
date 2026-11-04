@@ -1,14 +1,27 @@
-<?php require_once '../CONFIG/verificar_sesion.php'; ?>
+<?php
+require_once '../CONFIG/verificar_sesion.php';
+require_once '../CONFIG/permisos.php';
+// El boton y la ventana de importacion solo existen para quien tiene el permiso (el servidor lo vuelve a exigir)
+$puedeImportar = Permisos::puede('pacientes.importar');
+?>
 <link rel="stylesheet" href="../ESTILOS/style_pacientes.css">
+<?php if ($puedeImportar): ?><link rel="stylesheet" href="../ESTILOS/style_importacion.css"><?php endif; ?>
 
 <div class="contenedor-personal">
 
     <!-- ENCABEZADO -->
     <div class="encabezado-personal">
         <h2>Gestión de Pacientes</h2>
-        <button id="btnNuevoPersonal" class="btn-principal">
-            <i class="ti ti-user-plus"></i> Nuevo Paciente
-        </button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <?php if ($puedeImportar): ?>
+            <button id="btnImportarPacientes" type="button" class="btn-secundario">
+                <i class="ti ti-file-import"></i> Importar desde Excel
+            </button>
+            <?php endif; ?>
+            <button id="btnNuevoPersonal" class="btn-principal">
+                <i class="ti ti-user-plus"></i> Nuevo Paciente
+            </button>
+        </div>
     </div>
 
     <!-- LISTADO -->
@@ -92,7 +105,7 @@
                             <select name="id_tipo_documento" id="selectTipoDocumento">
                                 <option value="1">DNI</option>
                             </select>
-                            <input type="text" name="dni" id="inputNroDocumento" maxlength="8" required placeholder="12345678">
+                            <input type="text" name="nro_documento" id="inputNroDocumento" maxlength="8" required placeholder="12345678">
                         </div>
                         <small class="ayuda-campo" id="ayudaDocumento">8 dígitos sin puntos</small>
                     </div>
@@ -205,7 +218,7 @@
                         <select name="tipo_doc_apoderado" id="tipoDocApoderado">
                             <option value="1">DNI</option>
                         </select>
-                        <input type="text" name="dni_apoderado" id="dniApoderado"
+                        <input type="text" name="nro_documento_apoderado" id="dniApoderado"
                                maxlength="8" required placeholder="12345678">
                     </div>
                 </div>
@@ -259,5 +272,65 @@
     </div>
 
 </div>
+
+<?php if ($puedeImportar): ?>
+<!-- MODAL: IMPORTAR PACIENTES DESDE EXCEL -->
+<div id="modalImportarPacientes" class="imp-overlay" style="display:none;">
+    <div class="imp-contenido" role="dialog" aria-modal="true" aria-labelledby="impTitulo">
+        <div class="imp-encabezado">
+            <h3 id="impTitulo">Importar pacientes desde Excel</h3>
+            <button type="button" id="impCerrar" class="imp-cerrar" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="imp-cuerpo">
+
+            <!-- Paso 1: elegir archivo -->
+            <section id="impPaso1">
+                <ol class="imp-pasos">
+                    <li>Descargue la plantilla y llénela: una fila por paciente.</li>
+                    <li>Súbala aquí para <strong>revisarla</strong>. Todavía no se guarda nada.</li>
+                    <li>Confirme: se importan las filas correctas y se le muestran las que tienen problemas.</li>
+                </ol>
+                <a id="impPlantilla" class="imp-btn imp-btn-sec" href="../CONTROLADORES/controlador_importacion_pacientes.php?accion=plantilla">
+                    <i class="ti ti-download"></i> Descargar plantilla
+                </a>
+                <div class="imp-subida">
+                    <input type="file" id="impArchivo" accept=".xlsx,.csv">
+                    <button type="button" id="impRevisar" class="imp-btn imp-btn-prim" disabled>Revisar archivo</button>
+                </div>
+                <p class="imp-ayuda">Formatos: .xlsx o .csv &middot; hasta 1000 filas y 5 MB por archivo. Los pacientes que ya existen se omiten sin modificarlos.</p>
+                <p id="impMensaje" class="imp-mensaje" role="alert" style="display:none;"></p>
+            </section>
+
+            <!-- Paso 2: resultado de la revision -->
+            <section id="impPaso2" style="display:none;">
+                <p class="imp-archivo">Archivo: <strong id="impNombreArchivo"></strong></p>
+                <div class="imp-resumen" id="impResumen"></div>
+                <p id="impIgnoradas" class="imp-ayuda" style="display:none;"></p>
+                <div id="impErrores"></div>
+                <p id="impMensaje2" class="imp-mensaje" role="alert" style="display:none;"></p>
+                <div class="imp-acciones">
+                    <button type="button" id="impVolver" class="imp-btn imp-btn-sec">Elegir otro archivo</button>
+                    <button type="button" id="impConfirmar" class="imp-btn imp-btn-prim">Importar</button>
+                </div>
+            </section>
+
+            <!-- Paso 3: resultado final -->
+            <section id="impPaso3" style="display:none;">
+                <div class="imp-resumen" id="impResumenFinal"></div>
+                <div id="impErroresFinal"></div>
+                <div class="imp-acciones">
+                    <button type="button" id="impOtra" class="imp-btn imp-btn-sec">Importar otro archivo</button>
+                    <button type="button" id="impListo" class="imp-btn imp-btn-prim">Listo</button>
+                </div>
+            </section>
+
+            <hr class="imp-separador">
+            <h4 class="imp-subtitulo">Cargas anteriores</h4>
+            <div id="impConfirmarRevertir" class="imp-confirmacion" style="display:none;"></div>
+            <div id="impHistorial"><p class="imp-ayuda">Cargando...</p></div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <script src="../SCRIPTS/script_pacientes.js"></script>

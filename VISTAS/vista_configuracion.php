@@ -21,6 +21,7 @@ $esAdmin = Permisos::puedeGestionarPermisos();
             <button class="tab-btn" data-tab="planes">Planes</button>
             <button class="tab-btn" data-tab="aparatologia">Aparatología</button>
             <button class="tab-btn" data-tab="tipos_atencion">Tipos de Atención</button>
+            <button class="tab-btn" data-tab="metodos_pago"<?= $esAdmin ? '' : ' style="display:none;"' ?>>Métodos de pago</button>
             <button class="tab-btn" data-tab="horarios">Horarios</button>
             <button class="tab-btn" data-tab="google_calendar">Google Calendar</button>
         </div>
@@ -305,6 +306,48 @@ $esAdmin = Permisos::puedeGestionarPermisos();
         </section>
 
         <!-- TAB: HORARIOS -->
+        <section id="tab-metodos_pago" class="tab-contenido">
+            <div class="seccion-header">
+                <h3>Métodos de pago</h3>
+                <button id="btnNuevoMetodoPago" class="btn-principal">+ Nuevo método</button>
+            </div>
+            <p class="subtitulo">Los métodos que se pueden elegir al registrar un pago (efectivo, Yape, tarjeta...). Agregue los que use la clínica. Si un método está marcado como «pide número de operación», el sistema lo exigirá al cobrar. Un método inactivo ya no aparece al cobrar, pero los pagos anteriores conservan su historial.</p>
+            <table id="tablaMetodosPago">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Pide número de operación</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div id="formMetodoPagoContenedor" style="display:none;" class="form-inline">
+                <h4 id="tituloFormMetodoPago">Nuevo método de pago</h4>
+                <input type="hidden" id="idMetodoPagoEditar">
+                <div class="grupo-campo">
+                    <label>Nombre <span class="campo-obligatorio">*</span></label>
+                    <input type="text" id="inputNombreMetodoPago" maxlength="60" placeholder="Ej: Depósito en cuenta">
+                </div>
+                <div class="grupo-campo">
+                    <label>Código: <span class="campo-obligatorio">*</span></label>
+                    <input type="text" id="inputCodigoMetodoPago" class="input-codigo" maxlength="10" placeholder="Ej: 06">
+                </div>
+                <div class="grupo-campo">
+                    <label><input type="checkbox" id="checkRequiereRefMetodoPago"> Pide número de operación al cobrar</label>
+                </div>
+                <div class="grupo-campo" id="grupoActivoMetodoPago" style="display:none;">
+                    <label><input type="checkbox" id="checkActivoMetodoPago" checked> Activo</label>
+                </div>
+                <div class="form-botones">
+                    <button id="btnCancelarMetodoPago" class="btn-secundario">Cancelar</button>
+                    <button id="btnGuardarMetodoPago" class="btn-guardar">Guardar</button>
+                </div>
+            </div>
+        </section>
+
         <section id="tab-horarios" class="tab-contenido">
             <div class="seccion-header">
                 <h3>Horarios de Doctores</h3>

@@ -563,3 +563,43 @@
     cursor: not-allowed;
     border-color: #e8ecf0;
 }
+/* =====================================================
+   PAGOS: metodo, anticipos (saldo a favor) y anulacion
+   ===================================================== */
+.cobros-det-acciones { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cobros-badge-saldo {
+    display: inline-block; margin-top: 4px; padding: 3px 10px; border-radius: 12px;
+    background: #eaf7ee; color: #1e7e3a; border: 0.5px solid #bfe3c9; font-size: 12px; font-weight: 600;
+}
+.cobros-req { color: #c0392b; }
+.cobros-opc { color: #95a5a6; font-size: 11px; font-weight: normal; }
+.cobros-ayuda { display: block; margin-top: 4px; font-size: 11.5px; color: #7f8c8d; line-height: 1.4; }
+.cobros-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; cursor: pointer; }
+.cobros-aviso { font-size: 13.5px; margin: 0 0 12px; color: #2c3e50; }
+.cobros-error { font-size: 13px; color: #a93226; background: #fdecea; border: 0.5px solid #f0c4be; padding: 8px 10px; border-radius: 6px; margin: 8px 0 0; }
+.cobros-btn-peligro {
+    padding: 9px 18px; border-radius: 7px; border: none; background: #b03a2e; color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.cobros-btn-peligro:hover:not(:disabled) { background: #922b21; }
+.cobros-btn-peligro:disabled { opacity: .6; cursor: not-allowed; }
+
+.cobros-op { border: 0.5px solid #e0e4ea; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+.cobros-op.anulada { background: #fafafa; border-style: dashed; }
+.cobros-op.anulada .cobros-op-cab strong { text-decoration: line-through; color: #95a5a6; }
+.cobros-op-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+.cobros-op-metodo { color: #5a6475; font-size: 13px; margin-left: 6px; }
+.cobros-op-sub { font-size: 12px; color: #7f8c8d; margin: 3px 0 8px; }
+.cobros-op-lineas { list-style: none; margin: 0 0 6px; padding: 0; font-size: 13px; }
+.cobros-op-lineas li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 0.5px solid #f0f2f5; }
+.cobros-op-lineas li.inversa { color: #a93226; font-style: italic; }
+.cobros-op-motivo { font-size: 12.5px; color: #8a6a12; background: #fff8e6; border-radius: 6px; padding: 6px 9px; margin-top: 6px; }
+.cobros-estado { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 11.5px; font-weight: 600; margin-left: 4px; }
+.cobros-estado.vigente { background: #eaf7ee; color: #1e7e3a; }
+.cobros-estado.anulado { background: #fdecea; color: #a93226; }
+.cobros-estado.retro { background: #eef2fb; color: #2a4d8f; }
+.cobros-btn-anular {
+    margin-top: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: #b03a2e;
+    background: #fff; border: 1px solid #f0c4be; border-radius: 6px; cursor: pointer;
+}
+.cobros-btn-anular:hover { background: #fdf2f0; }

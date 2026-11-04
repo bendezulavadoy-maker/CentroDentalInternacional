@@ -374,7 +374,7 @@ function configurarEventosEstadisticas() {
             div.className = 'sugerencia-item';
             div.innerHTML = `
                 <div class="sugerencia-principal">${esc(paciente.nombre)} ${esc(paciente.apellido)}</div>
-                <div class="sugerencia-secundaria">${esc(paciente.tipo_documento_abrev || 'DNI')}: ${esc(paciente.dni)}</div>
+                <div class="sugerencia-secundaria">${esc(paciente.tipo_documento_abrev || 'DNI')}: ${esc(paciente.nro_documento)}</div>
             `;
             div.addEventListener('click', () => {
                 seleccionarPaciente(paciente);
@@ -389,7 +389,7 @@ function configurarEventosEstadisticas() {
     // =====================================================
     function seleccionarPaciente(paciente) {
         
-        inputPaciente.value = `${paciente.nombre} ${paciente.apellido} - ${paciente.tipo_documento_abrev || 'DNI'}: ${paciente.dni}`;
+        inputPaciente.value = `${paciente.nombre} ${paciente.apellido} - ${paciente.tipo_documento_abrev || 'DNI'}: ${paciente.nro_documento}`;
         idPacienteSeleccionado.value = paciente.id_paciente;
         sugerenciasPaciente.style.display = 'none';
         
@@ -444,7 +444,7 @@ function configurarEventosEstadisticas() {
             div.className = 'sugerencia-item';
             div.innerHTML = `
                 <div class="sugerencia-principal">Dr(a). ${esc(doctor.nombre)} ${esc(doctor.apellidos)}</div>
-                <div class="sugerencia-secundaria">${esc(doctor.tipo_documento_abrev || 'DNI')}: ${esc(doctor.dni)}</div>
+                <div class="sugerencia-secundaria">${esc(doctor.tipo_documento_abrev || 'DNI')}: ${esc(doctor.nro_documento)}</div>
             `;
             div.addEventListener('click', () => {
                 seleccionarDoctor(doctor);
@@ -988,7 +988,7 @@ function configurarEventosEstadisticas() {
     function llenarFormularioEdicion(cita) {
         
         // -- Paciente --
-        inputPaciente.value = `${cita.paciente_nombre} ${cita.paciente_apellido} - ${cita.paciente_tipo_doc || 'DNI'}: ${cita.paciente_dni}`;
+        inputPaciente.value = `${cita.paciente_nombre} ${cita.paciente_apellido} - ${cita.paciente_tipo_doc || 'DNI'}: ${cita.paciente_nro_documento}`;
         idPacienteSeleccionado.value = cita.id_paciente;
         inputPaciente.classList.add('campo-valido');
         
@@ -1124,7 +1124,7 @@ function configurarEventosEstadisticas() {
                         <h4>Información del Paciente</h4>
                         <div class="datos-detalle">
                             <p><strong>Nombre:</strong> ${esc(cita.paciente_nombre)} ${esc(cita.paciente_apellido)}</p>
-                            <p><strong>${esc(cita.paciente_tipo_doc || 'DNI')}:</strong> ${esc(cita.paciente_dni)}</p>
+                            <p><strong>${esc(cita.paciente_tipo_doc || 'DNI')}:</strong> ${esc(cita.paciente_nro_documento)}</p>
                         </div>
                     </div>
                     
@@ -1267,7 +1267,7 @@ function configurarEventosEstadisticas() {
                 <td>${esc(cita.id_cita)}</td>
                 <td>
                     <strong style="font-size:13px;color:#2c3e50;">${esc(cita.paciente_nombre)} ${esc(cita.paciente_apellido)}</strong><br>
-                    <small style="color:#95a5a6;font-size:11px;">${esc(cita.paciente_tipo_doc || 'DNI')}: ${esc(cita.paciente_dni)}</small>
+                    <small style="color:#95a5a6;font-size:11px;">${esc(cita.paciente_tipo_doc || 'DNI')}: ${esc(cita.paciente_nro_documento)}</small>
                 </td>
                 <td>
                     <span style="font-size:13px;color:#2c3e50;">Dr(a). ${esc(cita.doctor_nombre)} ${esc(cita.doctor_apellidos)}</span>
@@ -1346,11 +1346,11 @@ function configurarEventosEstadisticas() {
             citasFiltradas = citasFiltradas.filter(c => {
                 const pacienteNombre = `${c.paciente_nombre} ${c.paciente_apellido}`.toLowerCase();
                 const doctorNombre = `${c.doctor_nombre} ${c.doctor_apellidos}`.toLowerCase();
-                const dni = c.paciente_dni?.toLowerCase() || '';
+                const nro_documento = c.paciente_nro_documento?.toLowerCase() || '';
                 
                 return pacienteNombre.includes(terminoBusqueda) ||
                        doctorNombre.includes(terminoBusqueda) ||
-                       dni.includes(terminoBusqueda);
+                       nro_documento.includes(terminoBusqueda);
             });
         }
         

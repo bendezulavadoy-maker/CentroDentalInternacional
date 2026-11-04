@@ -113,7 +113,7 @@ function iniciarModuloPersonal() {
 
     // Ajusta longitud máxima, placeholder y texto de ayuda según el tipo elegido
     function aplicarReglasDocumento() {
-        const input = form.querySelector('input[name="dni"]');
+        const input = form.querySelector('input[name="nro_documento"]');
         if (!selectTipoDocumento || !input) return;
         const regla = reglaDocumento(selectTipoDocumento.value);
         const soloNum = Number(regla.solo_numeros) === 1;
@@ -248,7 +248,7 @@ function iniciarModuloPersonal() {
                 const nombreCompleto = `${p.nombre} ${p.apellidos}`.toLowerCase();
                 const codigo = p.codigo_usuario.toLowerCase();
                 const correo = p.correo.toLowerCase();
-                const documento = (p.dni || '').toLowerCase();
+                const documento = (p.nro_documento || '').toLowerCase();
 
                 // Búsqueda por coincidencia parcial en nombre, código, correo o documento
                 return nombreCompleto.includes(terminoBusqueda) ||
@@ -264,7 +264,7 @@ function iniciarModuloPersonal() {
     // =====================================================
     // VALIDACIÓN DE CAMPOS EN TIEMPO REAL
     // =====================================================
-    const inputDni = form.querySelector('input[name="dni"]');
+    const inputDni = form.querySelector('input[name="nro_documento"]');
     const inputNombre = form.querySelector('input[name="nombre"]');
     const inputApellidos = form.querySelector('input[name="apellidos"]');
     const inputCorreo = form.querySelector('input[name="correo"]');
@@ -602,7 +602,7 @@ function iniciarModuloPersonal() {
                         <h4>Información personal</h4>
                         <div class="detalle-fila">
                             <span class="etiqueta">${p.tipo_documento_abrev || 'DNI'}</span>
-                            <span class="valor">${p.dni || '—'}</span>
+                            <span class="valor">${p.nro_documento || '—'}</span>
                         </div>
                         <div class="detalle-fila">
                             <span class="etiqueta">Fecha de nacimiento</span>
@@ -673,7 +673,7 @@ function iniciarModuloPersonal() {
         modoEdicion = true;
         idEdicion = p.id_usuario || idEdicion;
         tipoDocOriginal = String(p.id_tipo_documento || 1);
-        numeroOriginal = p.dni || '';
+        numeroOriginal = p.nro_documento || '';
         codigoOriginal = p.codigo_usuario || '';
         fotoActual = p.foto || fotoActual;
         if (tituloFormulario) tituloFormulario.textContent = 'Editar personal';
@@ -686,7 +686,7 @@ function iniciarModuloPersonal() {
         // Primero el tipo de documento (define longitud y caracteres permitidos), luego el número
         if (selectTipoDocumento)    selectTipoDocumento.value = tipoDocOriginal;
         aplicarReglasDocumento();
-        if (form.dni)               form.dni.value = p.dni || '';
+        if (form.nro_documento)               form.nro_documento.value = p.nro_documento || '';
         if (form.correo)            form.correo.value = p.correo || '';
         if (form.fecha_nacimiento)  form.fecha_nacimiento.value = p.fecha_nacimiento || '';
         if (form.id_rol)            form.id_rol.value = p.id_rol || '';
@@ -748,7 +748,7 @@ function iniciarModuloPersonal() {
 
             // Si el número de documento cambió, preguntar si también se actualiza el código de usuario
             // (el código se arma con los primeros 4 caracteres del número)
-            const numeroActual = (form.dni ? form.dni.value : '').trim().toUpperCase();
+            const numeroActual = (form.nro_documento ? form.nro_documento.value : '').trim().toUpperCase();
             const codigoNuevo = 'DENTINT' + numeroActual.substring(0, 4);
             if (numeroActual && numeroActual !== numeroOriginal && codigoNuevo !== codigoOriginal) {
                 const abrevAnterior = reglaDocumento(tipoDocOriginal).abreviatura;

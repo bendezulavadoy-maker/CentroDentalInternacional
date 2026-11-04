@@ -166,7 +166,7 @@ ob_start();
         </td>
         <td style="width:25%;">
             <span class="etiqueta"><?= e($paciente['tipo_documento_abrev'] ?? 'DNI') ?></span><br>
-            <span class="valor"><?= e($paciente['dni'] ?? null) ?></span>
+            <span class="valor"><?= e($paciente['nro_documento'] ?? null) ?></span>
         </td>
         <td style="width:25%;">
             <span class="etiqueta">Edad</span><br>

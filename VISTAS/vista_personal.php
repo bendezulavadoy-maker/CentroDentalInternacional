@@ -106,7 +106,7 @@
                                 <select name="id_tipo_documento" id="selectTipoDocumento">
                                     <option value="1">DNI</option>
                                 </select>
-                                <input type="text" name="dni" maxlength="8" required placeholder="12345678">
+                                <input type="text" name="nro_documento" maxlength="8" required placeholder="12345678">
                             </div>
                             <small class="ayuda-campo" id="ayudaDocumento">8 dígitos sin puntos</small>
                         </div>

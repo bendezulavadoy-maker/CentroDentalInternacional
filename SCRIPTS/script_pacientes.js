@@ -149,7 +149,7 @@ function iniciarModuloPacientes() {
                     const selApo = document.getElementById('tipoDocApoderado');
                     llenar(selectTipoDocumento);
                     llenar(selApo);
-                    aplicarReglasDocumento(selectTipoDocumento, form.querySelector('input[name="dni"]'), ayudaDocumento);
+                    aplicarReglasDocumento(selectTipoDocumento, form.querySelector('input[name="nro_documento"]'), ayudaDocumento);
                     aplicarReglasDocumento(selApo, document.getElementById('dniApoderado'), null);
                 }).catch(err => console.error('Error al cargar tipos de documento:', err));
 
@@ -266,7 +266,7 @@ function iniciarModuloPacientes() {
                 contenedor.innerHTML = `
                     <div class="info-apoderado">
                         <p><strong>${esc(datosApoderado.nombre)} ${esc(datosApoderado.apellido)}</strong></p>
-                        <p>${esc(textoParentesco(datosApoderado))} — ${esc(abrev)}: ${esc(datosApoderado.dni)}</p>
+                        <p>${esc(textoParentesco(datosApoderado))} — ${esc(abrev)}: ${esc(datosApoderado.nro_documento)}</p>
                         <p>Tel: ${esc(datosApoderado.telefono)}</p>
                         <button type="button" class="btn-editar-apoderado" id="btnEditarApoderado"><i class="ti ti-edit"></i> Editar</button>${btnQuitar}
                     </div>
@@ -341,7 +341,7 @@ function iniciarModuloPacientes() {
                 document.getElementById('apellidoApoderado').value = datosExistentes.apellido || '';
                 if (tipoDocApo) tipoDocApo.value = datosExistentes.id_tipo_documento || 1;
                 aplicarReglasDocumento(tipoDocApo, dniApo, null);
-                dniApo.value = datosExistentes.dni || '';
+                dniApo.value = datosExistentes.nro_documento || '';
                 document.getElementById('tipoFamiliar').value = datosExistentes.id_tipo_familiar || '';
                 document.getElementById('telefonoApoderado').value = datosExistentes.telefono || '';
             } else {
@@ -371,18 +371,18 @@ function iniciarModuloPacientes() {
                 nombre:            formApo.nombre_apoderado.value.trim().toUpperCase(),
                 apellido:          formApo.apellido_apoderado.value.trim().toUpperCase(),
                 id_tipo_documento: formApo.tipo_doc_apoderado.value,
-                dni:               formApo.dni_apoderado.value.trim().toUpperCase(),
+                nro_documento:               formApo.nro_documento_apoderado.value.trim().toUpperCase(),
                 id_tipo_familiar:  formApo.tipo_familiar.value,
                 telefono:          formApo.telefono_apoderado.value.trim()
             };
 
-            if (!datosApoderado.nombre || !datosApoderado.apellido || !datosApoderado.dni ||
+            if (!datosApoderado.nombre || !datosApoderado.apellido || !datosApoderado.nro_documento ||
                 !datosApoderado.id_tipo_familiar || !datosApoderado.telefono) {
                 mostrarMensajeSistema('Todos los campos del apoderado son obligatorios', 'error');
                 return;
             }
             const reglaApo = reglaDocumento(datosApoderado.id_tipo_documento);
-            const msgDoc = evaluarDocumento(datosApoderado.dni, reglaApo);
+            const msgDoc = evaluarDocumento(datosApoderado.nro_documento, reglaApo);
             if (msgDoc) { mostrarMensajeSistema('Apoderado: ' + msgDoc, 'error'); return; }
             if (!REGEX_TELEFONO.test(datosApoderado.telefono)) { mostrarMensajeSistema('El teléfono del apoderado debe tener 9 dígitos', 'error'); return; }
             if (!REGEX_NOMBRES.test(datosApoderado.nombre)) { mostrarMensajeSistema('El nombre del apoderado solo puede contener letras', 'error'); return; }
@@ -425,7 +425,7 @@ function iniciarModuloPacientes() {
                         <td>${esc(p.id_paciente)}</td>
                         <td>${esc(p.nombre)}</td>
                         <td>${esc(p.apellido)}</td>
-                        <td>${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.dni)}</td>
+                        <td>${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.nro_documento)}</td>
                         <td>${esc(p.telefono)}</td>
                         <td>
                             <button class="btn-historia" data-id="${esc(p.id_paciente)}" title="Gestionar Historia Clínica"><i class="ti ti-clipboard-list"></i> Historia</button>
@@ -461,7 +461,7 @@ function iniciarModuloPacientes() {
                 const filtrados = pacientesCompleto.filter(p => {
                     const nombreCompleto = `${p.nombre} ${p.apellido}`.toLowerCase();
                     return nombreCompleto.includes(terminoBusqueda) ||
-                           p.dni.toLowerCase().includes(terminoBusqueda) ||
+                           p.nro_documento.toLowerCase().includes(terminoBusqueda) ||
                            (p.telefono && p.telefono.toLowerCase().includes(terminoBusqueda)) ||
                            (p.correo && p.correo.toLowerCase().includes(terminoBusqueda));
                 });
@@ -472,7 +472,7 @@ function iniciarModuloPacientes() {
         // =====================================================
         // Validaciones
         // =====================================================
-        const inputDni = form.querySelector('input[name="dni"]');
+        const inputDni = form.querySelector('input[name="nro_documento"]');
         const inputNombre = form.querySelector('input[name="nombre"]');
         const inputApellidos = form.querySelector('input[name="apellidos"]');
         const inputCorreo = form.querySelector('input[name="correo"]');
@@ -693,7 +693,7 @@ function iniciarModuloPacientes() {
             const apo = p.apoderado ? `
                 <div class="info-apoderado">
                     <p><strong>${esc(p.apoderado.nombre)} ${esc(p.apoderado.apellido)}</strong></p>
-                    <p>${esc(textoParentesco(p.apoderado))} — ${esc(p.apoderado.tipo_documento_abrev || 'DNI')}: ${esc(p.apoderado.dni)}</p>
+                    <p>${esc(textoParentesco(p.apoderado))} — ${esc(p.apoderado.tipo_documento_abrev || 'DNI')}: ${esc(p.apoderado.nro_documento)}</p>
                     <p>Tel: ${esc(p.apoderado.telefono)}</p>
                 </div>` : '<span class="sin-apoderado">Sin apoderado registrado</span>';
 
@@ -703,7 +703,7 @@ function iniciarModuloPacientes() {
                         ${avatarHtml}
                         <div class="detalle-header-info">
                             <p class="nombre">${esc(p.nombre)} ${esc(p.apellido)}</p>
-                            <p class="meta">${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.dni)} · ${esc(p.nombre_sexo || '')}</p>
+                            <p class="meta">${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.nro_documento)} · ${esc(p.nombre_sexo || '')}</p>
                         </div>
                     </div>
 
@@ -895,7 +895,7 @@ function iniciarModuloPacientes() {
             // Primero el tipo de documento (define longitud y caracteres permitidos), luego el número
             if (selectTipoDocumento) selectTipoDocumento.value = p.id_tipo_documento || 1;
             aplicarReglasDocumento(selectTipoDocumento, inputDni, ayudaDocumento);
-            form.dni.value               = p.dni || '';
+            form.nro_documento.value               = p.nro_documento || '';
             form.fecha_nacimiento.value  = p.fecha_nacimiento || '';
             form.telefono.value          = p.telefono || '';
             form.correo.value            = p.correo || '';
@@ -1147,6 +1147,18 @@ function iniciarModuloPacientes() {
 
         // Exponer funciones usadas en onclick="" inline del HTML generado dinámicamente
         window.editarPaciente = editarPaciente;
+
+        // Importacion masiva desde Excel: el boton solo existe si el usuario tiene el permiso
+        window.recargarListaPacientes = listarPacientes;
+        if (document.getElementById('btnImportarPacientes')) {
+            const rutaImp = '../SCRIPTS/script_importacion_pacientes.js';
+            const previo = document.querySelector(`script[src="${rutaImp}"]`);
+            if (previo) previo.remove();
+            const scriptImp = document.createElement('script');
+            scriptImp.src = rutaImp;
+            scriptImp.onload = () => { if (typeof iniciarImportacionPacientes === 'function') iniciarImportacionPacientes(); };
+            document.body.appendChild(scriptImp);
+        }
 
     } catch (errorInit) {
         console.error('[pacientes] ERROR FATAL durante inicialización:', errorInit);

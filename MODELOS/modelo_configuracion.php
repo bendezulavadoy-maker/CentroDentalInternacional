@@ -29,6 +29,7 @@ class ModeloConfiguracion {
         'planes'         => ['planes_tratamiento', 'id_plan'],
         'aparatologia'   => ['aparatologia',       'id_aparatologia'],
         'tipos_atencion' => ['tipos_atencion',     'id_tipo_atencion'],
+        'metodos_pago'   => ['metodo_pago',        'id_metodo_pago'],
     ];
 
     // Normaliza y valida: obligatorio, formato y único dentro de su tabla
@@ -457,13 +458,68 @@ class ModeloConfiguracion {
     }
 
     // ══════════════════════════════════════════════════════════════
+    // METODOS DE PAGO (catalogo editable; el de sistema "Saldo a favor" no se toca)
+    // ══════════════════════════════════════════════════════════════
+
+    public function listarMetodosPago() {
+        try {
+            return $this->conexion->query("SELECT * FROM metodo_pago ORDER BY es_sistema ASC, codigo ASC")->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) { error_log("listarMetodosPago: " . $e->getMessage()); return []; }
+    }
+
+    private function nombreMetodoValido($nombre) {
+        if ($nombre === '') return 'El nombre es obligatorio';
+        if (mb_strlen($nombre) > 60) return 'El nombre es demasiado largo (máx. 60)';
+        if (strpbrk($nombre, '<>') !== false) return 'El nombre no puede contener < ni >';
+        return null;
+    }
+
+    public function crearMetodoPago($nombre, $requiereRef, $codigo) {
+        try {
+            if ($m = $this->nombreMetodoValido($nombre)) return ['success' => false, 'mensaje' => $m];
+            $v = $this->validarCodigo('metodos_pago', $codigo);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+            $dup = $this->conexion->prepare("SELECT COUNT(*) FROM metodo_pago WHERE nombre = :n");
+            $dup->execute([':n' => $nombre]);
+            if ($dup->fetchColumn() > 0) return ['success' => false, 'mensaje' => 'Ya existe un método con ese nombre'];
+            $this->conexion->prepare("INSERT INTO metodo_pago (codigo, nombre, requiere_referencia) VALUES (:c, :n, :r)")
+                 ->execute([':c' => $v['codigo'], ':n' => $nombre, ':r' => $requiereRef ? 1 : 0]);
+            return ['success' => true, 'id' => (int)$this->conexion->lastInsertId()];
+        } catch (PDOException $e) { error_log("crearMetodoPago: " . $e->getMessage()); return ['success' => false, 'mensaje' => 'Error al crear']; }
+    }
+
+    public function editarMetodoPago($id, $nombre, $requiereRef, $activo, $codigo) {
+        try {
+            $s = $this->conexion->prepare("SELECT * FROM metodo_pago WHERE id_metodo_pago = :id");
+            $s->execute([':id' => $id]);
+            $actual = $s->fetch(PDO::FETCH_ASSOC);
+            if (!$actual) return ['success' => false, 'mensaje' => 'El método no existe'];
+            if ((int)$actual['es_sistema'] === 1) return ['success' => false, 'mensaje' => 'Este método lo usa el sistema y no se puede modificar'];
+            if ($m = $this->nombreMetodoValido($nombre)) return ['success' => false, 'mensaje' => $m];
+            $v = $this->validarCodigo('metodos_pago', $codigo, $id);
+            if (!$v['valido']) return ['success' => false, 'mensaje' => $v['mensaje']];
+            $dup = $this->conexion->prepare("SELECT COUNT(*) FROM metodo_pago WHERE nombre = :n AND id_metodo_pago <> :id");
+            $dup->execute([':n' => $nombre, ':id' => $id]);
+            if ($dup->fetchColumn() > 0) return ['success' => false, 'mensaje' => 'Ya existe un método con ese nombre'];
+            if (!$activo) {                       // siempre debe quedar al menos un metodo activo, o nadie podria cobrar
+                $otros = $this->conexion->prepare("SELECT COUNT(*) FROM metodo_pago WHERE es_sistema = 0 AND activo = 1 AND id_metodo_pago <> :id");
+                $otros->execute([':id' => $id]);
+                if ($otros->fetchColumn() == 0) return ['success' => false, 'mensaje' => 'Debe quedar al menos un método de pago activo'];
+            }
+            $this->conexion->prepare("UPDATE metodo_pago SET codigo = :c, nombre = :n, requiere_referencia = :r, activo = :a WHERE id_metodo_pago = :id")
+                 ->execute([':c' => $v['codigo'], ':n' => $nombre, ':r' => $requiereRef ? 1 : 0, ':a' => $activo ? 1 : 0, ':id' => $id]);
+            return ['success' => true];
+        } catch (PDOException $e) { error_log("editarMetodoPago: " . $e->getMessage()); return ['success' => false, 'mensaje' => 'Error al editar']; }
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // HORARIOS DE DOCTORES
     // ══════════════════════════════════════════════════════════════
 
     public function listarDoctores() {
         try {
             $s = $this->conexion->query(
-                "SELECT u.id_usuario, u.dni, CONCAT(u.nombre,' ',u.apellidos) AS nombre_completo
+                "SELECT u.id_usuario, u.nro_documento, CONCAT(u.nombre,' ',u.apellidos) AS nombre_completo
                  FROM usuarios u
                  INNER JOIN roles r ON u.id_rol = r.id_rol
                  WHERE r.nombre_rol = 'Odontólogo' AND u.id_rol IS NOT NULL

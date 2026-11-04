@@ -86,7 +86,7 @@ function validarCamposObligatorios($datos) {
     $camposRequeridos = [
         'nombre'            => 'Nombre',
         'apellidos'         => 'Apellidos',
-        'dni'               => 'Número de documento',
+        'nro_documento'               => 'Número de documento',
         'telefono'          => 'Teléfono',
         'direccion'         => 'Dirección',
     ];
@@ -140,13 +140,13 @@ function responsableDelFormulario($modelo, &$incluir) {
 function prepararApoderado($modelo, $datos) {
     $idTipo = intval($datos['id_tipo_documento'] ?? 1);
     $tipo   = $modelo->obtenerTipoDocumento($idTipo);
-    $numero = strtoupper(trim($datos['dni'] ?? ''));
+    $numero = strtoupper(trim($datos['nro_documento'] ?? ''));
 
     $v = validarDocumento($tipo, $numero);
     if (!$v['valido']) return ['valido' => false, 'mensaje' => 'Apoderado: ' . $v['mensaje']];
 
     $datos['id_tipo_documento'] = $idTipo;
-    $datos['dni']               = $numero;
+    $datos['nro_documento']               = $numero;
     $datos['nombre']            = mb_strtoupper(trim($datos['nombre'] ?? ''), 'UTF-8');
     $datos['apellido']          = mb_strtoupper(trim($datos['apellido'] ?? ''), 'UTF-8');
     return ['valido' => true, 'datos' => $datos];
@@ -158,7 +158,7 @@ function prepararApoderado($modelo, $datos) {
  * Devuelve el id del apoderado, o null si no se pudo guardar.
  */
 function guardarApoderado($modelo, $datos, $idActual = null) {
-    $existente = $modelo->buscarApoderadoPorDocumento($datos['id_tipo_documento'], $datos['dni']);
+    $existente = $modelo->buscarApoderadoPorDocumento($datos['id_tipo_documento'], $datos['nro_documento']);
     if ($existente) {
         $modelo->editarApoderado($existente['id_apoderado'], $datos);
         return $existente['id_apoderado'];
@@ -189,13 +189,13 @@ switch ($accion) {
     case 'registrar':
         $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
         $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
-        $dni       = strtoupper(trim($_POST['dni'] ?? ''));
+        $nro_documento       = strtoupper(trim($_POST['nro_documento'] ?? ''));
 
-        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        $validacionDoc = validarDocumento($tipoDoc, $nro_documento);
         if (!$validacionDoc['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]); exit;
         }
-        if ($modelo->existeDocumento($idTipoDoc, $dni)) {
+        if ($modelo->existeDocumento($idTipoDoc, $nro_documento)) {
             echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado en el sistema"]); exit;
         }
         $correo = trim($_POST['correo'] ?? '');
@@ -279,7 +279,7 @@ switch ($accion) {
             'nombre'              => $nombre,
             'apellido'            => $apellidos,
             'id_tipo_documento'   => $idTipoDoc,
-            'dni'                 => $dni,
+            'nro_documento'                 => $nro_documento,
             'fecha_nacimiento'    => $fecha_nacimiento,
             'telefono'            => $telefono,
             'direccion'           => $direccion,
@@ -314,13 +314,13 @@ switch ($accion) {
 
         $idTipoDoc = intval($_POST['id_tipo_documento'] ?? 1);
         $tipoDoc   = $modelo->obtenerTipoDocumento($idTipoDoc);
-        $dni       = strtoupper(trim($_POST['dni'] ?? ''));
+        $nro_documento       = strtoupper(trim($_POST['nro_documento'] ?? ''));
 
-        $validacionDoc = validarDocumento($tipoDoc, $dni);
+        $validacionDoc = validarDocumento($tipoDoc, $nro_documento);
         if (!$validacionDoc['valido']) {
             echo json_encode(['success' => false, 'mensaje' => $validacionDoc['mensaje']]); exit;
         }
-        if ($modelo->existeDocumentoExceptoPaciente($idTipoDoc, $dni, $id)) {
+        if ($modelo->existeDocumentoExceptoPaciente($idTipoDoc, $nro_documento, $id)) {
             echo json_encode(['success' => false, 'mensaje' => "El {$tipoDoc['abreviatura']} ya está registrado por otro paciente"]); exit;
         }
 
@@ -414,7 +414,7 @@ switch ($accion) {
             'nombre'               => $nombre,
             'apellido'             => $apellidos,
             'id_tipo_documento'    => $idTipoDoc,
-            'dni'                  => $dni,
+            'nro_documento'                  => $nro_documento,
             'fecha_nacimiento'     => $fecha_nacimiento,
             'telefono'             => $telefono,
             'direccion'            => $direccion,

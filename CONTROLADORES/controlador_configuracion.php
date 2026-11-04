@@ -45,7 +45,8 @@ $accion = $jsonInput['accion'] ?? $_POST['accion'] ?? $_GET['accion'] ?? '';
 // Roles, permisos y parametros del sistema: SOLO el Administrador.
 // Antes cualquier Asistente podia crear/eliminar roles y darse acceso a cualquier modulo.
 $accionesSoloAdministrador = ['crear_rol', 'editar_rol', 'eliminar_rol', 'listar_permisos', 'guardar_permisos',
-                              'listar_permisos_accion', 'guardar_permisos_accion', 'listar_parametros', 'guardar_parametro'];
+                              'listar_permisos_accion', 'guardar_permisos_accion', 'listar_parametros', 'guardar_parametro',
+                              'listar_metodos_pago', 'crear_metodo_pago', 'editar_metodo_pago'];
 if (in_array($accion, $accionesSoloAdministrador, true) && !Permisos::puedeGestionarPermisos()) {
     http_response_code(403);
     echo json_encode(['success' => false, 'mensaje' => 'Solo el administrador puede realizar esta acción']);
@@ -336,6 +337,25 @@ switch ($accion) {
     case 'listar_doctores':
         echo json_encode($modelo->listarDoctores());
         break;
+    // ── METODOS DE PAGO (solo Administrador) ───────────────────────
+    case 'listar_metodos_pago':
+        echo json_encode($modelo->listarMetodosPago());
+        break;
+
+    case 'crear_metodo_pago':
+        $r = $modelo->crearMetodoPago(trim($_POST['nombre'] ?? ''), intval($_POST['requiere_referencia'] ?? 0), $_POST['codigo'] ?? '');
+        if (!empty($r['success'])) registrarBitacora('metodo_pago.crear', 'metodo_pago', $r['id'], null, ['nombre' => trim($_POST['nombre'] ?? '')]);
+        echo json_encode($r);
+        break;
+
+    case 'editar_metodo_pago':
+        $id = intval($_POST['id_metodo_pago'] ?? 0);
+        $r = $id > 0 ? $modelo->editarMetodoPago($id, trim($_POST['nombre'] ?? ''), intval($_POST['requiere_referencia'] ?? 0), intval($_POST['activo'] ?? 1), $_POST['codigo'] ?? '')
+                     : ['success' => false, 'mensaje' => 'Datos inválidos'];
+        if (!empty($r['success'])) registrarBitacora('metodo_pago.editar', 'metodo_pago', $id, null, ['nombre' => trim($_POST['nombre'] ?? ''), 'activo' => intval($_POST['activo'] ?? 1)]);
+        echo json_encode($r);
+        break;
+
     case 'siguiente_codigo':
         echo json_encode(['codigo' => $modelo->siguienteCodigo($_GET['catalogo'] ?? '')]);
         break;

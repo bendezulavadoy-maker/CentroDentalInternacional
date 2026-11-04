@@ -57,7 +57,7 @@ class ModeloPacientes {
     public function existeDocumento($idTipo, $numero) {
         try {
             $sql = "SELECT COUNT(*) as total FROM pacientes
-                    WHERE id_tipo_documento = :tipo AND dni = :numero";
+                    WHERE id_tipo_documento = :tipo AND nro_documento = :numero";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([':tipo' => $idTipo, ':numero' => $numero]);
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -72,7 +72,7 @@ class ModeloPacientes {
     public function existeDocumentoExceptoPaciente($idTipo, $numero, $idPaciente) {
         try {
             $sql = "SELECT COUNT(*) as total FROM pacientes
-                    WHERE id_tipo_documento = :tipo AND dni = :numero
+                    WHERE id_tipo_documento = :tipo AND nro_documento = :numero
                       AND id_paciente != :id_paciente";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([
@@ -156,10 +156,10 @@ class ModeloPacientes {
             $fechaRegistro = date('Y-m-d H:i:s');
 
             $sql = "INSERT INTO pacientes
-                    (nombre, apellido, id_tipo_documento, dni, fecha_nacimiento, telefono, direccion, correo,
+                    (nombre, apellido, id_tipo_documento, nro_documento, fecha_nacimiento, telefono, direccion, correo,
                      fecha_registro, foto, id_estado_civil, id_sexo, id_grado_instruccion,
                      ocupacion, observaciones, id_apoderado, id_doctor_responsable)
-                    VALUES (:nombre, :apellido, :id_tipo_documento, :dni, :fecha_nacimiento, :telefono, :direccion,
+                    VALUES (:nombre, :apellido, :id_tipo_documento, :nro_documento, :fecha_nacimiento, :telefono, :direccion,
                             :correo, :fecha_registro, :foto, :id_estado_civil, :id_sexo,
                             :id_grado_instruccion, :ocupacion, :observaciones, :id_apoderado, :id_doctor_responsable)";
 
@@ -169,7 +169,7 @@ class ModeloPacientes {
                 ':nombre' => $datos['nombre'],
                 ':apellido' => $datos['apellido'],
                 ':id_tipo_documento' => $datos['id_tipo_documento'],
-                ':dni' => $datos['dni'],
+                ':nro_documento' => $datos['nro_documento'],
                 ':fecha_nacimiento' => $datos['fecha_nacimiento'] ?? null,
                 ':telefono' => $datos['telefono'],
                 ':direccion' => $datos['direccion'],
@@ -280,7 +280,7 @@ class ModeloPacientes {
                     SET nombre = :nombre,
                         apellido = :apellido,
                         id_tipo_documento = :id_tipo_documento,
-                        dni = :dni,
+                        nro_documento = :nro_documento,
                         fecha_nacimiento = :fecha_nacimiento,
                         telefono = :telefono,
                         direccion = :direccion,
@@ -301,7 +301,7 @@ class ModeloPacientes {
                 ':nombre' => $datos['nombre'],
                 ':apellido' => $datos['apellido'],
                 ':id_tipo_documento' => $datos['id_tipo_documento'],
-                ':dni' => $datos['dni'],
+                ':nro_documento' => $datos['nro_documento'],
                 ':fecha_nacimiento' => $datos['fecha_nacimiento'] ?? null,
                 ':telefono' => $datos['telefono'],
                 ':direccion' => $datos['direccion'],
@@ -381,15 +381,15 @@ class ModeloPacientes {
     // =====================================================
     public function registrarApoderado($datos) {
         try {
-            $sql = "INSERT INTO apoderados (nombre, apellido, id_tipo_documento, dni, id_tipo_familiar, telefono)
-                    VALUES (:nombre, :apellido, :id_tipo_documento, :dni, :id_tipo_familiar, :telefono)";
+            $sql = "INSERT INTO apoderados (nombre, apellido, id_tipo_documento, nro_documento, id_tipo_familiar, telefono)
+                    VALUES (:nombre, :apellido, :id_tipo_documento, :nro_documento, :id_tipo_familiar, :telefono)";
 
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([
                 ':nombre' => $datos['nombre'],
                 ':apellido' => $datos['apellido'],
                 ':id_tipo_documento' => $datos['id_tipo_documento'] ?? 1,
-                ':dni' => $datos['dni'],
+                ':nro_documento' => $datos['nro_documento'],
                 ':id_tipo_familiar' => $datos['id_tipo_familiar'],
                 ':telefono' => $datos['telefono']
             ]);
@@ -407,7 +407,7 @@ class ModeloPacientes {
     public function buscarApoderadoPorDocumento($idTipo, $numero) {
         try {
             $stmt = $this->conexion->prepare(
-                "SELECT id_apoderado FROM apoderados WHERE id_tipo_documento = :tipo AND dni = :numero LIMIT 1"
+                "SELECT id_apoderado FROM apoderados WHERE id_tipo_documento = :tipo AND nro_documento = :numero LIMIT 1"
             );
             $stmt->execute([':tipo' => $idTipo, ':numero' => $numero]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -446,7 +446,7 @@ class ModeloPacientes {
                     SET nombre = :nombre,
                         apellido = :apellido,
                         id_tipo_documento = :id_tipo_documento,
-                        dni = :dni,
+                        nro_documento = :nro_documento,
                         id_tipo_familiar = :id_tipo_familiar,
                         telefono = :telefono
                     WHERE id_apoderado = :id";
@@ -456,7 +456,7 @@ class ModeloPacientes {
                 ':nombre' => $datos['nombre'],
                 ':apellido' => $datos['apellido'],
                 ':id_tipo_documento' => $datos['id_tipo_documento'] ?? 1,
-                ':dni' => $datos['dni'],
+                ':nro_documento' => $datos['nro_documento'],
                 ':id_tipo_familiar' => $datos['id_tipo_familiar'],
                 ':telefono' => $datos['telefono'],
                 ':id' => $id
@@ -476,7 +476,7 @@ class ModeloPacientes {
     public function restablecerAccesoPortal($idPaciente) {
         try {
             $sel = $this->conexion->prepare(
-                "SELECT id_tipo_documento, dni, contrasena_portal FROM pacientes WHERE id_paciente = :id"
+                "SELECT id_tipo_documento, nro_documento, contrasena_portal FROM pacientes WHERE id_paciente = :id"
             );
             $sel->execute([':id' => $idPaciente]);
             $fila = $sel->fetch(PDO::FETCH_ASSOC);
@@ -489,7 +489,7 @@ class ModeloPacientes {
 
             // Si la tabla de intentos del portal aun no existe, no es un error
             try {
-                $clave = 'doc|' . $fila['id_tipo_documento'] . '|' . $fila['dni'];
+                $clave = 'doc|' . $fila['id_tipo_documento'] . '|' . $fila['nro_documento'];
                 $this->conexion->prepare("DELETE FROM portal_intentos WHERE clave = :c")->execute([':c' => $clave]);
             } catch (PDOException $e) {
                 error_log("restablecerAccesoPortal (intentos): " . $e->getMessage());
@@ -521,7 +521,7 @@ class ModeloPacientes {
                     LEFT JOIN grado_instruccion gi ON p.id_grado_instruccion = gi.id_grado_instruccion
                     WHERE p.nombre LIKE :termino
                        OR p.apellido LIKE :termino
-                       OR p.dni LIKE :termino
+                       OR p.nro_documento LIKE :termino
                        OR p.correo LIKE :termino
                        OR p.telefono LIKE :termino
                     ORDER BY p.id_paciente DESC";

@@ -167,7 +167,7 @@ function iniciarModuloMiAgenda() {
             const matchEstado   = !estado   || c.estado.toLowerCase() === estado;
             const matchPaciente = !paciente ||
                 c.nombre_paciente.toLowerCase().includes(paciente) ||
-                (c.dni_paciente && c.dni_paciente.includes(paciente));
+                (c.nro_documento_paciente && c.nro_documento_paciente.includes(paciente));
             return matchEstado && matchPaciente;
         });
 
@@ -384,7 +384,7 @@ function iniciarModuloMiAgenda() {
 
                 contenidoDetalle.innerHTML = `
                     <div class="detalle-paciente"> <img src="${foto}" alt="Paciente"
-                             onerror="this.src='../IMAGENES/perfiles_pacientes/default.png'"> <div> <p class="detalle-nombre">${c.nombre_paciente}</p> <p class="detalle-sub">DNI: ${c.dni_paciente}${edad ? ' · ' + edad : ''}</p> </div> </div> <div class="detalle-seccion"> <p><strong>Fecha:</strong> ${formatearFechaLegible(c.fecha)}</p> <p><strong>Hora:</strong> ${c.hora.substring(0,5)}</p> <p><strong>Tipo de atención:</strong> ${c.tipo_atencion || c.nombre_servicio || 'No especificado'}</p> <p><strong>Sede:</strong> ${c.nombre_sede}</p> <p><strong>Teléfono:</strong> ${c.telefono_paciente}</p> ${c.motivo ? `<p><strong>Motivo:</strong> ${c.motivo}</p>` : ''}
+                             onerror="this.src='../IMAGENES/perfiles_pacientes/default.png'"> <div> <p class="detalle-nombre">${c.nombre_paciente}</p> <p class="detalle-sub">${c.tipo_documento_abrev || 'DNI'}: ${c.nro_documento_paciente}${edad ? ' · ' + edad : ''}</p> </div> </div> <div class="detalle-seccion"> <p><strong>Fecha:</strong> ${formatearFechaLegible(c.fecha)}</p> <p><strong>Hora:</strong> ${c.hora.substring(0,5)}</p> <p><strong>Tipo de atención:</strong> ${c.tipo_atencion || c.nombre_servicio || 'No especificado'}</p> <p><strong>Sede:</strong> ${c.nombre_sede}</p> <p><strong>Teléfono:</strong> ${c.telefono_paciente}</p> ${c.motivo ? `<p><strong>Motivo:</strong> ${c.motivo}</p>` : ''}
                         ${c.observaciones ? `<p><strong>Observaciones:</strong> ${c.observaciones}</p>` : ''}
                     </div> <div class="detalle-estado" style="margin-bottom:16px;"> <span class="badge-estado-cita"
                               style="color:${color.texto}; border-color:${color.borde};"> ${c.estado}

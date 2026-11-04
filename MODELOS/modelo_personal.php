@@ -46,7 +46,7 @@ class ModeloPersonal {
     public function existeDocumento($idTipo, $numero) {
         try {
             $sql = "SELECT COUNT(*) as total FROM usuarios
-                    WHERE id_tipo_documento = :tipo AND dni = :numero";
+                    WHERE id_tipo_documento = :tipo AND nro_documento = :numero";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([':tipo' => $idTipo, ':numero' => $numero]);
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -61,7 +61,7 @@ class ModeloPersonal {
     public function existeDocumentoExceptoUsuario($idTipo, $numero, $idUsuario) {
         try {
             $sql = "SELECT COUNT(*) as total FROM usuarios
-                    WHERE id_tipo_documento = :tipo AND dni = :numero
+                    WHERE id_tipo_documento = :tipo AND nro_documento = :numero
                       AND id_usuario != :id_usuario";
             $stmt = $this->conexion->prepare($sql);
             $stmt->execute([
@@ -138,24 +138,24 @@ class ModeloPersonal {
     // =====================================================
     // Registrar nuevo personal
     // =====================================================
-    public function registrarPersonal($nombre, $apellidos, $id_tipo_documento, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento = null, $foto = null) {
+    public function registrarPersonal($nombre, $apellidos, $id_tipo_documento, $nro_documento, $correo, $id_rol, $id_estado, $fecha_nacimiento = null, $foto = null) {
         try {
-            $codigoFinal = $this->generarCodigoUsuario($dni);
+            $codigoFinal = $this->generarCodigoUsuario($nro_documento);
 
             $fecha = date('Y-m-d H:i:s');
             $temporal = '12345';
             $hash = password_hash($temporal, PASSWORD_BCRYPT);
 
             $sql = "INSERT INTO usuarios
-                    (nombre, apellidos, id_tipo_documento, dni, correo, contrasena, fecha_creacion, codigo_usuario, id_rol, id_estado, fecha_nacimiento, foto)
-                    VALUES (:nombre, :apellidos, :id_tipo_documento, :dni, :correo, :contrasena, :fecha_creacion, :codigo_usuario, :id_rol, :id_estado, :fecha_nacimiento, :foto)";
+                    (nombre, apellidos, id_tipo_documento, nro_documento, correo, contrasena, fecha_creacion, codigo_usuario, id_rol, id_estado, fecha_nacimiento, foto)
+                    VALUES (:nombre, :apellidos, :id_tipo_documento, :nro_documento, :correo, :contrasena, :fecha_creacion, :codigo_usuario, :id_rol, :id_estado, :fecha_nacimiento, :foto)";
             $stmt = $this->conexion->prepare($sql);
 
             $stmt->execute([
                 ':nombre' => $nombre,
                 ':apellidos' => $apellidos,
                 ':id_tipo_documento' => $id_tipo_documento,
-                ':dni' => $dni,
+                ':nro_documento' => $nro_documento,
                 ':correo' => $correo,
                 ':contrasena' => $hash,
                 ':fecha_creacion' => $fecha,
@@ -221,15 +221,15 @@ class ModeloPersonal {
     // =====================================================
     // Editar personal
     // =====================================================
-    public function editarPersonal($id, $nombre, $apellidos, $id_tipo_documento, $dni, $correo, $id_rol, $id_estado, $fecha_nacimiento, $foto, $actualizarCodigo = false) {
+    public function editarPersonal($id, $nombre, $apellidos, $id_tipo_documento, $nro_documento, $correo, $id_rol, $id_estado, $fecha_nacimiento, $foto, $actualizarCodigo = false) {
         try {
-            $codigoNuevo = $actualizarCodigo ? $this->generarCodigoUsuario($dni, $id) : null;
+            $codigoNuevo = $actualizarCodigo ? $this->generarCodigoUsuario($nro_documento, $id) : null;
 
             $sql = "UPDATE usuarios
                     SET nombre = :nombre,
                         apellidos = :apellidos,
                         id_tipo_documento = :id_tipo_documento,
-                        dni = :dni,
+                        nro_documento = :nro_documento,
                         correo = :correo,
                         id_rol = :id_rol,
                         id_estado = :id_estado,
@@ -243,7 +243,7 @@ class ModeloPersonal {
                 ':nombre' => $nombre,
                 ':apellidos' => $apellidos,
                 ':id_tipo_documento' => $id_tipo_documento,
-                ':dni' => $dni,
+                ':nro_documento' => $nro_documento,
                 ':correo' => $correo,
                 ':id_rol' => $id_rol,
                 ':id_estado' => $id_estado,
@@ -288,7 +288,7 @@ class ModeloPersonal {
                     LEFT JOIN tipo_documento td ON u.id_tipo_documento = td.id_tipo_documento
                     WHERE u.nombre LIKE :termino
                        OR u.apellidos LIKE :termino
-                       OR u.dni LIKE :termino
+                       OR u.nro_documento LIKE :termino
                        OR u.codigo_usuario LIKE :termino
                        OR u.correo LIKE :termino
                     ORDER BY u.id_usuario DESC";

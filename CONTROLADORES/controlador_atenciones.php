@@ -1,5 +1,8 @@
 <?php
+require_once '../CONFIG/permisos.php';          // sesion obligatoria y motor de permisos
+require_once '../CONFIG/bitacora.php';
 require_once '../MODELOS/modelo_atenciones.php';
+require_once '../MODELOS/modelo_cobros.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 header('Content-Type: application/json; charset=utf-8');
@@ -48,20 +51,29 @@ switch ($accion) {
         }
         echo json_encode($modelo->guardarInforme($datos, $id_usuario));
         break;
+    case 'metodos_pago':                                  // los metodos que se pueden elegir al cobrar
+        Permisos::requerir('cobros.registrar');
+        echo json_encode(['success' => true, 'metodos' => (new ModeloCobros())->metodosPago(true)]);
+        break;
+
     case 'registrar_pago':
-        if ($id_rol !== 1 && $id_rol !== 3) {
-            echo json_encode(['success' => false, 'mensaje' => 'Sin permiso para registrar pagos']);
-            break;
-        }
+        // Mismas reglas que Cobros: permiso, metodo de pago, validacion contra la deuda y excedente como saldo a favor
+        Permisos::requerir('cobros.registrar');
         $id_pac  = intval($_POST['id_paciente'] ?? 0);
-        $id_cita = intval($_POST['id_cita'] ?? 0) ?: null;
-        $monto   = floatval($_POST['monto'] ?? 0);
-        $obs     = trim($_POST['observacion'] ?? '');
-        if ($monto <= 0) {
-            echo json_encode(['success' => false, 'mensaje' => 'El monto debe ser mayor a 0']);
+        $id_cita = intval($_POST['id_cita'] ?? 0);
+        if ($id_pac <= 0 || $id_cita <= 0) {
+            echo json_encode(['success' => false, 'mensaje' => 'Datos incompletos']);
             break;
         }
-        echo json_encode($modelo->registrarPago($id_pac, $id_cita, $monto, $obs, $id_usuario));
+        $r = (new ModeloCobros())->registrarPagoCita($id_pac, $id_cita, $_POST['monto'] ?? 0, trim($_POST['observacion'] ?? ''), $id_usuario, [
+            'id_metodo_pago'  => $_POST['id_metodo_pago']  ?? 0,
+            'nro_comprobante' => $_POST['nro_comprobante'] ?? '',
+        ]);
+        if (!empty($r['success'])) {
+            registrarBitacora('cobro.registrar', 'operacion', $r['id_operacion'], $id_pac,
+                ['aplicado' => $r['aplicado'], 'anticipo' => $r['anticipo'], 'metodo' => $r['metodo'], 'origen' => $r['origen'], 'desde' => 'atenciones']);
+        }
+        echo json_encode($r);
         break;
 
     case 'listar_servicios':

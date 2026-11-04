@@ -13,13 +13,13 @@ class ModeloHistoriaClinica {
     // =====================================================
     public function buscarPacientes($termino) {
         try {
-            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.dni, p.telefono, p.correo,
+            $sql = "SELECT p.id_paciente, p.nombre, p.apellido, p.nro_documento, p.telefono, p.correo,
                            td.abreviatura AS tipo_documento_abrev
                     FROM pacientes p
                     LEFT JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
                     WHERE p.nombre LIKE :termino 
                        OR p.apellido LIKE :termino 
-                       OR p.dni LIKE :termino 
+                       OR p.nro_documento LIKE :termino 
                        OR CONCAT(p.nombre, ' ', p.apellido) LIKE :termino
                     ORDER BY p.apellido ASC, p.nombre ASC
                     LIMIT 10";
@@ -46,7 +46,7 @@ class ModeloHistoriaClinica {
                            CONCAT(ur.nombre, ' ', ur.apellidos) AS doctor_responsable_nombre,
                            a.nombre as apoderado_nombre,
                            a.apellido as apoderado_apellido,
-                           a.dni as apoderado_dni,
+                           a.nro_documento as apoderado_nro_documento,
                            atd.abreviatura as apoderado_tipo_documento_abrev,
                            a.telefono as apoderado_telefono,
                            tf.descripcion as tipo_familiar
@@ -71,7 +71,7 @@ class ModeloHistoriaClinica {
                     $paciente['apoderado'] = [
                         'nombre' => $paciente['apoderado_nombre'],
                         'apellido' => $paciente['apoderado_apellido'],
-                        'dni' => $paciente['apoderado_dni'],
+                        'nro_documento' => $paciente['apoderado_nro_documento'],
                         'tipo_documento_abrev' => $paciente['apoderado_tipo_documento_abrev'],
                         'telefono' => $paciente['apoderado_telefono'],
                         'tipo_familiar' => $paciente['tipo_familiar']
@@ -81,7 +81,7 @@ class ModeloHistoriaClinica {
                 // Limpiar campos innecesarios
                 unset($paciente['apoderado_nombre']);
                 unset($paciente['apoderado_apellido']);
-                unset($paciente['apoderado_dni']);
+                unset($paciente['apoderado_nro_documento']);
                 unset($paciente['apoderado_tipo_documento_abrev']);
                 // El hash de la contrasena del portal nunca debe llegar al navegador ni a ningun PDF
                 unset($paciente['contrasena_portal']);

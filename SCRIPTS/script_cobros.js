@@ -30,6 +30,30 @@
         return Math.max(0, parseFloat(total || 0) - parseFloat(pagado || 0));
     }
 
+    // ── Contexto (metodos de pago y permisos de quien usa la pantalla) ──
+    let ctx = { metodos: [], permisos: { registrar: false, anular: false, retroactivo: false } };
+    let saldoActual = 0;
+
+    function esc(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function fmtFechaHora(str) {
+        if (!str) return '—';
+        const [f, h] = String(str).split(' ');
+        const [y, m, d] = f.split('-');
+        return `${d}/${m}/${y}` + (h ? ' ' + h.slice(0, 5) : '');
+    }
+
+    function cargarContexto() {
+        return fetch(`${CTRL}?accion=contexto`)
+            .then(r => r.json())
+            .then(d => { if (d && d.success) ctx = { metodos: d.metodos || [], permisos: d.permisos || ctx.permisos }; })
+            .catch(() => { /* se queda sin permisos de accion: la pantalla solo consulta */ });
+    }
+
     // ── Buzón ─────────────────────────────────────────────────────
     function cargarBuzon() {
         fetch(`${CTRL}?accion=listar_buzon`)
@@ -45,9 +69,9 @@
 
                 cont.innerHTML = lista.map(p => `
                     <div class="cobros-paciente-item" data-id="${p.id_paciente}">
-                        <div class="cobros-pac-nombre">${p.nombre_paciente}</div>
+                        <div class="cobros-pac-nombre">${esc(p.nombre_paciente)}</div>
                         <div class="cobros-pac-meta">
-                            <span>DNI ${p.dni_paciente}</span>
+                            <span>${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.nro_documento_paciente)}</span>
                             <span class="cobros-pac-badge">${p.total_informes} informe${p.total_informes > 1 ? 's' : ''}</span>
                         </div>
                     </div>`).join('');
@@ -79,17 +103,23 @@
     function renderDetalle(pac, data) {
         const cont = document.getElementById('cobrosDetalleContenido');
 
+        saldoActual = Number((data && data.saldo_a_favor) || 0);
         let html = `
             <div class="cobros-det-header">
                 <div>
-                    <p class="cobros-det-nombre">${pac.nombre_paciente}</p>
-                    <p class="cobros-det-sub">DNI ${pac.dni_paciente}</p>
+                    <p class="cobros-det-nombre">${esc(pac.nombre_paciente)}</p>
+                    <p class="cobros-det-sub">${esc(pac.tipo_documento_abrev || 'DNI')} ${esc(pac.nro_documento_paciente)}</p>
+                    ${saldoActual > 0 ? `<span class="cobros-badge-saldo" id="cobrosSaldoFavor">Saldo a favor: ${fmt(saldoActual)}</span>` : ''}
                 </div>
-                <button class="cobros-btn-registrar" id="btnAbrirPago">Registrar pagos</button>
+                <div class="cobros-det-acciones">
+                    ${ctx.permisos.registrar ? `<button class="cobros-btn-sec" id="btnAbrirAdelanto">Registrar adelanto</button>
+                    <button class="cobros-btn-registrar" id="btnAbrirPago">Registrar pagos</button>` : ''}
+                </div>
             </div>
             <div class="cobros-tabs">
                 <button class="cobros-tab ${tabActiva === 'cobro' ? 'activo' : ''}" data-tab="cobro">Cobro</button>
                 <button class="cobros-tab ${tabActiva === 'saldos' ? 'activo' : ''}" data-tab="saldos">Resumen de saldos</button>
+                <button class="cobros-tab ${tabActiva === 'pagos' ? 'activo' : ''}" data-tab="pagos">Pagos realizados</button>
             </div>
             <div id="cobrosTabContenido">
                 ${tabActiva === 'cobro' ? renderTabCobro(data) : ''}
@@ -107,12 +137,52 @@
                     tc.innerHTML = renderTabCobro(data);
                 } else {
                     tc.innerHTML = '<p class="cobros-cargando">Cargando...</p>';
-                    cargarSaldos(pac.id_paciente);
+                    if (tabActiva === 'pagos') cargarHistorial(pac.id_paciente); else cargarSaldos(pac.id_paciente);
                 }
             });
         });
 
-        document.getElementById('btnAbrirPago').addEventListener('click', abrirModalPago);
+        document.getElementById('btnAbrirPago')?.addEventListener('click', () => abrirModalPago(false));
+        document.getElementById('btnAbrirAdelanto')?.addEventListener('click', () => abrirModalPago(true));
+        // Si se estaba en otra pestaña al elegir a otro paciente, se carga su contenido
+        if (tabActiva === 'saldos') cargarSaldos(pac.id_paciente);
+        else if (tabActiva === 'pagos') cargarHistorial(pac.id_paciente);
+    }
+
+    // ── Pestaña "Pagos realizados" ───────────────────────────────
+    function cargarHistorial(id_paciente) {
+        fetch(`${CTRL}?accion=historial_pagos&id_paciente=${Number(id_paciente)}`)
+            .then(r => r.json())
+            .then(d => {
+                const tc = document.getElementById('cobrosTabContenido');
+                if (!tc || tabActiva !== 'pagos') return;
+                tc.innerHTML = renderHistorial(d);
+            })
+            .catch(() => {
+                const tc = document.getElementById('cobrosTabContenido');
+                if (tc) tc.innerHTML = '<p class="cobros-cargando">No se pudo cargar el historial</p>';
+            });
+    }
+
+    function renderHistorial(d) {
+        if (!d || !d.success) return '<p class="cobros-cargando">No se pudo cargar el historial</p>';
+        if (!d.operaciones.length) return '<p class="cobros-vacio">Todavía no hay pagos registrados.</p>';
+        return d.operaciones.map(o => `
+            <div class="cobros-op ${o.estado === 'anulado' ? 'anulada' : ''}">
+                <div class="cobros-op-cab">
+                    <div><strong>${fmt(o.total)}</strong> <span class="cobros-op-metodo">${esc(o.metodo)}${o.comprobante ? ' · N.º ' + esc(o.comprobante) : ''}</span></div>
+                    <div>
+                        <span class="cobros-estado ${o.estado === 'anulado' ? 'anulado' : 'vigente'}">${o.estado === 'anulado' ? 'Anulado' : 'Vigente'}</span>
+                        ${o.origen === 'retroactivo' ? '<span class="cobros-estado retro">Fecha pasada</span>' : ''}
+                    </div>
+                </div>
+                <div class="cobros-op-sub">${esc(fmtFechaHora(o.fecha_pago))} · registró ${esc(o.registrado_por)}</div>
+                <ul class="cobros-op-lineas">
+                    ${o.lineas.map(l => `<li class="${l.inversa ? 'inversa' : ''}"><span>${l.inversa ? 'Anulación: ' : ''}${esc(l.concepto)}</span><span>${fmt(l.monto)}</span></li>`).join('')}
+                </ul>
+                ${o.estado === 'anulado' && o.motivo_anulacion ? `<div class="cobros-op-motivo">Motivo: ${esc(o.motivo_anulacion)}</div>` : ''}
+                ${o.estado !== 'anulado' && ctx.permisos.anular ? `<button class="cobros-btn-anular" data-op="${Number(o.id_operacion)}" data-total="${Number(o.total)}">Anular</button>` : ''}
+            </div>`).join('');
     }
 
     // ── Tab Cobro ─────────────────────────────────────────────────
@@ -195,6 +265,20 @@
                     });
                 }
 
+                html += `</div>`;
+            });
+        }
+
+        // ── 1b. CUOTA INICIAL DEL PLAN (se puede cobrar en cualquier momento; no bloquea la cita actual) ──
+        if (data.cuotas_pendientes && data.cuotas_pendientes.length) {
+            data.cuotas_pendientes.forEach(q => {
+                const pend = pendiente(q.cuota_inicial, q.pagado);
+                html += `<div class="cobros-seccion">
+                    <p class="cobros-sec-titulo">Cuota inicial pendiente — ${esc(q.nombre_plan)}</p>
+                    <p class="cobros-sec-nota">La cuota inicial del plan se puede cobrar en cualquier momento y no bloquea el cobro de la cita actual.</p>`;
+                html += rowsHeader('Plan');
+                html += inputFila('Cuota inicial', q.cuota_inicial, q.pagado, pend,
+                                  { tipo: 'cuota_inicial', 'id-paciente-plan': q.id_paciente_plan }, false, 'cobros-input-plan');
                 html += `</div>`;
             });
         }
@@ -287,7 +371,7 @@
         </div>`;
     }
 
-    function inputFila(nombre, total, pagado, pend, dataAttrs, forzarDisabled = false) {
+    function inputFila(nombre, total, pagado, pend, dataAttrs, forzarDisabled = false, claseExtra = '') {
         const disabled = (pend <= 0 || forzarDisabled) ? 'disabled' : '';
         const dataStr  = Object.entries(dataAttrs)
             .map(([k, v]) => `data-${k}="${v}"`)
@@ -299,7 +383,7 @@
             <span class="cobros-fila-pendiente ${pend <= 0 ? 'cero' : ''}">${fmt(pend)}</span>
             <span class="cobros-fila-input">
                 <input type="number" step="0.01" min="0" max="${pend}"
-                       class="cobros-monto-input" ${dataStr}
+                       class="cobros-monto-input ${claseExtra}" ${dataStr}
                        placeholder="${pend > 0 && !forzarDisabled ? pend.toFixed(2) : '—'}" ${disabled}>
             </span>
         </div>`;
@@ -386,59 +470,87 @@
     }
 
     // ── Modal de pago ─────────────────────────────────────────────
-    function abrirModalPago() {
-        const inputs  = document.querySelectorAll('.cobros-monto-input:not(:disabled)');
-        const deudaInputs   = document.querySelectorAll('.cobros-input-deuda');
-        const citaInputs    = document.querySelectorAll('.cobros-monto-input:not(.cobros-input-deuda):not(:disabled)');
+    let modoAdelanto = false;
 
-        // Validar: si hay deudas, al menos una debe tener monto
-        const hayDeuda    = deudaInputs.length > 0;
-        const deudaCubierta = Array.from(deudaInputs).some(i => parseFloat(i.value || 0) > 0);
-        const hayCitaMonto  = Array.from(citaInputs).some(i => parseFloat(i.value || 0) > 0);
+    function hoyISO() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
 
-        if (hayDeuda && !deudaCubierta && hayCitaMonto) {
-            mostrarMsg('Hay deudas anteriores pendientes. Registra al menos un pago de deuda antes de cobrar la cita actual.', 'error');
-            return;
-        }
+    function actualizarReqComprobante() {
+        const sel = document.getElementById('pagoMetodo');
+        const req = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.ref === '1';
+        document.getElementById('pagoComprobanteReq').style.display = req ? 'inline' : 'none';
+    }
 
-        const pagos = [];
-        inputs.forEach(inp => {
-            if (parseFloat(inp.value || 0) > 0) pagos.push(inp);
-        });
+    function alternarUsarSaldo() {
+        const usar = document.getElementById('pagoUsarSaldo').checked;
+        document.getElementById('bloqueDatosPago').style.display = usar ? 'none' : 'block';
+    }
 
-        if (!pagos.length) {
-            mostrarMsg('Ingresa al menos un monto a cobrar', 'error');
-            return;
-        }
+    function prepararCamposPago() {
+        document.getElementById('pagoMetodo').innerHTML = '<option value="">Seleccione...</option>' +
+            ctx.metodos.map(m => `<option value="${Number(m.id_metodo_pago)}" data-ref="${Number(m.requiere_referencia)}">${esc(m.nombre)}</option>`).join('');
+        document.getElementById('pagoComprobante').value = '';
+        document.getElementById('pagoAdelanto').value = '';
+        document.getElementById('pagoObservacionGlobal').value = '';
+        document.getElementById('pagoUsarSaldo').checked = false;
+        document.getElementById('grupoUsarSaldo').style.display = (saldoActual > 0 && !modoAdelanto) ? 'block' : 'none';
+        document.getElementById('pagoSaldoDisp').textContent = fmt(saldoActual);
+        document.getElementById('grupoFechaPago').style.display = ctx.permisos.retroactivo ? 'block' : 'none';
+        const f = document.getElementById('pagoFecha');
+        f.value = hoyISO(); f.max = hoyISO();
+        alternarUsarSaldo();
+        actualizarReqComprobante();
+    }
 
-        let totalModal = 0;
+    function abrirModalPago(soloAdelanto) {
+        modoAdelanto = soloAdelanto === true;
         let resumenHtml = '';
 
-        pagos.forEach(inp => {
-            const monto  = parseFloat(inp.value);
-            const fila   = inp.closest('.cobros-fila');
-            const nombre = fila?.querySelector('.cobros-fila-nombre')?.textContent || '—';
-            const esDeuda = inp.classList.contains('cobros-input-deuda');
-            totalModal += monto;
-            resumenHtml += `<div class="cobros-resumen-item ${esDeuda ? 'cobros-resumen-deuda' : ''}">
-                <span>${esDeuda ? '[Deuda anterior] ' : ''}${nombre}</span>
-                <span>${fmt(monto)}</span>
-            </div>`;
-        });
+        if (modoAdelanto) {
+            resumenHtml = '<p class="cobros-aviso">Registrar un <strong>adelanto</strong>: quedará como saldo a favor del paciente y se podrá usar en sus próximos cobros.</p>';
+        } else {
+            const inputs        = document.querySelectorAll('.cobros-monto-input:not(:disabled)');
+            const deudaInputs   = document.querySelectorAll('.cobros-input-deuda');
+            const citaInputs    = document.querySelectorAll('.cobros-monto-input:not(.cobros-input-deuda):not(.cobros-input-plan):not(:disabled)');
 
-        resumenHtml += `<div class="cobros-resumen-total">
-            <span>Total a registrar</span><span>${fmt(totalModal)}</span>
-        </div>`;
-
+            // Validar: si hay deudas, al menos una debe tener monto
+            const hayDeuda      = deudaInputs.length > 0;
+            const deudaCubierta = Array.from(deudaInputs).some(i => parseFloat(i.value || 0) > 0);
+            const hayCitaMonto  = Array.from(citaInputs).some(i => parseFloat(i.value || 0) > 0);
+            if (hayDeuda && !deudaCubierta && hayCitaMonto) {
+                mostrarMsg('Hay deudas anteriores pendientes. Registra al menos un pago de deuda antes de cobrar la cita actual.', 'error');
+                return;
+            }
+            const pagos = Array.from(inputs).filter(inp => parseFloat(inp.value || 0) > 0);
+            if (!pagos.length) {
+                mostrarMsg('Ingresa al menos un monto a cobrar (o usa "Registrar adelanto")', 'error');
+                return;
+            }
+            let totalModal = 0;
+            pagos.forEach(inp => {
+                const monto   = parseFloat(inp.value);
+                const nombre  = inp.closest('.cobros-fila')?.querySelector('.cobros-fila-nombre')?.textContent || '—';
+                const esDeuda = inp.classList.contains('cobros-input-deuda');
+                totalModal += monto;
+                resumenHtml += `<div class="cobros-resumen-item ${esDeuda ? 'cobros-resumen-deuda' : ''}">
+                    <span>${esDeuda ? '[Deuda anterior] ' : ''}${esc(nombre)}</span>
+                    <span>${fmt(monto)}</span>
+                </div>`;
+            });
+            resumenHtml += `<div class="cobros-resumen-total"><span>Total a registrar</span><span>${fmt(totalModal)}</span></div>`;
+        }
         document.getElementById('resumenPagosModal').innerHTML = resumenHtml;
-        document.getElementById('pagoObservacionGlobal').value = '';
+        prepararCamposPago();
         document.getElementById('modalConfirmarPago').style.display = 'flex';
     }
 
     function confirmarPagos() {
-        const inputs = document.querySelectorAll('.cobros-monto-input:not(:disabled)');
-        const obs    = document.getElementById('pagoObservacionGlobal').value.trim();
-        const pagos  = [];
+        const usarSaldo = !modoAdelanto && document.getElementById('pagoUsarSaldo').checked;
+        const inputs    = modoAdelanto ? [] : document.querySelectorAll('.cobros-monto-input:not(:disabled)');
+        const obs       = document.getElementById('pagoObservacionGlobal').value.trim();
+        const pagos     = [];
 
         inputs.forEach(inp => {
             const monto = parseFloat(inp.value || 0);
@@ -456,7 +568,30 @@
             });
         });
 
-        if (!pagos.length) return;
+        const adelanto = usarSaldo ? 0 : (parseFloat(document.getElementById('pagoAdelanto').value || 0) || 0);
+        if (!pagos.length && !(adelanto > 0)) { mostrarMsg('Ingresa al menos un monto', 'error'); return; }
+
+        const sel = document.getElementById('pagoMetodo');
+        const comprobante = document.getElementById('pagoComprobante').value.trim();
+        if (usarSaldo) {
+            const total = pagos.reduce((a, p) => a + p.monto, 0);
+            if (total > saldoActual + 0.004) { mostrarMsg('El saldo a favor disponible (' + fmt(saldoActual) + ') no alcanza', 'error'); return; }
+        } else {
+            if (!sel.value) { mostrarMsg('Seleccione el método de pago', 'error'); return; }
+            if (sel.selectedOptions[0].dataset.ref === '1' && !comprobante) {
+                mostrarMsg('Este método exige el número de operación o comprobante', 'error');
+                return;
+            }
+        }
+
+        const cuerpo = { id_paciente: pacienteActivo.id_paciente, pagos, anticipo: adelanto };
+        if (usarSaldo) cuerpo.usar_saldo = true;
+        else {
+            cuerpo.id_metodo_pago  = Number(sel.value);
+            cuerpo.nro_comprobante = comprobante;
+            const fecha = document.getElementById('pagoFecha').value;
+            if (ctx.permisos.retroactivo && fecha && fecha !== hoyISO()) cuerpo.fecha_pago = fecha;
+        }
 
         const btn = document.getElementById('btnConfirmarPago');
         btn.disabled = true;
@@ -465,18 +600,21 @@
         fetch(`${CTRL}?accion=registrar_pagos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_paciente: pacienteActivo.id_paciente, pagos })
+            body: JSON.stringify(cuerpo)
         })
         .then(r => r.json())
         .then(data => {
             btn.disabled = false;
             btn.textContent = 'Registrar pagos';
-            document.getElementById('modalConfirmarPago').style.display = 'none';
             if (data.success) {
-                mostrarMsg('Pagos registrados correctamente');
+                document.getElementById('modalConfirmarPago').style.display = 'none';
+                mostrarMsg(data.anticipo > 0
+                    ? 'Pagos registrados. ' + fmt(data.anticipo) + ' quedaron como saldo a favor del paciente'
+                    : 'Pagos registrados correctamente');
                 cargarBuzon();
                 cargarDetalle(pacienteActivo);
             } else {
+                // el modal se queda abierto para corregir (antes se cerraba y se perdia lo escrito)
                 mostrarMsg(data.mensaje || 'Error al registrar pagos', 'error');
             }
         })
@@ -484,6 +622,48 @@
             btn.disabled = false;
             btn.textContent = 'Registrar pagos';
             mostrarMsg('Error de conexión', 'error');
+        });
+    }
+
+    // ── Anular un pago ────────────────────────────────────────────
+    let operacionAAnular = null;
+
+    function pedirAnular(idOperacion, total) {
+        operacionAAnular = idOperacion;
+        document.getElementById('anularResumen').textContent = 'Se anulará el cobro de ' + fmt(total) + '. Los saldos del paciente se recalculan automáticamente.';
+        document.getElementById('anularMotivo').value = '';
+        document.getElementById('anularError').style.display = 'none';
+        document.getElementById('modalAnularPago').style.display = 'flex';
+        document.getElementById('anularMotivo').focus();
+    }
+
+    function confirmarAnular() {
+        const motivo = document.getElementById('anularMotivo').value.trim();
+        const err = document.getElementById('anularError');
+        if (motivo.length < 5) { err.textContent = 'Escriba el motivo de la anulación (mínimo 5 caracteres)'; err.style.display = 'block'; return; }
+        const btn = document.getElementById('btnConfirmarAnular');
+        btn.disabled = true; btn.textContent = 'Anulando...';
+        fetch(`${CTRL}?accion=anular_pago`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_operacion: operacionAAnular, motivo })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Anular pago';
+            if (data.success) {
+                document.getElementById('modalAnularPago').style.display = 'none';
+                mostrarMsg('Pago anulado correctamente');
+                cargarBuzon();
+                cargarDetalle(pacienteActivo);
+            } else {
+                err.textContent = data.mensaje || 'No se pudo anular';
+                err.style.display = 'block';
+            }
+        })
+        .catch(() => {
+            btn.disabled = false; btn.textContent = 'Anular pago';
+            err.textContent = 'Error de conexión'; err.style.display = 'block';
         });
     }
 
@@ -495,14 +675,23 @@
     document.getElementById('btnCerrarModalPago')?.addEventListener('click', () => {
         document.getElementById('modalConfirmarPago').style.display = 'none';
     });
+    document.getElementById('pagoMetodo')?.addEventListener('change', actualizarReqComprobante);
+    document.getElementById('pagoUsarSaldo')?.addEventListener('change', alternarUsarSaldo);
+    document.getElementById('btnConfirmarAnular')?.addEventListener('click', confirmarAnular);
+    document.getElementById('btnCancelarAnular')?.addEventListener('click', () => { document.getElementById('modalAnularPago').style.display = 'none'; });
+    document.getElementById('btnCerrarModalAnular')?.addEventListener('click', () => { document.getElementById('modalAnularPago').style.display = 'none'; });
+    document.getElementById('cobrosDetalleContenido')?.addEventListener('click', e => {
+        const b = e.target.closest && e.target.closest('.cobros-btn-anular');
+        if (b) pedirAnular(Number(b.dataset.op), Number(b.dataset.total));
+    });
 
     // ── Init ──────────────────────────────────────────────────────
-    cargarBuzon();
+    cargarContexto().then(cargarBuzon);
 
     window.iniciarModuloCobros = function () {
         tabActiva = 'cobro';
         pacienteActivo = null;
-        cargarBuzon();
+        cargarContexto().then(cargarBuzon);
     };
 
 })();

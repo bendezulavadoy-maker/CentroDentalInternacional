@@ -354,7 +354,7 @@ class ModeloCitasDoctor {
                         s.direccion_sede as sede,
                         p.nombre as paciente_nombre,
                         p.apellido as paciente_apellido,
-                        p.dni as paciente_dni,
+                        p.nro_documento as paciente_nro_documento,
                         CONCAT(u.nombre, ' ', u.apellidos) as doctor_nombre
                     FROM citas c
                     INNER JOIN estado_cita ec ON c.id_estado_cita = ec.id_estado_cita
