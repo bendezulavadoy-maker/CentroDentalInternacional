@@ -59,6 +59,10 @@ function iniciarModuloConfiguracion() {
                 btn.dataset.iniciado = '1';
                 iniciarSeccionMetodosPago();
             }
+            if (btn.dataset.tab === 'permisos_usuario' && !btn.dataset.iniciado) {
+                btn.dataset.iniciado = '1';
+                iniciarSeccionPermisosUsuario();
+            }
         });
     });
 
@@ -442,6 +446,137 @@ function iniciarModuloConfiguracion() {
                 .catch(() => mostrarMensaje('Error de conexión', 'error'));
         });
         cargar();
+    }
+
+    // =============================================================
+    // PERMISOS POR USUARIO (excepciones sobre el rol; solo administrador)
+    // =============================================================
+    function iniciarSeccionPermisosUsuario() {
+        const CTRL = '../CONTROLADORES/controlador_configuracion.php';
+        const $ = id => document.getElementById(id);
+        const ETIQ = { ninguno: 'No', asignados: 'Solo sus pacientes', todos: 'Todos' };
+        let datos = null;                 // matriz del usuario elegido
+        let idUsuarioActual = '';
+
+        function cargarUsuarios(mantener) {
+            return fetch(`${CTRL}?accion=listar_usuarios_permisos`)
+                .then(r => r.json())
+                .then(d => {
+                    const sel = $('selectUsuarioPermisos');
+                    if (!sel) return;
+                    if (!d || !d.success) { sel.innerHTML = '<option value="">' + escCfg((d && d.mensaje) || 'No disponible') + '</option>'; return; }
+                    sel.innerHTML = '<option value="">Seleccione un usuario...</option>' + d.usuarios.map(u =>
+                        `<option value="${Number(u.id_usuario)}">${escCfg(u.nombre)} — ${escCfg(u.nombre_rol)}${Number(u.id_estado) === 1 ? '' : ' (inactivo)'}${Number(u.excepciones) ? ' · ' + Number(u.excepciones) + ' excepción(es)' : ''}</option>`).join('');
+                    if (mantener) sel.value = mantener;
+                })
+                .catch(() => { const sel = $('selectUsuarioPermisos'); if (sel) sel.innerHTML = '<option value="">No se pudo cargar</option>'; });
+        }
+
+        function celdaResultado(rol, exc) {
+            const final = exc === 'heredar' ? rol : exc;
+            return { final, cambia: final !== rol };
+        }
+
+        function pintarMatriz() {
+            const cont = $('contenedorPermisosUsuario');
+            if (!cont || !datos) return;
+            const u = datos.usuario;
+            let html = `<p class="info-usuario-permisos"><strong>${escCfg(u.nombre)}</strong> · rol <strong>${escCfg(u.nombre_rol)}</strong>${Number(u.id_estado) === 1 ? '' : ' · <em>usuario inactivo</em>'}</p>` +
+                       '<table id="matrizUsuario"><thead><tr><th>Acción</th><th>Según su rol</th><th>Excepción para este usuario</th><th>Resultado</th></tr></thead><tbody>';
+            Object.values(datos.catalogo).forEach(modulo => {
+                html += `<tr class="fila-modulo"><td colspan="4">${escCfg(modulo.titulo)}</td></tr>`;
+                Object.entries(modulo.acciones).forEach(([accion, def]) => {
+                    const rol = datos.rol[accion] || 'ninguno';
+                    const exc = datos.excepciones[accion] || 'heredar';
+                    const opciones = ['heredar'].concat(def.por_paciente ? ['ninguno', 'asignados', 'todos'] : ['ninguno', 'todos']);
+                    const r = celdaResultado(rol, exc);
+                    html += `<tr data-accion="${escCfg(accion)}" data-rol="${escCfg(rol)}">
+                        <td>${escCfg(def.titulo)}</td>
+                        <td class="celda-rol">${ETIQ[rol]}</td>
+                        <td><select class="sel-excepcion" data-accion="${escCfg(accion)}" data-original="${escCfg(exc)}">` +
+                            opciones.map(o => `<option value="${o}"${o === exc ? ' selected' : ''}>${o === 'heredar' ? 'Según su rol' : ETIQ[o]}</option>`).join('') +
+                        `</select></td>
+                        <td class="celda-resultado${r.cambia ? ' cambia' : ''}">${ETIQ[r.final]}</td>
+                    </tr>`;
+                });
+            });
+            cont.innerHTML = html + '</tbody></table>';
+            cont.querySelectorAll('.sel-excepcion').forEach(sel => sel.addEventListener('change', () => {
+                const fila = sel.closest('tr');
+                const r = celdaResultado(fila.dataset.rol, sel.value);
+                const celda = fila.querySelector('.celda-resultado');
+                celda.textContent = ETIQ[r.final];
+                celda.classList.toggle('cambia', r.cambia);
+                sel.classList.toggle('cambiado', sel.value !== sel.dataset.original);
+                $('btnGuardarPermisosUsuario').disabled = !cont.querySelector('.sel-excepcion.cambiado');
+            }));
+            $('btnGuardarPermisosUsuario').disabled = true;
+        }
+
+        function cargarMatriz(id) {
+            const cont = $('contenedorPermisosUsuario');
+            idUsuarioActual = id;
+            datos = null;
+            $('btnGuardarPermisosUsuario').disabled = true;
+            if (!id) { cont.innerHTML = '<p class="cargando">Elija un usuario para ver y cambiar sus permisos.</p>'; return; }
+            cont.innerHTML = '<p class="cargando">Cargando...</p>';
+            fetch(`${CTRL}?accion=obtener_permisos_usuario&id_usuario=${encodeURIComponent(id)}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (!d || !d.success) { cont.innerHTML = '<p class="cargando">' + escCfg((d && d.mensaje) || 'No disponible') + '</p>'; return; }
+                    datos = d; pintarMatriz();
+                })
+                .catch(() => { cont.innerHTML = '<p class="cargando">No se pudieron cargar los permisos</p>'; });
+        }
+
+        function cargarResumen() {
+            fetch(`${CTRL}?accion=resumen_excepciones`)
+                .then(r => r.json())
+                .then(d => {
+                    const cont = $('resumenExcepciones');
+                    if (!cont) return;
+                    if (!d || !d.success) { cont.innerHTML = '<p class="cargando">' + escCfg((d && d.mensaje) || 'No disponible') + '</p>'; return; }
+                    if (!d.excepciones.length) { cont.innerHTML = '<p class="cargando">Ningún usuario tiene permisos especiales: todos usan los de su rol.</p>'; return; }
+                    cont.innerHTML = '<table id="tablaResumenExcepciones"><thead><tr><th>Usuario</th><th>Rol</th><th>Acción</th><th>Permiso</th><th>Otorgado por</th><th>Fecha</th><th></th></tr></thead><tbody>' +
+                        d.excepciones.map(e => `<tr>
+                            <td>${escCfg(e.nombre)}</td><td>${escCfg(e.nombre_rol)}</td><td>${escCfg(e.accion_titulo)}</td>
+                            <td>${escCfg(ETIQ[e.alcance] || e.alcance)}</td><td>${escCfg(e.otorgado_por || '—')}</td><td>${escCfg(String(e.fecha || '').slice(0, 16))}</td>
+                            <td><button class="btn-accion btn-ver-excepcion" data-id="${Number(e.id_usuario)}">Ver</button></td></tr>`).join('') + '</tbody></table>';
+                    cont.querySelectorAll('.btn-ver-excepcion').forEach(b => b.addEventListener('click', () => {
+                        $('selectUsuarioPermisos').value = b.dataset.id;
+                        cargarMatriz(b.dataset.id);
+                        $('selectUsuarioPermisos').scrollIntoView && $('selectUsuarioPermisos').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }));
+                })
+                .catch(() => { const cont = $('resumenExcepciones'); if (cont) cont.innerHTML = '<p class="cargando">No se pudo cargar el resumen</p>'; });
+        }
+
+        $('selectUsuarioPermisos')?.addEventListener('change', e => cargarMatriz(e.target.value));
+        $('btnGuardarPermisosUsuario')?.addEventListener('click', () => {
+            if (!idUsuarioActual) return;
+            const cambios = {};
+            document.querySelectorAll('#matrizUsuario .sel-excepcion').forEach(sel => {
+                if (sel.value !== sel.dataset.original) cambios[sel.dataset.accion] = sel.value;
+            });
+            if (!Object.keys(cambios).length) { mostrarMensaje('No hay cambios que guardar', 'exito'); return; }
+            const btn = $('btnGuardarPermisosUsuario');
+            btn.disabled = true;
+            fetch(`${CTRL}?accion=guardar_permisos_usuario`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_usuario: Number(idUsuarioActual), cambios })
+            })
+                .then(r => r.json())
+                .then(d => {
+                    mostrarMensaje(d.mensaje || 'No se pudo guardar', d.success ? 'exito' : 'error');
+                    if (d.success) { cargarMatriz(idUsuarioActual); cargarResumen(); cargarUsuarios(idUsuarioActual); }
+                    else btn.disabled = false;
+                })
+                .catch(() => { mostrarMensaje('Error de conexión', 'error'); btn.disabled = false; });
+        });
+
+        cargarUsuarios();
+        cargarResumen();
     }
 
     // =============================================================

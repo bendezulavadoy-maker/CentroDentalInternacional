@@ -664,3 +664,28 @@
 }
 .btn-guardar-parametro:hover { background: #dfe8fa; }
 .btn-guardar-parametro:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* =====================================================
+   PERMISOS POR USUARIO (excepciones sobre el rol)
+   ===================================================== */
+.info-usuario-permisos { margin: 14px 0 10px; font-size: 14px; color: #2c3e50; }
+#matrizUsuario, #tablaResumenExcepciones {
+    width: 100%; border-collapse: collapse; font-size: 14px; background: white;
+    border: 0.5px solid #e0e4ea; border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+}
+#matrizUsuario th, #matrizUsuario td, #tablaResumenExcepciones th, #tablaResumenExcepciones td {
+    padding: 9px 14px; border-bottom: 0.5px solid #eef0f3; text-align: left;
+}
+#matrizUsuario thead, #tablaResumenExcepciones thead { background: #f7f8fa; }
+#matrizUsuario thead th, #tablaResumenExcepciones thead th {
+    font-size: 11px; font-weight: 500; color: #5a6475; text-transform: uppercase; letter-spacing: .4px;
+}
+#matrizUsuario tr.fila-modulo td {
+    background: #f1f4f9; font-size: 12px; font-weight: 600; color: #2a4d8f; text-transform: uppercase; letter-spacing: .4px;
+}
+#matrizUsuario tbody tr:last-child td { border-bottom: none; }
+#matrizUsuario .celda-rol { color: #7f8c8d; }
+#matrizUsuario .celda-resultado { font-weight: 600; }
+#matrizUsuario .celda-resultado.cambia { color: #2a4d8f; background: #eef2fb; }
+.sel-excepcion { min-width: 170px; padding: 6px 8px; font-size: 13px; border: 0.5px solid #cfd6e0; border-radius: 6px; background: white; color: #2c3e50; }
+.sel-excepcion.cambiado { border-color: #2a4d8f; background: #eef2fb; }

@@ -46,7 +46,8 @@ $accion = $jsonInput['accion'] ?? $_POST['accion'] ?? $_GET['accion'] ?? '';
 // Antes cualquier Asistente podia crear/eliminar roles y darse acceso a cualquier modulo.
 $accionesSoloAdministrador = ['crear_rol', 'editar_rol', 'eliminar_rol', 'listar_permisos', 'guardar_permisos',
                               'listar_permisos_accion', 'guardar_permisos_accion', 'listar_parametros', 'guardar_parametro',
-                              'listar_metodos_pago', 'crear_metodo_pago', 'editar_metodo_pago'];
+                              'listar_metodos_pago', 'crear_metodo_pago', 'editar_metodo_pago',
+                              'listar_usuarios_permisos', 'obtener_permisos_usuario', 'guardar_permisos_usuario', 'resumen_excepciones'];
 if (in_array($accion, $accionesSoloAdministrador, true) && !Permisos::puedeGestionarPermisos()) {
     http_response_code(403);
     echo json_encode(['success' => false, 'mensaje' => 'Solo el administrador puede realizar esta acción']);
@@ -337,6 +338,31 @@ switch ($accion) {
     case 'listar_doctores':
         echo json_encode($modelo->listarDoctores());
         break;
+    // ── PERMISOS POR USUARIO (excepciones sobre el rol; solo Administrador) ──
+    case 'listar_usuarios_permisos':
+        echo json_encode(Permisos::usuariosParaPermisos());
+        break;
+
+    case 'obtener_permisos_usuario':
+        echo json_encode(Permisos::matrizUsuario(intval($_GET['id_usuario'] ?? 0)));
+        break;
+
+    case 'resumen_excepciones':
+        echo json_encode(Permisos::resumenExcepciones());
+        break;
+
+    case 'guardar_permisos_usuario':
+        // { id_usuario, cambios: { accion: 'ninguno'|'asignados'|'todos'|'heredar' } }
+        $datos = json_decode(file_get_contents('php://input'), true);
+        if (!isset($datos['id_usuario']) || !isset($datos['cambios']) || !is_array($datos['cambios'])) {
+            echo json_encode(['success' => false, 'mensaje' => 'Datos inválidos']);
+            break;
+        }
+        $r = Permisos::guardarUsuario(intval($datos['id_usuario']), $datos['cambios']);
+        if (!empty($r['success'])) $r['mensaje'] = $r['cambios'] === 0 ? 'No había cambios que guardar' : 'Permisos del usuario guardados correctamente';
+        echo json_encode($r);
+        break;
+
     // ── METODOS DE PAGO (solo Administrador) ───────────────────────
     case 'listar_metodos_pago':
         echo json_encode($modelo->listarMetodosPago());

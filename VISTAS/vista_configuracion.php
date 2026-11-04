@@ -16,6 +16,7 @@ $esAdmin = Permisos::puedeGestionarPermisos();
         <div class="tabs-config">
             <button class="tab-btn<?= $esAdmin ? ' activo' : '' ?>" data-tab="roles"<?= $esAdmin ? '' : ' style="display:none;"' ?>>Roles</button>
             <button class="tab-btn" data-tab="permisos"<?= $esAdmin ? '' : ' style="display:none;"' ?>>Permisos por Rol</button>
+            <button class="tab-btn" data-tab="permisos_usuario"<?= $esAdmin ? '' : ' style="display:none;"' ?>>Permisos por usuario</button>
             <button class="tab-btn<?= $esAdmin ? '' : ' activo' ?>" data-tab="sedes">Sedes</button>
             <button class="tab-btn" data-tab="servicios">Servicios</button>
             <button class="tab-btn" data-tab="planes">Planes</button>
@@ -91,6 +92,27 @@ $esAdmin = Permisos::puedeGestionarPermisos();
         </section>
 
         <!-- TAB: SEDES -->
+        <section id="tab-permisos_usuario" class="tab-contenido">
+            <div class="seccion-header">
+                <h3>Permisos por usuario</h3>
+            </div>
+            <p class="subtitulo">El <strong>rol</strong> da los permisos base de cada persona. Aquí puede darle o quitarle una acción concreta a <strong>un usuario en particular</strong> sin cambiar a los demás de su rol (por ejemplo, permitir que una cajera anule pagos). Una excepción manda sobre el rol; «Según su rol» quita la excepción. Los cambios valen al instante y quedan en la bitácora.</p>
+            <div class="grupo-campo">
+                <label for="selectUsuarioPermisos">Usuario</label>
+                <select id="selectUsuarioPermisos"><option value="">Cargando...</option></select>
+            </div>
+            <div id="contenedorPermisosUsuario"><p class="cargando">Elija un usuario para ver y cambiar sus permisos.</p></div>
+            <div class="form-botones" style="margin-top:16px;">
+                <button id="btnGuardarPermisosUsuario" class="btn-guardar" disabled>Guardar excepciones</button>
+            </div>
+
+            <div class="seccion-header" style="margin-top:36px;">
+                <h3>Usuarios con permisos especiales</h3>
+                <p class="subtitulo">Todas las excepciones vigentes, para revisar de un vistazo quién tiene permisos distintos a los de su rol.</p>
+            </div>
+            <div id="resumenExcepciones"><p class="cargando">Cargando...</p></div>
+        </section>
+
         <section id="tab-sedes" class="tab-contenido<?= $esAdmin ? '' : ' activo' ?>">
             <div class="seccion-header">
                 <h3>Gestión de Sedes</h3>
