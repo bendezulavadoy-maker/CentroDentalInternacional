@@ -71,4 +71,5 @@ CROSS JOIN (SELECT 'cobros.registrar' AS accion UNION ALL SELECT 'cobros.anular'
 SELECT 'metodos de pago (esperado 6)' AS elemento, COUNT(*) AS cantidad FROM metodo_pago
 UNION ALL SELECT 'columna nueva en pagos: id_metodo_pago', COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pagos' AND COLUMN_NAME = 'id_metodo_pago'
 UNION ALL SELECT 'pagos sin operacion (esperado 0)', COUNT(*) FROM pagos WHERE id_operacion IS NULL
-UNION ALL SELECT 'permisos de cobros (esperado 12 = 3 acciones x 4 roles)', COUNT(*) FROM permisos_accion WHERE accion LIKE 'cobros.%';
+UNION ALL SELECT 'permisos de cobros (esperado = 3 x n.º de roles; vea la fila siguiente)', COUNT(*) FROM permisos_accion WHERE accion LIKE 'cobros.%'
+UNION ALL SELECT 'roles en esta base (el esperado de la fila anterior es este numero x 3)', COUNT(*) FROM roles;

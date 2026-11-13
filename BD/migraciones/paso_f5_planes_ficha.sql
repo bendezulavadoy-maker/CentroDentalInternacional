@@ -16,5 +16,6 @@ SELECT id_rol, 'planes.editar', CASE id_rol WHEN 1 THEN 'todos' WHEN 2 THEN 'tod
 INSERT IGNORE INTO permisos_accion (id_rol, accion, alcance)
 SELECT id_rol, 'planes.editar_costos', IF(id_rol = 1, 'todos', 'ninguno') FROM roles;
 
--- Verificacion (esperado: 8 = 2 permisos x 4 roles)
-SELECT COUNT(*) AS permisos_de_planes FROM permisos_accion WHERE accion IN ('planes.editar', 'planes.editar_costos');
+-- Verificacion (esperado: permisos_de_planes = 2 x roles_en_la_base)
+SELECT COUNT(*) AS permisos_de_planes, (SELECT COUNT(*) FROM roles) AS roles_en_la_base
+FROM permisos_accion WHERE accion IN ('planes.editar', 'planes.editar_costos');

@@ -22,7 +22,8 @@ ALTER TABLE citas
 INSERT IGNORE INTO permisos_accion (id_rol, accion, alcance)
 SELECT id_rol, 'citas.registrar_retroactiva', IF(id_rol = 1, 'todos', 'ninguno') FROM roles;
 
--- Verificacion (esperado: 1 columna nueva y 4 permisos = uno por rol)
+-- Verificacion (esperado: 1 columna nueva y un permiso por cada rol de la base)
 SELECT 'columna citas.origen (esperado 1)' AS elemento, COUNT(*) AS cantidad
 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'citas' AND COLUMN_NAME = 'origen'
-UNION ALL SELECT 'permisos citas.registrar_retroactiva (esperado 4)', COUNT(*) FROM permisos_accion WHERE accion = 'citas.registrar_retroactiva';
+UNION ALL SELECT 'permisos citas.registrar_retroactiva (esperado = n.º de roles; vea la fila siguiente)', COUNT(*) FROM permisos_accion WHERE accion = 'citas.registrar_retroactiva'
+UNION ALL SELECT 'roles en esta base', COUNT(*) FROM roles;
