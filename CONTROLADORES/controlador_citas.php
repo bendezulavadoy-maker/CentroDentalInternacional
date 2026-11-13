@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 require_once '../CONFIG/requerir_sesion_api.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 0);

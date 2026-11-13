@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 require_once '../MODELOS/modelo_odontograma.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 

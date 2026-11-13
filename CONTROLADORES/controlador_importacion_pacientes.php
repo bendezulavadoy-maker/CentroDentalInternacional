@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Importacion masiva de pacientes (Excel/CSV).
 // Solo con sesion iniciada, acceso al modulo Pacientes Y el permiso "Importar pacientes desde Excel"
 // (Configuracion > Permisos por Rol > Acciones permitidas). Por defecto: solo el Administrador.

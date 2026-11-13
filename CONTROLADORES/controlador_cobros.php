@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Cobros. Acceso: sesion + modulo "Cobros" (Configuracion > Permisos por Rol). Antes el acceso estaba fijo a los
 // roles 1 y 2, numeracion que ya no coincide (el 2 es Odontologo y la Asistente, rol 3, quedaba fuera).
 // Acciones finas: cobros.registrar, cobros.anular, cobros.registrar_retroactivo.

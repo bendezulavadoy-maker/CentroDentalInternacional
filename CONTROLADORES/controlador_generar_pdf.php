@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 /**
  * controlador_generar_pdf.php
  * Genera el PDF de la Historia Clínica de un paciente.

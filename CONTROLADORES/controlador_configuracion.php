@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Sesion obligatoria (y permisos finos) para todo este controlador
 require_once '../CONFIG/permisos.php';
 require_once '../CONFIG/parametros.php';

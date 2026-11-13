@@ -78,6 +78,12 @@ class Permisos {
                     'planes.editar_costos' => ['titulo' => 'Editar costos, cuotas y corregir costos del plan',       'por_paciente' => false],
                 ],
             ],
+            'personal' => [
+                'titulo' => 'Personal',
+                'acciones' => [
+                    'personal.restablecer_contrasena' => ['titulo' => 'Restablecer la contraseña de otra persona', 'por_paciente' => false],
+                ],
+            ],
             'cobros' => [
                 'titulo' => 'Cobros',
                 'acciones' => [

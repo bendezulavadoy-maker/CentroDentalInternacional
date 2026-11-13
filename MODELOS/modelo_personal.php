@@ -1,5 +1,6 @@
 <?php
-require_once '../CONFIG/conexion.php';
+require_once __DIR__ . '/../CONFIG/conexion.php';
+require_once __DIR__ . '/../CONFIG/contrasenas.php';
 
 class ModeloPersonal {
     private $conexion;
@@ -143,12 +144,12 @@ class ModeloPersonal {
             $codigoFinal = $this->generarCodigoUsuario($nro_documento);
 
             $fecha = date('Y-m-d H:i:s');
-            $temporal = '12345';
-            $hash = password_hash($temporal, PASSWORD_BCRYPT);
+            $temporal = Contrasenas::generarTemporal();   // aleatoria y distinta para cada persona
+            $hash = Contrasenas::cifrar($temporal);
 
             $sql = "INSERT INTO usuarios
-                    (nombre, apellidos, id_tipo_documento, nro_documento, correo, contrasena, fecha_creacion, codigo_usuario, id_rol, id_estado, fecha_nacimiento, foto)
-                    VALUES (:nombre, :apellidos, :id_tipo_documento, :nro_documento, :correo, :contrasena, :fecha_creacion, :codigo_usuario, :id_rol, :id_estado, :fecha_nacimiento, :foto)";
+                    (nombre, apellidos, id_tipo_documento, nro_documento, correo, contrasena, debe_cambiar_contrasena, fecha_creacion, codigo_usuario, id_rol, id_estado, fecha_nacimiento, foto)
+                    VALUES (:nombre, :apellidos, :id_tipo_documento, :nro_documento, :correo, :contrasena, 1, :fecha_creacion, :codigo_usuario, :id_rol, :id_estado, :fecha_nacimiento, :foto)";
             $stmt = $this->conexion->prepare($sql);
 
             $stmt->execute([

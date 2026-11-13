@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Documentos del paciente. Solo con sesion iniciada y con acceso al modulo de Historia Clinica;
 // cada accion ademas exige su propio permiso (Configuracion -> Permisos por Rol).
 require_once '../CONFIG/permisos.php';

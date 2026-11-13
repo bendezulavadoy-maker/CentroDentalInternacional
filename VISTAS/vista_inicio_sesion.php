@@ -49,6 +49,8 @@
         <?php if (isset($_GET['error'])): ?>
             <?php if ($_GET['error'] === 'inactivo'): ?>
                 <p class="mensaje-error">Tu cuenta está inactiva. Contacta al administrador.</p>
+            <?php elseif ($_GET['error'] === 'bloqueado'): ?>
+                <p class="mensaje-error">Demasiados intentos fallidos. Espera 15 minutos e inténtalo de nuevo.</p>
             <?php else: ?>
                 <p class="mensaje-error">Usuario o contraseña incorrectos.</p>
             <?php endif; ?>

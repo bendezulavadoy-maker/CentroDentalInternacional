@@ -628,15 +628,23 @@ function iniciarModuloPersonal() {
                             <span class="etiqueta">Código de usuario</span>
                             <span class="valor">${p.codigo_usuario || '—'}</span>
                         </div>
+                        <div class="detalle-fila">
+                            <span class="etiqueta">Contraseña</span>
+                            <span class="valor" id="estadoContrasena">${estadoContrasenaTexto(p)}</span>
+                        </div>
                     </div>
 
                     ${credencialesHtml}
                 </div>
 
-                <div class="detalle-footer">
+                <div class="detalle-footer" id="pieDetalle">
                     <button class="btn-principal" onclick="editarPersonal(${p.id_usuario})">
                         <i class="ti ti-edit"></i> Editar
                     </button>
+                    ${(p.puede_restablecer_contrasena && !p.es_mi_cuenta) ? `
+                    <button type="button" class="btn-secundario" id="btnRestablecerClave" style="margin-left:8px;">
+                        <i class="ti ti-key"></i> Restablecer contraseña
+                    </button>` : ''}
                 </div>
             </div>
         `;
@@ -649,6 +657,9 @@ function iniciarModuloPersonal() {
         idEdicion  = p.id_usuario;
         fotoActual = p.foto || null;
 
+        const btnRestablecer = document.getElementById('btnRestablecerClave');
+        if (btnRestablecer) btnRestablecer.addEventListener('click', () => pedirConfirmacionRestablecer(p));
+
         if (mostrarCredenciales && credenciales) {
             const btnCopiar = document.getElementById('btnCopiarCredencialesDetalle');
             if (btnCopiar) {
@@ -658,6 +669,48 @@ function iniciarModuloPersonal() {
                 });
             }
         }
+    }
+
+    // =====================================================
+    // Contraseña: estado y restablecimiento
+    // =====================================================
+    function estadoContrasenaTexto(p) {
+        if (Number(p.debe_cambiar_contrasena) === 1) return 'Debe cambiarla al ingresar';
+        if (p.contrasena_cambiada) {
+            const [y, m, d] = String(p.contrasena_cambiada).split(' ')[0].split('-');
+            return `Cambiada el ${d}/${m}/${y}`;
+        }
+        return '—';
+    }
+    function escHtml(t) {
+        return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function pedirConfirmacionRestablecer(p) {
+        const pie = document.getElementById('pieDetalle');
+        if (!pie) return;
+        pie.innerHTML = `
+            <p style="margin:0 0 10px;font-size:13px;color:#45505c;line-height:1.5;">
+                ¿Restablecer la contraseña de <b>${escHtml(p.nombre)} ${escHtml(p.apellidos)}</b>?
+                Se generará una contraseña temporal y deberá cambiarla al ingresar.
+            </p>
+            <button type="button" class="btn-principal" id="btnConfirmarRestablecer">Sí, restablecer</button>
+            <button type="button" class="btn-secundario" id="btnCancelarRestablecer" style="margin-left:8px;">Cancelar</button>`;
+        document.getElementById('btnCancelarRestablecer').addEventListener('click', () => mostrarDetalle(p));
+        document.getElementById('btnConfirmarRestablecer').addEventListener('click', () => restablecerContrasena(p));
+    }
+    function restablecerContrasena(p) {
+        const datos = new FormData();
+        datos.append('accion', 'restablecer_contrasena');
+        datos.append('id_usuario', p.id_usuario);
+        fetch('../CONTROLADORES/controlador_personal.php', { method: 'POST', body: datos })
+            .then(res => res.json())
+            .then(r => {
+                if (!r.success) { mostrarMensajeSistema(r.mensaje || 'No se pudo restablecer la contraseña', 'error'); mostrarDetalle(p); return; }
+                return fetch(`../CONTROLADORES/controlador_personal.php?accion=ver&id=${p.id_usuario}`)
+                    .then(res => res.json())
+                    .then(actualizado => mostrarDetalle(actualizado, true, { codigo: r.codigo, contrasena: r.contrasena }));
+            })
+            .catch(err => { console.error(err); mostrarMensajeSistema('No se pudo restablecer la contraseña', 'error'); });
     }
 
     // =====================================================

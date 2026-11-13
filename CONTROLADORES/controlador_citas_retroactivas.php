@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Citas de fechas pasadas (historial). Acceso: sesion + modulo Citas + el permiso "Registrar citas de fechas pasadas"
 // (por defecto solo el Administrador; se puede dar a una persona concreta en Configuracion > Permisos por usuario).
 // Si incluye pagos, ademas exige los permisos de Cobros (registrar y registrar con fecha pasada).

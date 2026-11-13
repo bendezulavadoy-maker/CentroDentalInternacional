@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 require_once '../CONFIG/permisos.php';          // sesion obligatoria y motor de permisos
 require_once '../CONFIG/bitacora.php';
 require_once '../MODELOS/modelo_atenciones.php';

@@ -1,7 +1,18 @@
 <?php
 // Solo usuarios con sesion iniciada y permiso sobre el modulo Personal
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 require_once '../CONFIG/requerir_sesion_api.php';
 requerirPermisoApi('personal');
+require_once '../CONFIG/permisos.php';
+require_once '../CONFIG/bitacora.php';
+require_once '../CONFIG/contrasenas.php';
+require_once '../MODELOS/modelo_contrasena.php';
+
+// El codigo cifrado de la contrasena NUNCA debe salir del servidor
+function sinContrasena($fila) {
+    if (is_array($fila)) { unset($fila['contrasena']); }
+    return $fila;
+}
 
 require_once '../MODELOS/modelo_personal.php';
 $modelo = new ModeloPersonal();
@@ -186,13 +197,50 @@ switch ($accion) {
 
     // Listar personal
     case 'listar':
-        echo json_encode($modelo->listarPersonal());
+        echo json_encode(array_map('sinContrasena', $modelo->listarPersonal()));
         break;
 
     // Ver detalle
     case 'ver':
-        $id = $_GET['id'] ?? 0;
-        echo json_encode($modelo->verPersonal($id));
+        $id = (int)($_GET['id'] ?? 0);
+        $persona = sinContrasena($modelo->verPersonal($id));
+        if (is_array($persona)) {
+            $persona['es_mi_cuenta'] = ($id === (int)$_SESSION['usuario']['id_usuario']);
+            $persona['puede_restablecer_contrasena'] = Permisos::puede('personal.restablecer_contrasena');
+        }
+        echo json_encode($persona);
+        break;
+
+    // Restablecer la contrasena de otra persona: queda una clave temporal que debe cambiar al ingresar
+    case 'restablecer_contrasena':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'mensaje' => 'Método no permitido']);
+            break;
+        }
+        Permisos::requerir('personal.restablecer_contrasena');
+        $id = (int)($_POST['id_usuario'] ?? 0);
+        if ($id <= 0) {
+            echo json_encode(['success' => false, 'mensaje' => 'Persona no válida']);
+            break;
+        }
+        if ($id === (int)$_SESSION['usuario']['id_usuario']) {
+            echo json_encode(['success' => false, 'mensaje' => 'Para tu propia cuenta usa «Contraseña» en la parte superior.']);
+            break;
+        }
+        $mc = new ModeloContrasena();
+        $objetivo = $mc->obtenerUsuario($id);
+        if (!$objetivo) {
+            echo json_encode(['success' => false, 'mensaje' => 'La persona no existe']);
+            break;
+        }
+        $temporal = Contrasenas::generarTemporal();
+        if (!$mc->guardarRestablecimiento($id, Contrasenas::cifrar($temporal))) {
+            echo json_encode(['success' => false, 'mensaje' => 'No se pudo restablecer la contraseña']);
+            break;
+        }
+        registrarBitacora('personal.restablecer_contrasena', 'usuario', $id, null, ['codigo_usuario' => $objetivo['codigo_usuario']]);
+        echo json_encode(['success' => true, 'codigo' => $objetivo['codigo_usuario'], 'contrasena' => $temporal]);
         break;
 
     // Editar personal

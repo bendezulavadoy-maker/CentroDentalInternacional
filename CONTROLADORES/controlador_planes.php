@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/compuerta_contrasena.php';   // quien debe cambiar su contraseña no avanza
 // Ficha del plan de tratamiento. Ver: cualquier usuario con sesion (igual que el resto de Atenciones).
 // Editar: permisos "planes.editar" (notas, estado, fecha) y "planes.editar_costos" (dinero). Todo cambio queda en la bitacora.
 require_once '../CONFIG/permisos.php';

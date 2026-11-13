@@ -87,6 +87,10 @@ foreach ($modulosVisibles as $clave => $info) {
                 <i class="ti ti-user"></i>
             <?php endif; ?>
         </div>
+        <a href="vista_cambiar_contrasena.php" class="btn-salir" title="Cambiar mi contraseña">
+            <i class="ti ti-key" style="font-size:15px;"></i>
+            <span>Contraseña</span>
+        </a>
         <a href="../CONTROLADORES/controlador_cerrar_sesion.php" class="btn-salir">
             <i class="ti ti-logout" style="font-size:15px;"></i>
             <span>Salir</span>

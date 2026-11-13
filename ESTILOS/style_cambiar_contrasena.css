@@ -1,0 +1,17 @@
+/* Cambiar contraseña: reutiliza el aspecto de la pantalla de ingreso (style_inicio_sesion.css) */
+.contenedor-cambio { width: 400px; }
+.aviso-cambio { margin: 0 0 18px; padding: 11px 13px; border-left: 3px solid var(--azul, #2a4d8f); background: var(--azul-light, #eef2fb); border-radius: 0 4px 4px 0; font-size: 12.5px; line-height: 1.5; color: #2c3a4d; }
+.campo-clave { position: relative; }
+.campo-clave input[type="password"], .campo-clave input[type="text"] { width: 100%; padding: 10px 70px 10px 12px; border: 0.5px solid #ccd3d1; border-radius: 4px; font-size: 13.5px; font-family: 'Inter', sans-serif; box-sizing: border-box; background: #fafcfc; }
+.campo-clave input:focus { outline: none; border-color: var(--azul, #2a4d8f); background: #fff; }
+.ver-clave { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: auto; margin: 0; padding: 4px 8px; background: none; border: none; color: var(--azul, #2a4d8f); font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+.ver-clave:hover { text-decoration: underline; background: none; }
+.reglas-clave { list-style: none; margin: 4px 0 14px; padding: 0; font-size: 12px; color: #7f8c8d; }
+.reglas-clave li { position: relative; padding: 3px 0 3px 22px; }
+.reglas-clave li::before { content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #c3cad2; box-sizing: border-box; }
+.reglas-clave li.cumple { color: #2c3a4d; }
+.reglas-clave li.cumple::before { border-color: var(--azul, #2a4d8f); background: var(--azul, #2a4d8f); box-shadow: inset 0 0 0 2px #fff; }
+.mensaje-ok { margin: 0 0 12px; font-size: 13px; color: #1f6f4a; }
+#btnGuardar:disabled { opacity: .5; cursor: not-allowed; }
+.enlace-volver { display: block; margin-top: 16px; text-align: center; font-size: 12.5px; color: var(--azul, #2a4d8f); text-decoration: none; }
+.enlace-volver:hover { text-decoration: underline; }
