@@ -11,76 +11,74 @@
                 </button>
 
                 <div class="sidebar-paciente-contenido">
-                    <div class="avatar-paciente-sidebar">
-                        <img id="fotoPaciente" src="../IMAGENES/perfiles_pacientes/default.png" alt="Foto del paciente">
-                    </div>
-                    <h3 class="nombre-paciente" id="nombrePaciente">---</h3>
-                    <p class="dni-paciente-sidebar"><span id="tipoDocPaciente">DNI</span> <span id="dniPaciente">---</span></p>
-                    <p class="responsable-paciente-sidebar" id="lineaResponsable" style="display:none;">Odontólogo responsable: <span id="doctorResponsable">---</span></p>
-
-                    <div class="datos-sidebar-paciente">
-                        <div class="dato-sidebar"><span id="sexoEdadPaciente">---</span></div>
-                        <div class="dato-sidebar"><i class="ti ti-phone"></i> <span id="telefonoPaciente">---</span></div>
-                        <div class="dato-sidebar"><i class="ti ti-mail"></i> <span id="correoPaciente">---</span></div>
-                    </div>
-
-                    <div id="contenedorMensajeCumpleanos" class="contenedor-mensaje-cumpleanos"></div>
-
-                    <button id="btnGestionarAlergias" class="btn-ver-alergias">Ver alergias</button>
-                    <button id="btnGenerarPDF" class="btn-generar-pdf-sidebar" title="Generar Historia Clínica en PDF">
-                        <i class="ti ti-file-type-pdf"></i> Generar PDF
-                    </button>
-
-                    <!-- Información del apoderado (solo si existe) -->
-                    <div id="infoApoderado" class="info-apoderado-seccion" style="display:none;">
-                        <h4>Apoderado</h4>
-                        <div class="grid-datos-apoderado">
-                            <div class="dato-item">
-                                <span class="dato-label">Nombre:</span>
-                                <span class="dato-valor" id="nombreApoderado">---</span>
-                            </div>
-                            <div class="dato-item">
-                                <span class="dato-label">Teléfono:</span>
-                                <span class="dato-valor" id="telefonoApoderado">---</span>
-                            </div>
-                            <div class="dato-item">
-                                <span class="dato-label">Parentesco:</span>
-                                <span class="dato-valor" id="tipoFamiliarApoderado">---</span>
-                            </div>
+                    <!-- Cabecera azul con el paciente -->
+                    <div class="sp-cabecera">
+                        <div class="avatar-paciente-sidebar">
+                            <img id="fotoPaciente" src="../IMAGENES/perfiles_pacientes/default.png" alt="Foto del paciente">
+                            <span id="inicialesPaciente" class="sp-iniciales" style="display:none;"></span>
                         </div>
+                        <h3 class="nombre-paciente" id="nombrePaciente">---</h3>
+                        <p class="dni-paciente-sidebar"><span id="tipoDocPaciente">DNI</span> <span id="dniPaciente">---</span></p>
+                        <p class="responsable-paciente-sidebar" id="lineaResponsable" style="display:none;">Odontólogo responsable: <span id="doctorResponsable"></span></p>
+                        <p class="sp-sexoedad"><span id="sexoEdadPaciente">---</span></p>
+                        <div id="contenedorMensajeCumpleanos" class="contenedor-mensaje-cumpleanos"></div>
                     </div>
 
-                    <div id="avisoSoloLectura" class="aviso-solo-lectura" style="display:none;"></div>
+                    <div class="sp-cuerpo">
+                        <div class="datos-sidebar-paciente">
+                            <div class="dato-sidebar"><svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><span id="telefonoPaciente">---</span></div>
+                            <div class="dato-sidebar"><svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><span id="correoPaciente">---</span></div>
+                        </div>
 
-                    <p class="titulo-checklist-sidebar">Historia clínica</p>
-                    <div class="checklist-sidebar">
-                        <div class="check-item-sidebar completo no-clic" data-seccion="filiacion" title="Se completa al registrar al paciente">
-                            <span class="check-texto">Filiación</span>
-                            <span class="check-icono">✓</span>
+                        <div class="sp-botones">
+                            <button id="btnGestionarAlergias" class="btn-ver-alergias"><svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span class="sp-txt">Alergias</span></button>
+                            <button id="btnGenerarPDF" class="btn-generar-pdf-sidebar" title="Generar Historia Clínica en PDF"><svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg><span class="sp-txt">PDF</span></button>
                         </div>
-                        <div class="check-item-sidebar" data-seccion="motivo_consulta">
-                            <span class="check-texto">Motivo de Consulta</span>
-                            <span class="check-icono">–</span>
+
+                        <!-- Información del apoderado (solo si existe) -->
+                        <div id="infoApoderado" class="info-apoderado-seccion" style="display:none;">
+                            <h4>Apoderado</h4>
+                            <div class="sp-apod">
+                                <span class="sp-apod-avatar" id="inicialesApoderado">--</span>
+                                <div><b class="sp-apod-nombre" id="nombreApoderado">---</b><small id="tipoFamiliarApoderado">---</small></div>
+                            </div>
+                            <div class="sp-apod-tel"><svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><span id="telefonoApoderado">---</span></div>
                         </div>
-                        <div class="check-item-sidebar" data-seccion="antecedentes_personales">
-                            <span class="check-texto">Antec. Personales</span>
-                            <span class="check-icono">–</span>
-                        </div>
-                        <div class="check-item-sidebar" data-seccion="antecedentes_familiares">
-                            <span class="check-texto">Antec. Familiares</span>
-                            <span class="check-icono">–</span>
-                        </div>
-                        <div class="check-item-sidebar" data-seccion="examen_general">
-                            <span class="check-texto">Exámen general</span>
-                            <span class="check-icono">–</span>
-                        </div>
-                        <div class="check-item-sidebar" data-seccion="examen_extraoral">
-                            <span class="check-texto">Extraoral</span>
-                            <span class="check-icono">–</span>
-                        </div>
-                        <div class="check-item-sidebar" data-seccion="examen_intraoral">
-                            <span class="check-texto">Intraoral</span>
-                            <span class="check-icono">–</span>
+
+                        <div id="avisoSoloLectura" class="aviso-solo-lectura" style="display:none;"></div>
+
+                        <div class="sp-hc-cab"><p class="titulo-checklist-sidebar">Historia clínica</p><b id="hcPorcentaje">0%</b></div>
+                        <p class="sp-hc-sub" id="hcResumen">0 de 7 secciones completas</p>
+                        <div class="sp-barra"><div id="hcBarra" style="width:0%"></div></div>
+                        <div class="checklist-sidebar">
+                            <div class="check-item-sidebar completo no-clic" data-seccion="filiacion" title="Se completa al registrar al paciente">
+                                <span class="check-texto">Filiación</span>
+                                <span class="check-icono">✓</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="motivo_consulta">
+                                <span class="check-texto">Motivo de consulta</span>
+                                <span class="check-icono">–</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="antecedentes_personales">
+                                <span class="check-texto">Antecedentes personales</span>
+                                <span class="check-icono">–</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="antecedentes_familiares">
+                                <span class="check-texto">Antecedentes familiares</span>
+                                <span class="check-icono">–</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="examen_general">
+                                <span class="check-texto">Examen general</span>
+                                <span class="check-icono">–</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="examen_extraoral">
+                                <span class="check-texto">Examen extraoral</span>
+                                <span class="check-icono">–</span>
+                            </div>
+                            <div class="check-item-sidebar" data-seccion="examen_intraoral">
+                                <span class="check-texto">Examen intraoral</span>
+                                <span class="check-icono">–</span>
+                            </div>
                         </div>
                     </div>
                 </div>

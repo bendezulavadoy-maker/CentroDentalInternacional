@@ -56,14 +56,21 @@
 
     // ── Buzón ─────────────────────────────────────────────────────
     function cargarBuzon() {
-        fetch(`${CTRL}?accion=listar_buzon`)
+        // Por defecto solo pacientes con saldo pendiente; la casilla muestra tambien a los que no deben nada; el buscador filtra
+        const q = (document.getElementById('cobrosBuscar')?.value || '').trim();
+        const verTodos = !!document.getElementById('cobrosVerTodos')?.checked;
+        const params = new URLSearchParams({ accion: 'listar_buzon' });
+        if (verTodos) params.set('todos', '1');
+        if (q) params.set('q', q);
+        fetch(`${CTRL}?${params.toString()}`)
             .then(r => r.json())
             .then(lista => {
                 const cont = document.getElementById('cobrosBuzonLista');
+                if (!Array.isArray(lista)) { cont.innerHTML = '<p class="cobros-cargando">No se pudo cargar la lista</p>'; return; }
                 document.getElementById('cobroContador').textContent = lista.length;
 
                 if (!lista.length) {
-                    cont.innerHTML = '<p class="cobros-cargando">Sin cobros pendientes</p>';
+                    cont.innerHTML = `<p class="cobros-cargando">${(q || verTodos) ? 'Sin resultados' : 'Sin cobros pendientes'}</p>`;
                     return;
                 }
 
@@ -72,7 +79,7 @@
                         <div class="cobros-pac-nombre">${esc(p.nombre_paciente)}</div>
                         <div class="cobros-pac-meta">
                             <span>${esc(p.tipo_documento_abrev || 'DNI')} ${esc(p.nro_documento_paciente)}</span>
-                            <span class="cobros-pac-badge">${p.total_informes} informe${p.total_informes > 1 ? 's' : ''}</span>
+                            <span class="${Number(p.pendiente) > 0.004 ? 'cobros-pac-deuda' : 'cobros-pac-badge'}">${Number(p.pendiente) > 0.004 ? 'Debe ' + fmt(p.pendiente) : 'Sin deuda'}</span>
                         </div>
                     </div>`).join('');
 
@@ -193,7 +200,7 @@
         if (data.deudas_anteriores && data.deudas_anteriores.length) {
             data.deudas_anteriores.forEach(deuda => {
                 html += `<div class="cobros-seccion cobros-sec-deuda">
-                    <p class="cobros-sec-titulo">Deuda anterior — ${deuda.nombre_plan}</p>
+                    <p class="cobros-sec-titulo">Deuda anterior — ${esc(deuda.nombre_plan || 'servicios de citas anteriores')}</p>
                     <p class="cobros-sec-nota">Estos montos deben saldarse antes de registrar el cobro de la cita actual.</p>`;
 
                 // Sesiones anteriores con deuda
@@ -275,7 +282,7 @@
                 const pend = pendiente(q.cuota_inicial, q.pagado);
                 html += `<div class="cobros-seccion">
                     <p class="cobros-sec-titulo">Cuota inicial pendiente — ${esc(q.nombre_plan)}</p>
-                    <p class="cobros-sec-nota">La cuota inicial del plan se puede cobrar en cualquier momento y no bloquea el cobro de la cita actual.</p>`;
+                    <p class="cobros-sec-nota cobros-nota-info">La cuota inicial del plan se puede cobrar en cualquier momento y no bloquea el cobro de la cita actual.</p>`;
                 html += rowsHeader('Plan');
                 html += inputFila('Cuota inicial', q.cuota_inicial, q.pagado, pend,
                                   { tipo: 'cuota_inicial', 'id-paciente-plan': q.id_paciente_plan }, false, 'cobros-input-plan');
@@ -298,8 +305,16 @@
                 html += `<div class="cobros-seccion ${claseSeccion}">
                     <p class="cobros-sec-titulo">${etiqueta} — ${fmtFecha(cita.fecha)} ${cita.hora ? cita.hora.substring(0,5) : ''}</p>`;
 
+                // ¿esta cita tiene algo por cobrar? (si ya esta toda pagada, no tiene sentido hablar de "habilitar el cobro")
+                const tienePendiente =
+                    (cita.servicios || []).some(sv => pendiente(sv.subtotal, sv.pagado) > 0) ||
+                    (cita.sesion && pendiente(cita.sesion.costo_sesion, cita.sesion.pagado) > 0) ||
+                    (cita.aparatologia_sep || []).some(ap => pendiente(parseFloat(ap.precio_acordado) * parseInt(ap.cantidad || 1), ap.pagado) > 0);
+
                 if (!esCitaActual) {
                     html += `<p class="cobros-sec-nota">Salda esta deuda antes de cobrar la cita actual.</p>`;
+                } else if (!tienePendiente) {
+                    html += `<p class="cobros-sec-nota cobros-nota-ok">Esta cita ya está pagada por completo.</p>`;
                 } else if (hayDeudas) {
                     html += `<p class="cobros-sec-nota cobros-nota-bloqueada">Salda primero las deudas anteriores para habilitar este cobro.</p>`;
                 }
@@ -384,7 +399,7 @@
             <span class="cobros-fila-input">
                 <input type="number" step="0.01" min="0" max="${pend}"
                        class="cobros-monto-input ${claseExtra}" ${dataStr}
-                       placeholder="${pend > 0 && !forzarDisabled ? pend.toFixed(2) : '—'}" ${disabled}>
+                       placeholder="${pend <= 0 ? (parseFloat(total || 0) <= 0 ? 'Sin costo' : 'Pagado') : (forzarDisabled ? 'Bloqueado' : pend.toFixed(2))}" ${disabled}>
             </span>
         </div>`;
     }
@@ -436,7 +451,7 @@
                 totalGlobal += saldoPlan;
 
                 html += `<div class="cobros-seccion">
-                    <p class="cobros-sec-titulo">Plan: ${plan.nombre_plan}</p>
+                    <p class="cobros-sec-titulo">Plan: ${esc(plan.nombre_plan)}</p>
                     <div class="cobros-fila header-fila">
                         <span>Concepto</span><span>Total</span><span>Pagado</span><span>Saldo</span>
                     </div>`;
@@ -668,6 +683,9 @@
     }
 
     // ── Listeners ─────────────────────────────────────────────────
+    let temporizadorBuzon = null;
+    document.getElementById('cobrosBuscar')?.addEventListener('input', () => { clearTimeout(temporizadorBuzon); temporizadorBuzon = setTimeout(cargarBuzon, 300); });
+    document.getElementById('cobrosVerTodos')?.addEventListener('change', cargarBuzon);
     document.getElementById('btnConfirmarPago')?.addEventListener('click', confirmarPagos);
     document.getElementById('btnCancelarPago')?.addEventListener('click', () => {
         document.getElementById('modalConfirmarPago').style.display = 'none';

@@ -65,6 +65,19 @@ class Permisos {
                     'pacientes.importar'            => ['titulo' => 'Importar pacientes desde Excel',   'por_paciente' => false],
                 ],
             ],
+            'citas' => [
+                'titulo' => 'Citas',
+                'acciones' => [
+                    'citas.registrar_retroactiva' => ['titulo' => 'Registrar citas de fechas pasadas', 'por_paciente' => false],
+                ],
+            ],
+            'planes' => [
+                'titulo' => 'Planes de tratamiento',
+                'acciones' => [
+                    'planes.editar'        => ['titulo' => 'Editar el plan (notas, estado, fecha estimada de fin)', 'por_paciente' => true],
+                    'planes.editar_costos' => ['titulo' => 'Editar costos, cuotas y corregir costos del plan',       'por_paciente' => false],
+                ],
+            ],
             'cobros' => [
                 'titulo' => 'Cobros',
                 'acciones' => [

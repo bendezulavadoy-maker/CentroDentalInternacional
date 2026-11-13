@@ -7,6 +7,10 @@
             <h2 class="cobros-titulo">Cobros pendientes</h2>
             <span class="cobros-contador" id="cobroContador">—</span>
         </div>
+        <div class="cobros-buzon-filtros">
+            <input type="search" id="cobrosBuscar" class="cobros-input" maxlength="60" placeholder="Buscar por nombre o documento...">
+            <label class="cobros-check"><input type="checkbox" id="cobrosVerTodos"> Mostrar también pacientes sin deuda</label>
+        </div>
         <div class="cobros-buzon-lista" id="cobrosBuzonLista">
             <p class="cobros-cargando">Cargando...</p>
         </div>

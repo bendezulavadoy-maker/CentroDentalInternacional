@@ -313,12 +313,20 @@
                     a => a.incluida_en_costo == 0 && String(a.id_cita) !== String(citaActual.id_cita)
                 );
 
-                const costoSesion = (plan.tipo === 'costo_total' && plan.en_cuotas == 0)
-                    ? 0 : parseFloat(plan.costo_estimado_sesion || 0);
+                // el costo de ESTA sesion lo decide el servidor con la regla unica del plan (pasadas las cuotas, no se cobra)
+                const costoSesion = data.costo_sesion_actual !== undefined
+                    ? parseFloat(data.costo_sesion_actual)
+                    : ((plan.tipo === 'costo_total' && plan.en_cuotas == 0) ? 0 : parseFloat(plan.costo_estimado_sesion || 0));
 
                 let html = `<div class="inf-plan-resumen" id="inf-resumenPlanExistente">`;
 
                 html += `<div class="inf-plan-header"> <span class="inf-plan-nombre">${plan.nombre_plan}</span> <span class="inf-plan-tipo">${plan.tipo === 'costo_total' ? 'Costo total' : 'Por sesión'}</span> </div>`;
+
+                // Aviso: que costo lleva esta sesion y por que (sesion adicional, cuota k de N, etc.)
+                if (data.aviso && data.aviso.mensaje) {
+                    const escAv = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    html += `<div class="inf-plan-aviso inf-plan-aviso-${data.aviso.nivel === 'aviso' ? 'aviso' : 'info'}" id="inf-avisoPlan">${escAv(data.aviso.mensaje)}</div>`;
+                }
 
                 // Info plan
                 html += `<div class="inf-plan-bloque">`;

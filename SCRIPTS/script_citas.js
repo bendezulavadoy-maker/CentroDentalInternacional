@@ -1818,6 +1818,17 @@ function configurarEventosEstadisticas() {
             .catch(() => {});
     }
 
+    // Registrar citas de fechas pasadas: el boton solo existe si el usuario tiene el permiso
+    window.recargarListaCitas = listarCitas;
+    if (document.getElementById('btnCitaPasada')) {
+        const rutaPasada = '../SCRIPTS/script_citas_retroactivas.js';
+        const previo = document.querySelector(`script[src="${rutaPasada}"]`);
+        if (previo) previo.remove();
+        const scriptPasada = document.createElement('script');
+        scriptPasada.src = rutaPasada;
+        scriptPasada.onload = () => { if (typeof iniciarCitasRetroactivas === 'function') iniciarCitasRetroactivas(); };
+        document.body.appendChild(scriptPasada);
+    }
 } // ← Cierre de iniciarModuloCitas()
 
 // =====================================================

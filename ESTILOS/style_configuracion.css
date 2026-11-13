@@ -686,6 +686,40 @@
 #matrizUsuario tbody tr:last-child td { border-bottom: none; }
 #matrizUsuario .celda-rol { color: #7f8c8d; }
 #matrizUsuario .celda-resultado { font-weight: 600; }
-#matrizUsuario .celda-resultado.cambia { color: #2a4d8f; background: #eef2fb; }
+#matrizUsuario .celda-resultado.cambia { color: #2c3e50; font-weight: 700; }
 .sel-excepcion { min-width: 170px; padding: 6px 8px; font-size: 13px; border: 0.5px solid #cfd6e0; border-radius: 6px; background: white; color: #2c3e50; }
-.sel-excepcion.cambiado { border-color: #2a4d8f; background: #eef2fb; }
+.sel-excepcion.cambiado { border-color: #2a4d8f; background: #fff; }
+
+/* Tabla de metodos de pago: mismo aspecto que las demas tablas de Configuracion */
+#tablaMetodosPago {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 14px;
+    background: white;
+    border: 0.5px solid #e0e4ea;
+    border-radius: 10px;
+    overflow: hidden;
+}
+#tablaMetodosPago th, #tablaMetodosPago td {
+    padding: 11px 16px;
+    border-bottom: 0.5px solid #eef0f3;
+    text-align: left;
+}
+#tablaMetodosPago thead {
+    background: #f7f8fa;
+}
+#tablaMetodosPago thead th {
+    font-size: 11px;
+    font-weight: 500;
+    color: #5a6475;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 0.5px solid #e0e4ea;
+}
+#tablaMetodosPago tbody tr:hover {
+    background: #fafbfc;
+}
+#tablaMetodosPago tbody tr:last-child td {
+    border-bottom: none;
+}

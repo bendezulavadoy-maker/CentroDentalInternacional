@@ -26,7 +26,7 @@ function iniciarModuloHistoriaClinica() {
         if (aviso) {
             aviso.style.display = soloLectura ? 'block' : 'none';
             aviso.textContent = soloLectura
-                ? 'Solo lectura: no tienes permiso para editar la historia clínica de este paciente.' + (responsable ? ' Odontólogo responsable: ' + responsable + '.' : '')
+                ? 'Modo solo lectura. No tienes permiso para editar la historia clínica de este paciente.' + (responsable ? ' Odontólogo responsable: ' + responsable + '.' : '')
                 : '';
         }
     }
@@ -209,7 +209,15 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
 
         // Foto
         const rutaFoto = paciente.foto ? `../${paciente.foto}` : '../IMAGENES/perfiles_pacientes/default.png';
-        document.getElementById('fotoPaciente').src = rutaFoto;
+        const imgFoto = document.getElementById('fotoPaciente'), inicialesEl = document.getElementById('inicialesPaciente');
+        if (inicialesEl) {   // sin foto (o si el archivo no carga) se muestran las iniciales; con foto, la foto
+            const ini = ((paciente.nombre || '').trim()[0] || '') + ((paciente.apellido || '').trim()[0] || '');
+            inicialesEl.textContent = ini.toUpperCase();
+            const verIniciales = () => { imgFoto.style.display = 'none'; inicialesEl.style.display = 'flex'; };
+            imgFoto.onerror = verIniciales;
+            if (paciente.foto) { inicialesEl.style.display = 'none'; imgFoto.style.display = ''; } else verIniciales();
+        }
+        imgFoto.src = rutaFoto;
 
         // Datos básicos
         document.getElementById('nombrePaciente').textContent = `${paciente.nombre} ${paciente.apellido}`;
@@ -222,7 +230,7 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         }
         const edad = paciente.fecha_nacimiento ? calcularEdad(paciente.fecha_nacimiento) : 'N/A';
         const sexo = paciente.nombre_sexo || '';
-        document.getElementById('sexoEdadPaciente').textContent = sexo ? `${sexo}, ${edad}` : edad;
+        document.getElementById('sexoEdadPaciente').textContent = sexo ? `${sexo} • ${edad}` : edad;
         document.getElementById('telefonoPaciente').textContent = paciente.telefono || 'N/A';
         document.getElementById('correoPaciente').textContent = paciente.correo || 'N/A';
 
@@ -240,6 +248,8 @@ const btnGenerarPDF = document.getElementById('btnGenerarPDF');
         const infoApoderado = document.getElementById('infoApoderado');
         if (paciente.apoderado) {
             document.getElementById('nombreApoderado').textContent = `${paciente.apoderado.nombre} ${paciente.apoderado.apellido}`;
+            const iniApod = document.getElementById('inicialesApoderado');
+            if (iniApod) iniApod.textContent = (((paciente.apoderado.nombre || '').trim()[0] || '') + ((paciente.apoderado.apellido || '').trim()[0] || '')).toUpperCase() || '--';
             document.getElementById('telefonoApoderado').textContent = paciente.apoderado.telefono || 'N/A';
             document.getElementById('tipoFamiliarApoderado').textContent = paciente.apoderado.tipo_familiar || 'N/A';
             infoApoderado.style.display = 'block';
@@ -314,15 +324,16 @@ function generarPDFHistoriaClinica() {
         const btnAlergias = document.getElementById('btnGestionarAlergias');
         if (!btnAlergias) return;
 
+        const txtAlergias = btnAlergias.querySelector('.sp-txt') || btnAlergias;
         if (alergias.length === 0) {
-            btnAlergias.textContent = 'Sin alergias';
+            txtAlergias.textContent = 'Sin alergias';
             btnAlergias.classList.remove('con-alergias');
             btnAlergias.title = '';
             return;
         }
 
         const nombres = alergias.map(a => a.medicamento).join(', ');
-        btnAlergias.textContent = `Ver alergias (${alergias.length})`;
+        txtAlergias.textContent = `${alergias.length} ${alergias.length === 1 ? 'alergia' : 'alergias'}`;
         btnAlergias.classList.add('con-alergias');
         btnAlergias.title = nombres;
     }
@@ -817,6 +828,13 @@ function cargarModuloCitas() {
             icono.textContent = completo ? '✓' : '–';
             item.classList.toggle('completo', completo);
         });
+        // avance de la historia clinica (todas las secciones del panel, incluida la filiacion)
+        const todos = document.querySelectorAll('.check-item-sidebar'), hechos = document.querySelectorAll('.check-item-sidebar.completo').length;
+        const pct = todos.length ? Math.round(hechos / todos.length * 100) : 0;
+        const elPct = document.getElementById('hcPorcentaje'), elRes = document.getElementById('hcResumen'), elBar = document.getElementById('hcBarra');
+        if (elPct) elPct.textContent = pct + '%';
+        if (elRes) elRes.textContent = `${hechos} de ${todos.length} secciones completas`;
+        if (elBar) elBar.style.width = pct + '%';
     }
 
     // Prellenar los campos del modal con lo que ya está guardado
@@ -1177,7 +1195,8 @@ function cargarModuloCitas() {
             icono = '';
         }
         
-        const resultado = `<span class="mensaje-cumpleanos">${icono} ${mensaje}</span>`;
+        const ICONO_CUMPLE = '<svg class="sp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3"/><path d="M7 4h.01M12 4h.01M17 4h.01"/></svg>';
+        const resultado = `<span class="mensaje-cumpleanos">${ICONO_CUMPLE}${mensaje}</span>`;
         return resultado;
     }
 

@@ -494,3 +494,7 @@
 
 .inf-badge.actual { background: #e8f0fb; color: #2a4d8f; }
 .inf-badge.nueva  { background: #e9f7ef; color: #27ae60; }
+
+/* Aviso del plan: que costo lleva la sesion y por que (sobrio: solo una linea fina al costado) */
+.inf-plan-aviso { margin: 0 0 12px; padding: 2px 0 2px 11px; border-left: 2px solid #d3d9e1; font-size: 13px; line-height: 1.5; color: #45505c; }
+.inf-plan-aviso-aviso { border-left-color: #b4483c; color: #2c3e50; }

@@ -5,15 +5,29 @@ class ModeloCobros
 {
     private $con;
 
-    public function __construct()
+    /** $con opcional: permite usar la MISMA conexion (y transaccion) de quien lo llama, p. ej. al registrar una cita pasada con sus pagos */
+    public function __construct($con = null)
     {
-        $this->con = (new Conexion())->getConexion();
+        $this->con = $con ?: (new Conexion())->getConexion();
     }
 
     // ── Buzón: un registro por paciente con informes enviados ─────
-    public function listarBuzon()
+    /**
+     * Pacientes con informes enviados. Por defecto SOLO los que tienen saldo pendiente (antes salian todos,
+     * aunque ya no debieran nada). $busqueda filtra por nombre o documento; $soloConDeuda = false los muestra a todos
+     * (para consultar sus pagos). Cada fila trae su 'pendiente', calculado con la misma cuenta que el resumen de saldos.
+     */
+    public function listarBuzon($soloConDeuda = true, $busqueda = '')
     {
         try {
+            $busqueda = trim((string)$busqueda);
+            $where = "ia.estado = 'enviado'";
+            $params = [];
+            if ($busqueda !== '') {
+                $like = '%' . addcslashes($busqueda, '\\%_') . '%';     // se escapan \ % _ para que no actuen como comodines
+                $where .= " AND (CONCAT(p.nombre,' ',p.apellido) LIKE :q OR p.nro_documento LIKE :q)";
+                $params[':q'] = $like;
+            }
             $sql = "
                 SELECT
                     p.id_paciente,
@@ -26,16 +40,38 @@ class ModeloCobros
                 INNER JOIN citas     c ON ia.id_cita    = c.id_cita
                 INNER JOIN pacientes p ON c.id_paciente = p.id_paciente
                 LEFT  JOIN tipo_documento td ON p.id_tipo_documento = td.id_tipo_documento
-                WHERE ia.estado = 'enviado'
+                WHERE $where
                 GROUP BY p.id_paciente, p.nombre, p.apellido, p.nro_documento, td.abreviatura
                 ORDER BY ultimo_envio ASC";
+            $s = $this->con->prepare($sql);
+            $s->execute($params);
+            $filas = $s->fetchAll(PDO::FETCH_ASSOC);
 
-            $s = $this->con->query($sql);
-            return $s->fetchAll(PDO::FETCH_ASSOC);
+            $res = [];
+            foreach ($filas as $f) {
+                $f['pendiente'] = $this->pendienteTotal((int)$f['id_paciente']);
+                if ($soloConDeuda && $f['pendiente'] <= 0.004) continue;
+                $res[] = $f;
+            }
+            return $res;
         } catch (PDOException $e) {
             error_log("listarBuzon: " . $e->getMessage());
             return [];
         }
+    }
+
+    /** Total pendiente del paciente: la misma cuenta que muestra "Resumen de saldos" (servicios sueltos + planes) */
+    public function pendienteTotal($id_paciente)
+    {
+        $r = $this->resumenSaldos($id_paciente);
+        if (empty($r['success'])) return 0.0;
+        $total = (float)($r['servicios']['total'] ?? 0) - (float)($r['servicios']['pagado'] ?? 0);
+        foreach ($r['planes'] as $p) {
+            $total += ((float)$p['cuota_inicial'] - (float)$p['pagado_cuota'])
+                    + ((float)$p['total_ap_sep'] - (float)$p['pagado_ap_sep'])
+                    + ((float)$p['total_sesiones'] - (float)$p['pagado_sesiones']);
+        }
+        return $this->r2($total);
     }
 
     // ── Detalle de cobro por paciente ─────────────────────────────
@@ -568,8 +604,11 @@ class ModeloCobros
     // ── Registrar pagos desde la pantalla de Cobros ──────────────
     public function registrarPagos($pagos, $id_paciente, $registrado_por, array $cab = [])
     {
+        // Si quien llama ya abrio una transaccion (p. ej. una cita pasada con sus pagos), se trabaja dentro de ella:
+        // un error se propaga para que el llamador deshaga TODO. Si no, se abre y cierra una propia como siempre.
+        $propia = !$this->con->inTransaction();
         try {
-            $this->con->beginTransaction();
+            if ($propia) $this->con->beginTransaction();
             $lineas = [];
             foreach ((array)$pagos as $p) {
                 $monto = $this->validarMonto($p['monto'] ?? 0);
@@ -580,12 +619,14 @@ class ModeloCobros
                 $lineas[] = ['tipo_pago' => $p['tipo_pago'], 'campos' => $o['campos'], 'monto' => $monto, 'pendiente' => $o['pendiente'], 'observacion' => $obs !== '' ? $obs : null];
             }
             $r = $this->grabarOperacion($id_paciente, $registrado_por, $cab, $lineas);
-            $this->con->commit();
+            if ($propia) $this->con->commit();
             return ['success' => true] + $r;
         } catch (DomainException $e) {
+            if (!$propia) throw $e;
             if ($this->con->inTransaction()) $this->con->rollBack();
             return ['success' => false, 'mensaje' => $e->getMessage()];
         } catch (Throwable $e) {
+            if (!$propia) throw $e;
             if ($this->con->inTransaction()) $this->con->rollBack();
             error_log("registrarPagos: " . $e->getMessage());
             return ['success' => false, 'mensaje' => 'Error al registrar pagos (no se guardó nada)'];
@@ -757,7 +798,9 @@ class ModeloCobros
     public function resumenSaldos($id_paciente)
     {
         try {
-            // Servicios sueltos
+            // Solo cuenta lo que esta en atenciones ENVIADAS A COBRAR: es lo mismo que ofrece la pestaña Cobro
+            // (una sesion en borrador todavia no es cobrable, y los servicios de una cita con plan si lo son)
+            // Servicios
             $sqlSrv = "
                 SELECT
                     COALESCE(SUM(cs.subtotal), 0) AS total,
@@ -770,8 +813,7 @@ class ModeloCobros
                 INNER JOIN citas c           ON cs.id_cita = c.id_cita
                 INNER JOIN informe_atencion ia ON ia.id_cita = cs.id_cita
                 WHERE c.id_paciente = :id
-                  AND ia.estado = 'enviado'
-                  AND ia.id_paciente_plan IS NULL";
+                  AND ia.estado = 'enviado'";      // todos los servicios de atenciones enviadas, con o sin plan (igual que la pestaña Cobro)
 
             $s = $this->con->prepare($sqlSrv);
             $s->execute([':id' => $id_paciente]);
@@ -788,17 +830,22 @@ class ModeloCobros
                     COALESCE((SELECT SUM(pa.precio_acordado * COALESCE(pa.cantidad,1))
                               FROM paciente_plan_aparatologia pa
                               WHERE pa.id_paciente_plan = pp.id_paciente_plan
-                                AND pa.incluida_en_costo = 0), 0) AS total_ap_sep,
+                                AND pa.incluida_en_costo = 0
+                                AND EXISTS (SELECT 1 FROM informe_atencion ia WHERE ia.id_cita = pa.id_cita AND ia.estado = 'enviado')), 0) AS total_ap_sep,
                     COALESCE((SELECT SUM(pg.monto) FROM pagos pg
                               INNER JOIN paciente_plan_aparatologia pa
                                       ON pg.id_aparatologia_item = pa.id
                               WHERE pa.id_paciente_plan = pp.id_paciente_plan
-                                AND pg.tipo_pago = 'aparatologia'), 0) AS pagado_ap_sep,
-                    COALESCE((SELECT SUM(costo_sesion) FROM plan_sesiones
-                              WHERE id_paciente_plan = pp.id_paciente_plan), 0) AS total_sesiones,
-                    COALESCE((SELECT SUM(monto) FROM pagos
-                              WHERE id_paciente_plan = pp.id_paciente_plan
-                                AND tipo_pago = 'sesion'), 0) AS pagado_sesiones
+                                AND pg.tipo_pago = 'aparatologia'
+                                AND EXISTS (SELECT 1 FROM informe_atencion ia WHERE ia.id_cita = pa.id_cita AND ia.estado = 'enviado')), 0) AS pagado_ap_sep,
+                    COALESCE((SELECT SUM(ps.costo_sesion) FROM plan_sesiones ps
+                              WHERE ps.id_paciente_plan = pp.id_paciente_plan
+                                AND EXISTS (SELECT 1 FROM informe_atencion ia WHERE ia.id_cita = ps.id_cita AND ia.estado = 'enviado')), 0) AS total_sesiones,
+                    COALESCE((SELECT SUM(pg.monto) FROM pagos pg
+                              INNER JOIN plan_sesiones ps ON ps.id_sesion = pg.id_sesion
+                              WHERE ps.id_paciente_plan = pp.id_paciente_plan
+                                AND pg.tipo_pago = 'sesion'
+                                AND EXISTS (SELECT 1 FROM informe_atencion ia WHERE ia.id_cita = ps.id_cita AND ia.estado = 'enviado')), 0) AS pagado_sesiones
                 FROM paciente_planes pp
                 INNER JOIN planes_tratamiento pt ON pp.id_plan = pt.id_plan
                 WHERE pp.id_paciente = :id

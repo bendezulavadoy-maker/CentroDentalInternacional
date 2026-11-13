@@ -1,16 +1,27 @@
-<?php require_once '../CONFIG/verificar_sesion.php'; ?>
+<?php
+require_once '../CONFIG/verificar_sesion.php';
+require_once '../CONFIG/permisos.php';
+// La ventana de "cita pasada" solo existe para quien tiene el permiso (el servidor lo vuelve a exigir)
+$puedeCitaPasada = Permisos::puede('citas.registrar_retroactiva');
+?>
 <link rel="stylesheet" href="../ESTILOS/style_citas.css">
+<?php if ($puedeCitaPasada): ?><link rel="stylesheet" href="../ESTILOS/style_citas_retroactivas.css"><?php endif; ?>
 
 <div class="contenedor-citas">
     <div class="encabezado-citas">
         <h2>Gestión de Citas Odontológicas</h2>
-        <button id="btnNuevaCita" class="btn-principal">Nueva Cita</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <?php if ($puedeCitaPasada): ?>
+            <button id="btnCitaPasada" type="button" class="btn-secundario">Registrar cita pasada</button>
+            <?php endif; ?>
+            <button id="btnNuevaCita" class="btn-principal">Nueva Cita</button>
+        </div>
     </div>
 
     <!-- Listado -->
     <section id="seccionListadoCitas">
         <div class="barra-busqueda-filtros">
-            <div class="grupo-busqueda">
+            <div class="grupo-busqueda"> 
                 <input type="text" id="inputBusqueda"
                        placeholder="Buscar por paciente, doctor o documento..."
                        class="input-busqueda">
@@ -229,5 +240,125 @@
         </form>
     </section>
 </div>
+
+<?php if ($puedeCitaPasada): ?>
+<!-- MODAL: REGISTRAR CITA PASADA (historial) -->
+<div id="modalCitaPasada" class="cp-overlay" style="display:none;">
+    <div class="cp-contenido" role="dialog" aria-modal="true" aria-labelledby="cpTitulo">
+        <div class="cp-encabezado">
+            <h3 id="cpTitulo">Registrar cita pasada</h3>
+            <button type="button" id="cpCerrar" class="cp-cerrar" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="cp-cuerpo">
+            <p class="cp-ayuda">Para cargar atenciones de <strong>fechas anteriores a hoy</strong> (historial). No envía recordatorios, no crea eventos en Google Calendar ni valida horarios. Quedan marcadas como «registradas como pasadas».</p>
+
+            <div class="cp-grupo">
+                <label for="cpPaciente">Paciente <span class="cp-req">*</span></label>
+                <input type="text" id="cpPaciente" autocomplete="off" placeholder="Escriba nombre o documento (mín. 2 letras)">
+                <div id="cpResultadosPaciente" class="cp-lista" style="display:none;"></div>
+                <div id="cpPacienteElegido" class="cp-elegido" style="display:none;"></div>
+            </div>
+
+            <div class="cp-fila">
+                <div class="cp-grupo"><label for="cpFecha">Fecha <span class="cp-req">*</span></label><input type="date" id="cpFecha"></div>
+                <div class="cp-grupo"><label for="cpHora">Hora <span class="cp-req">*</span></label><input type="time" id="cpHora"></div>
+                <div class="cp-grupo"><label for="cpDuracion">Duración (min)</label><input type="number" id="cpDuracion" min="5" max="480" value="30"></div>
+            </div>
+            <div class="cp-fila">
+                <div class="cp-grupo"><label for="cpDoctor">Odontólogo <span class="cp-req">*</span></label><select id="cpDoctor"></select></div>
+                <div class="cp-grupo"><label for="cpSede">Sede <span class="cp-req">*</span></label><select id="cpSede"></select></div>
+            </div>
+            <div class="cp-fila">
+                <div class="cp-grupo"><label for="cpTipoAtencion">Tipo de atención</label><select id="cpTipoAtencion"></select></div>
+                <div class="cp-grupo"><label for="cpEstado">Estado <span class="cp-req">*</span></label><select id="cpEstado"></select></div>
+            </div>
+            <div class="cp-grupo"><label for="cpMotivo">Motivo <span class="cp-req">*</span></label><input type="text" id="cpMotivo" maxlength="1000" placeholder="Ej: Dolor de muela"></div>
+
+            <div id="cpBloqueAtencion">
+                <h4 class="cp-subtitulo">Servicios cobrados</h4>
+                <table class="cp-tabla" id="cpTablaServicios"><thead><tr><th>Servicio</th><th>Cant.</th><th>Precio (S/)</th><th>Subtotal</th><th></th></tr></thead><tbody></tbody></table>
+                <div class="cp-acciones-tabla">
+                    <button type="button" id="cpAgregarServicio" class="cp-btn cp-btn-sec cp-btn-chico">+ Agregar servicio</button>
+                    <span class="cp-total">Subtotal servicios: <strong id="cpTotalServicios">S/ 0.00</strong></span>
+                </div>
+
+                <h4 class="cp-subtitulo">Plan de tratamiento <span class="cp-opc">(ortodoncia, endodoncia, etc.)</span></h4>
+                <div class="cp-radios" id="cpModoPlan">
+                    <label><input type="radio" name="cpModoPlan" value="" checked> Sin plan</label>
+                    <label><input type="radio" name="cpModoPlan" value="existente"> Sesión de un plan existente</label>
+                    <label><input type="radio" name="cpModoPlan" value="nuevo"> Plan nuevo (esta es su primera sesión)</label>
+                </div>
+
+                <div id="cpPlanExistente" style="display:none;">
+                    <div class="cp-fila">
+                        <div class="cp-grupo"><label for="cpPlanSel">Plan del paciente <span class="cp-req">*</span></label><select id="cpPlanSel"></select></div>
+                        <div class="cp-grupo"><label for="cpPlanNumero">N.º de sesión</label><input type="number" id="cpPlanNumero" min="1" max="999" step="1" placeholder="Automático"></div>
+                        <div class="cp-grupo"><label for="cpPlanCostoEx">Costo de la sesión (S/)</label><input type="number" id="cpPlanCostoEx" min="0" step="0.01" placeholder="Según el plan"></div>
+                    </div>
+                    <p id="cpPlanInfo" class="cp-ayuda"></p>
+                </div>
+
+                <div id="cpPlanNuevo" style="display:none;">
+                    <div class="cp-fila">
+                        <div class="cp-grupo"><label for="cpNpPlan">Plan <span class="cp-req">*</span></label><select id="cpNpPlan"></select></div>
+                        <div class="cp-grupo"><label for="cpNpTipo">Tipo de cobro <span class="cp-req">*</span></label>
+                            <select id="cpNpTipo"><option value="por_sesion">Por sesión</option><option value="costo_total">Costo total</option></select></div>
+                        <div class="cp-grupo" id="cpNpGrCostoSesion"><label for="cpNpCostoSesion">Costo por sesión (S/)</label><input type="number" id="cpNpCostoSesion" min="0" step="0.01"></div>
+                        <div class="cp-grupo" id="cpNpGrCostoTotal" style="display:none;"><label for="cpNpCostoTotal">Costo acordado (S/)</label><input type="number" id="cpNpCostoTotal" min="0" step="0.01"></div>
+                    </div>
+                    <div class="cp-fila">
+                        <div class="cp-grupo"><label for="cpNpCuotaIni">Cuota inicial (S/)</label><input type="number" id="cpNpCuotaIni" min="0" step="0.01" value="0"></div>
+                        <div class="cp-grupo" id="cpNpGrCuotas" style="display:none;"><label class="cp-check" style="margin:0 0 4px;"><input type="checkbox" id="cpNpEnCuotas"> Se paga en cuotas</label>
+                            <input type="number" id="cpNpNumCuotas" min="1" max="120" step="1" placeholder="N.º de cuotas" style="display:none;"></div>
+                        <div class="cp-grupo"><label for="cpNpCostoSesionReal">Costo real de la sesión 1 (S/)</label><input type="number" id="cpNpCostoSesionReal" min="0" step="0.01" placeholder="Según el plan"></div>
+                    </div>
+                    <div class="cp-grupo"><label for="cpNpNotas">Notas del plan</label><input type="text" id="cpNpNotas" maxlength="1000"></div>
+                    <p id="cpNpInfo" class="cp-ayuda"></p>
+                </div>
+
+                <div id="cpBloqueAparatologia" style="display:none;">
+                    <h4 class="cp-subtitulo">Aparatología de esta cita</h4>
+                    <table class="cp-tabla" id="cpTablaAparatologia"><thead><tr><th>Pieza</th><th>Cant.</th><th>Precio acordado (S/)</th><th class="cp-col-incl">Incluida en el costo</th><th></th></tr></thead><tbody></tbody></table>
+                    <div class="cp-acciones-tabla"><button type="button" id="cpAgregarAparatologia" class="cp-btn cp-btn-sec cp-btn-chico">+ Agregar aparatología</button></div>
+                </div>
+
+                <label class="cp-check"><input type="checkbox" id="cpConInforme" checked> Registrar también la atención (diagnóstico y tratamiento)</label>
+                <div id="cpCamposInforme">
+                    <div class="cp-grupo"><label for="cpDiagnostico">Diagnóstico</label><textarea id="cpDiagnostico" rows="2" maxlength="2000"></textarea></div>
+                    <div class="cp-grupo"><label for="cpTratamiento">Tratamiento realizado</label><textarea id="cpTratamiento" rows="2" maxlength="2000"></textarea></div>
+                    <div class="cp-grupo"><label for="cpObservaciones">Observaciones</label><textarea id="cpObservaciones" rows="2" maxlength="2000"></textarea></div>
+                    <p class="cp-ayuda">Con la atención registrada, la cita figura en el historial y, si queda saldo, en Cobros.</p>
+                </div>
+
+                <div id="cpResumenCita" class="cp-resumen">
+                    <h4 class="cp-subtitulo" style="margin-top:0;">Resumen de la cita</h4>
+                    <div id="cpResumenLineas"></div>
+                    <div class="cp-resumen-total">Total de la cita: <strong id="cpTotal">S/ 0.00</strong></div>
+                </div>
+
+                <div id="cpBloquePagos">
+                    <h4 class="cp-subtitulo">Pagos recibidos <span class="cp-opc">(con la fecha de la cita)</span></h4>
+                    <table class="cp-tabla" id="cpTablaPagos"><thead><tr><th>Concepto</th><th>Monto (S/)</th><th>Método</th><th>N.º de operación</th><th></th></tr></thead><tbody></tbody></table>
+                    <div class="cp-acciones-tabla">
+                        <button type="button" id="cpAgregarPago" class="cp-btn cp-btn-sec cp-btn-chico">+ Agregar pago</button>
+                        <span class="cp-total">Pagado: <strong id="cpPagado">S/ 0.00</strong> · Pendiente: <strong id="cpPendiente">S/ 0.00</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <p id="cpMensaje" class="cp-mensaje" role="alert" style="display:none;"></p>
+            <div class="cp-acciones">
+                <button type="button" id="cpCancelar" class="cp-btn cp-btn-sec">Cancelar</button>
+                <button type="button" id="cpGuardar" class="cp-btn cp-btn-prim">Registrar cita pasada</button>
+            </div>
+
+            <hr class="cp-separador">
+            <h4 class="cp-subtitulo">Últimas citas pasadas registradas</h4>
+            <div id="cpConfirmarEliminar" class="cp-confirmacion" style="display:none;"></div>
+            <div id="cpRecientes"><p class="cp-ayuda">Cargando...</p></div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <script src="../SCRIPTS/script_citas.js"></script>

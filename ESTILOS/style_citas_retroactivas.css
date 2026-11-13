@@ -1,0 +1,56 @@
+/* =====================================================
+   CITAS PASADAS (historial)
+   ===================================================== */
+   .cp-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(20, 25, 35, .5); align-items: center; justify-content: center; padding: 16px; }
+   .cp-contenido {
+       background: #fff; border-radius: 12px; width: 100%; max-width: 900px; max-height: 94vh; display: flex; flex-direction: column;
+       box-shadow: 0 12px 40px rgba(0, 0, 0, .2); font-family: 'Inter', 'Segoe UI', sans-serif; color: #2c3e50;
+   }
+   .cp-encabezado { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid #e0e4ea; }
+   .cp-encabezado h3 { margin: 0; font-size: 17px; color: #1a2332; }
+   .cp-cerrar { background: none; border: none; font-size: 26px; line-height: 1; color: #7f8c8d; cursor: pointer; padding: 0 4px; }
+   .cp-cuerpo { padding: 16px 22px 22px; overflow-y: auto; }
+   .cp-ayuda { font-size: 12.5px; color: #7f8c8d; line-height: 1.5; margin: 0 0 12px; }
+   .cp-req { color: #c0392b; } .cp-opc { color: #95a5a6; font-size: 11px; font-weight: normal; }
+   .cp-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+   .cp-grupo { margin-bottom: 12px; position: relative; }
+   .cp-grupo label { display: block; font-size: 12.5px; font-weight: 500; margin-bottom: 4px; color: #45505c; }
+   .cp-grupo input, .cp-grupo select, .cp-grupo textarea, .cp-tabla input, .cp-tabla select {
+       width: 100%; box-sizing: border-box; padding: 8px 10px; font-size: 13.5px; border: 0.5px solid #cfd6e0; border-radius: 7px; background: #fff; color: #2c3e50; font-family: inherit;
+   }
+   .cp-lista { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; background: #fff; border: 0.5px solid #cfd6e0; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.12); max-height: 220px; overflow-y: auto; }
+   .cp-item, .cp-item-vacio { padding: 9px 12px; font-size: 13.5px; cursor: pointer; }
+   .cp-item:hover { background: #f1f4f9; } .cp-item small { color: #7f8c8d; margin-left: 6px; } .cp-item-vacio { color: #7f8c8d; cursor: default; }
+   .cp-elegido { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border: 0.5px solid #cfd6e0; border-radius: 8px; font-size: 13.5px; background: #fff; }
+   .cp-link { background: none; border: none; color: #2a4d8f; cursor: pointer; font-size: 12.5px; text-decoration: underline; padding: 0; }
+   .cp-subtitulo { margin: 14px 0 8px; font-size: 14px; color: #1a2332; }
+   .cp-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+   .cp-tabla th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: #5a6475; padding: 6px 8px; border-bottom: 0.5px solid #e0e4ea; }
+   .cp-tabla td { padding: 6px 8px; border-bottom: 0.5px solid #eef0f3; vertical-align: middle; }
+   .cp-tabla-caja { max-height: 240px; overflow: auto; border: 0.5px solid #e0e4ea; border-radius: 8px; }
+   .cp-quitar { background: none; border: none; color: #b03a2e; font-size: 20px; cursor: pointer; line-height: 1; }
+   .cp-acciones-tabla { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+   .cp-total { font-size: 13.5px; }
+   .cp-check { display: flex; gap: 8px; align-items: center; font-size: 13.5px; margin: 6px 0 10px; cursor: pointer; }
+   .cp-check input { width: auto; }
+   .cp-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; }
+   .cp-btn-prim { background: #1a2332; color: #fff; } .cp-btn-prim:hover:not(:disabled) { background: #2a3548; }
+   .cp-btn-sec { background: #fff; color: #45505c; border-color: #d7dce2; } .cp-btn-sec:hover { background: #f4f6f8; }
+   .cp-btn-peligro { background: #fff; color: #b03a2e; border-color: #f0c4be; } .cp-btn-peligro:hover:not(:disabled) { background: #fdf2f0; }
+   .cp-btn-chico { padding: 5px 10px; font-size: 12px; } .cp-btn:disabled { opacity: .5; cursor: not-allowed; }
+   .cp-acciones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+   .cp-mensaje { margin: 12px 0 0; padding: 0 0 0 10px; border-left: 2px solid #b4483c; font-size: 13px; color: #2c3e50; line-height: 1.5; }
+   .cp-confirmacion { margin: 0 0 12px; padding: 2px 0 2px 11px; border-left: 2px solid #d3d9e1; font-size: 13px; color: #45505c; }
+   .cp-confirmacion p { margin: 0 0 6px; }
+   .cp-separador { border: none; border-top: 1px solid #e0e4ea; margin: 20px 0 6px; }
+   .cp-radios { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 4px 0 10px; font-size: 13.5px; }
+   .cp-radios label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+   .cp-radios input { width: auto; }
+   .cp-col-incl { white-space: nowrap; }
+   #cpPlanExistente, #cpPlanNuevo { border-left: 2px solid #d3d9e1; padding: 4px 0 2px 14px; margin-bottom: 12px; }
+   .cp-resumen { border-top: 0.5px solid #e0e4ea; padding: 10px 0 0; margin: 14px 0 6px; font-size: 13.5px; }
+   .cp-resumen-linea { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; color: #45505c; }
+   .cp-resumen-linea.nota { color: #8a94a3; font-size: 12.5px; font-style: italic; }
+   .cp-resumen-total { display: flex; justify-content: flex-end; gap: 8px; border-top: 0.5px solid #d9e0ec; margin-top: 6px; padding-top: 8px; font-size: 14.5px; }
+   .cp-tabla input.cp-invalido { border-color: #c0392b; background: #fdf2f0; }
+   

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../CONFIG/plan_costos.php';
 require_once __DIR__ . '/../CONFIG/conexion.php';
 
 class ModeloInforme {
@@ -502,13 +503,16 @@ class ModeloInforme {
                 $sesionActual = intval($sMax->fetchColumn());
             }
 
+            $aviso = PlanCostos::aviso($plan, $sesionActual);
             return [
-                'plan'           => $plan,
-                'aparatologia'   => $aparatologia,
-                'sesiones'       => $sesiones,
-                'pagos'          => $pagos,
-                'sesion_actual'  => $sesionActual,
-                'id_cita_actual' => $id_cita
+                'plan'                => $plan,
+                'aparatologia'        => $aparatologia,
+                'sesiones'            => $sesiones,
+                'pagos'               => $pagos,
+                'sesion_actual'       => $sesionActual,
+                'costo_sesion_actual' => $aviso['costo_sesion'],     // segun la regla unica (no el "estimado" del plan)
+                'aviso'               => $aviso,
+                'id_cita_actual'      => $id_cita
             ];
 
         } catch (PDOException $e) {
@@ -520,7 +524,7 @@ class ModeloInforme {
 
     private function registrarSesionPlan($id_paciente_plan, $id_cita) {
         try {
-            // Obtener datos del plan
+            // Datos del plan
             $sPlan = $this->con->prepare(
                 "SELECT tipo, en_cuotas, costo_acordado, sesiones_pago_est, costo_estimado_sesion
                  FROM paciente_planes WHERE id_paciente_plan = :id"
@@ -529,35 +533,21 @@ class ModeloInforme {
             $p = $sPlan->fetch(PDO::FETCH_ASSOC);
             if (!$p) return;
 
-            // Calcular costo correcto por sesión según valores actuales del plan
-            if ($p['tipo'] === 'costo_total' && !$p['en_cuotas']) {
-                $costoSesion = 0; // pago único sin cuotas
-            } elseif ($p['tipo'] === 'costo_total' && $p['en_cuotas']) {
-                // Recalcular desde costo_acordado / sesiones_pago_est (fuente de verdad)
-                $ses = intval($p['sesiones_pago_est'] ?? 1);
-                $costoSesion = $ses > 0
-                    ? round(floatval($p['costo_acordado']) / $ses, 2)
-                    : 0;
-            } else {
-                // Por sesión: usar costo_estimado_sesion
-                $costoSesion = floatval($p['costo_estimado_sesion'] ?? 0);
-            }
-
             // Verificar si ya existe sesión para esta cita
             $chk = $this->con->prepare(
-                "SELECT id_sesion FROM plan_sesiones
+                "SELECT id_sesion, numero_sesion FROM plan_sesiones
                  WHERE id_paciente_plan = :pp AND id_cita = :cita"
             );
             $chk->execute([':pp' => $id_paciente_plan, ':cita' => $id_cita]);
-            $existente = $chk->fetch();
+            $existente = $chk->fetch(PDO::FETCH_ASSOC);
 
             if ($existente) {
-                // Actualizar costo por si cambió el plan
+                // Recalcular el costo con la regla única (depende del NÚMERO de sesión: pasadas las cuotas, no se cobra)
                 $this->con->prepare(
                     "UPDATE plan_sesiones SET costo_sesion = :costo
                      WHERE id_paciente_plan = :pp AND id_cita = :cita"
                 )->execute([
-                    ':costo' => $costoSesion,
+                    ':costo' => PlanCostos::costoSesion($p, $existente['numero_sesion']),
                     ':pp'    => $id_paciente_plan,
                     ':cita'  => $id_cita,
                 ]);
@@ -578,7 +568,7 @@ class ModeloInforme {
                     ':pp'    => $id_paciente_plan,
                     ':cita'  => $id_cita,
                     ':num'   => $numero,
-                    ':costo' => $costoSesion,
+                    ':costo' => PlanCostos::costoSesion($p, $numero),
                 ]);
             }
 
@@ -586,7 +576,6 @@ class ModeloInforme {
             error_log("registrarSesionPlan: " . $e->getMessage());
         }
     }
-
 
 }
 ?>

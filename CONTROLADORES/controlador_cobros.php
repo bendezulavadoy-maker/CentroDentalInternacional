@@ -36,7 +36,8 @@ switch ($accion) {
         break;
 
     case 'listar_buzon':
-        $resultado = $modelo->listarBuzon();
+        // Por defecto solo pacientes con saldo pendiente; ?todos=1 incluye a los que no deben nada; ?q= busca por nombre o documento
+        $resultado = $modelo->listarBuzon(($_GET['todos'] ?? '') !== '1', (string)($_GET['q'] ?? ''));
         echo json_encode($resultado === false ? ['error' => 'Query failed - check error_log'] : $resultado);
         break;
 
